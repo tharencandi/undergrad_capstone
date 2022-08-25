@@ -1,4 +1,5 @@
-DEFAULT_REASON="Unknown reason for download error."
+DEFAULT_REASON = "Unknown reason for download error."
+
 
 class DownloadError(Exception):
     def __init__(self, reason=DEFAULT_REASON, message=""):

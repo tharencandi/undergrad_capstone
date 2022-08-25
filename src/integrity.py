@@ -3,6 +3,7 @@ from Crypto.Hash import MD5
 
 CHUNK_SIZE = 1024
 
+
 def file_checksum(fname, md5sum):
     h = MD5.new()
     try:
@@ -17,11 +18,8 @@ def file_checksum(fname, md5sum):
         logging.exception("Unable to hash file.")
     except IOError:
         logging.exception("Unable to hash file.")
-    
-    return False
-    
 
-    
+    return False
 
 
 def byte_obj_checksum(obj, md5sum):
@@ -32,4 +30,3 @@ def byte_obj_checksum(obj, md5sum):
     except (TypeError, ValueError):
         logging.exception("Unable to hash object.")
         return False
-    
