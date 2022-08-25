@@ -22,4 +22,4 @@ pipelines:
             # Enforce style consistency across Python projects https://flake8.pycqa.org/en/latest/manpage.html
             - pip install flake8 black
             - black .
-            - flake8 . --extend-exclude=dist,build --show-source --statistics
+            # - flake8 . --extend-exclude=dist,build --show-source --statistics

@@ -1,4 +1,7 @@
-import json, requests, logging, re, sys, os
+import logging
+import re
+import sys
+import os
 from Crypto.Hash import MD5
 from download.gdc_client import gdc_client
 from download.DownloadError import DownloadError
@@ -17,16 +20,19 @@ TGCA_PREFIX = "TGCA"
 GBM = "GBM"
 LGG = "LGG"
 OUT_DIR_PATH = "../downloaded_data"
-PROGRESS_FILE_PATH= "../progress.txt"
+PROGRESS_FILE_PATH = "../progress.txt"
 
-I_CML_MANIFEST=1
-CML_MSG="""
+I_CML_MANIFEST = 1
+CML_MSG = """
 Usage:\n
 python3 download_script.py [manifest file path]
 """
+
+
 def has_file_ext(fname, ext):
     r = re.compile("[\S]+\." + ext + "$")
     return r.match(fname)
+
 
 def create_output_dir(path):
     if not os.path.exists(path):
@@ -36,9 +42,12 @@ def create_output_dir(path):
         print("Can't create output_dir", file=sys.stderr)
         exit(os.EX_CANTCREAT)
 
+
 def create_progress_file(path):
     if os.path.exists(path) and os.path.isdir(path):
-        logging.critical("Cannot create progress file. Path already exists and it is a directory.")
+        logging.critical(
+            "Cannot create progress file. Path already exists and it is a directory."
+        )
         print("Can't create progress file.", file=sys.stderr)
         exit(os.EX_CANTCREAT)
     elif not os.path.exists(path):
@@ -50,6 +59,7 @@ def cml():
     if len(sys.argv) < 2:
         print(CML_MSG, file=sys.stderr)
         exit(os.EX_USAGE)
+
 
 if __name__ == "__main__":
     cml()
@@ -71,7 +81,7 @@ if __name__ == "__main__":
                     continue
 
                 try:
-                    out_path = OUT_DIR_PATH + "/" +  sln[I_FILENAME]
+                    out_path = OUT_DIR_PATH + "/" + sln[I_FILENAME]
                     gdc.download_file(sln[I_ID], sln[I_MD5_SUM], out_path)
                     p.write(sln[I_ID] + "\t" + out_path + "\t" + sln[I_MD5_SUM] + "\n")
                 except DownloadError as e:

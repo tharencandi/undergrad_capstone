@@ -1,6 +1,9 @@
 import logging
 
 ERR_LOG_FILE = "download_failures.log"
+APPEND_FAIL_MSG = """
+Unable to append component to download error message while handling a download error.
+"""
 
 
 def download_error_handler(*args):
@@ -16,6 +19,4 @@ def append_err_comp(msg, comp):
     try:
         msg += str(comp) + "\t"
     except (ValueError, TypeError):
-        logging.exception(
-            "Unable to append component to download error message while handling a download error."
-        )
+        logging.exception(APPEND_FAIL_MSG)
