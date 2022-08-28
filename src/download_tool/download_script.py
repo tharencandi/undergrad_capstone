@@ -22,7 +22,7 @@ TGCA_PREFIX = "TGCA"
 GBM = "GBM"
 LGG = "LGG"
 
-DL_CHUNK_SIZE=8192
+# DL_CHUNK_SIZE=8192
 
 
 
@@ -101,7 +101,7 @@ if __name__ == "__main__":
                     out_path = conf[OUTPUT_DIR] + "/" + sln[I_FILENAME]
 
                     # download data as a stream to limit RAM usage
-                    gdc.stream_download_file(sln[I_ID], sln[I_MD5_SUM], out_path, DL_CHUNK_SIZE)
+                    gdc.stream_download_file(sln[I_ID], sln[I_MD5_SUM], out_path, conf[CHUNK_SIZE])
                     
                     # write the file details to the progress log
                     p.write(sln[I_ID] + "\t" + out_path + "\t" + sln[I_MD5_SUM] + "\n")
