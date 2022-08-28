@@ -1,16 +1,16 @@
 import requests
-import shutil
+import os
 import json
 import logging
-import functools
 import gzip
 import sys
 import signal
 from tqdm import tqdm
 from requests import HTTPError
+from download.DownloadError import DownloadIntegrityError
 from integrity import *
 
-TEMP_FILE_POSTFIX = ".tmp"
+PARTIAL_FILE_POSTFIX = ".part"
 
 # def sig_handler(sig, frame):
 
@@ -55,17 +55,22 @@ class gdc_client:
         }
         logging.info("Beginning download for uuid: %s, filename %s", uuid, out_path)
         try:
+            # send request to begin download
             with requests.post(self.data_url, data=param, headers=headers, stream=True) as r:
                 r.raise_for_status()
-                with open(out_path, "wb") as out:
+
+                #  stream data to temp file with .part postfix
+                with open(out_path + PARTIAL_FILE_POSTFIX, "wb") as out:
                     pbar = tqdm(total=int(r.headers["content-length"]), unit="iB", unit_scale=True)
                     for chunk in r.iter_content(chunk_size=chunk_size):
                         pbar.update(len(chunk))
                         out.write(chunk)
                     pbar.close()
-            if not file_checksum(out_path, md5sum):
+            if not file_checksum(out_path + PARTIAL_FILE_POSTFIX, md5sum):
                 raise DownloadIntegrityError()
 
+            # data has been validated and downloaded, remove .part postfix
+            os.rename(out_path + PARTIAL_FILE_POSTFIX, out_path)
             logging.info("Download finished for uuid %s, filename %s", uuid, out_path)
         except HTTPError as e:
             status = e.response.status_code

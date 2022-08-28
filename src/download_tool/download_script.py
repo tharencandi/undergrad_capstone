@@ -5,6 +5,7 @@ import os
 from Crypto.Hash import MD5
 from download.gdc_client import gdc_client
 from download.DownloadError import DownloadError
+from download.download_error_handler import download_error_handler
 from cml.cml_validator import *
 from config import *
 
@@ -82,32 +83,37 @@ if __name__ == "__main__":
     setup_download_failure_log(conf[FAILURE_LOG])
 
     gdc = gdc_client()
-    with open(sys.argv[I_CML_MANIFEST_FILE], "r") as f:
-        with open(conf[PROGRESS_LOG], "a") as p:
-            for ln in f:
-                ln = f.readline().strip()
-                logging.info("Manifest line read: %s", ln)
-                sln = ln.split(DELIM)
-                if len(ln) < 3:
-                    logging.warning(
-                        "Unexpected data format: Split line has length: %s, expected length of 4. Line was: %s",
-                        len(sln),
-                        ln,
-                    )
-                    continue
+    try:
+        with open(sys.argv[I_CML_MANIFEST_FILE], "r") as f:
+            with open(conf[PROGRESS_LOG], "a") as p:
+                for ln in f:
+                    ln = f.readline().strip()
+                    logging.info("Manifest line read: %s", ln)
+                    sln = ln.split(DELIM)
+                    if len(ln) < 3:
+                        logging.warning(
+                            "Unexpected data format: Split line has length: %s, expected length of 4. Line was: %s",
+                            len(sln),
+                            ln,
+                        )
+                        continue
 
-                try:
-                    # create an output path for the downloaded data
-                    out_path = conf[OUTPUT_DIR] + "/" + sln[I_FILENAME]
+                    try:
+                        # create an output path for the downloaded data
+                        out_path = conf[OUTPUT_DIR] + "/" + sln[I_FILENAME]
 
-                    # download data as a stream to limit RAM usage
-                    gdc.stream_download_file(sln[I_ID], sln[I_MD5_SUM], out_path, conf[CHUNK_SIZE])
-                    
-                    # write the file details to the progress log
-                    p.write(sln[I_ID] + "\t" + out_path + "\t" + sln[I_MD5_SUM] + "\n")
+                        # download data as a stream to limit RAM usage
+                        gdc.stream_download_file(sln[I_ID], sln[I_MD5_SUM], out_path, conf[CHUNK_SIZE])
+                        
+                        # write the file details to the progress log
+                        p.write(sln[I_ID] + "\t" + out_path + "\t" + sln[I_MD5_SUM] + "\n")
 
-                except DownloadError as e:
-                    logging.warning("Download failed with reason: %s", e.reason)
-                    # log the origin line from the manifest and the reason to failure log
-                    download_error_handler(conf[FAILURE_LOG], ln, repr(e))
+                    except DownloadError as e:
+                        logging.warning("Download failed with reason: %s", repr(e))
+                        # log the origin line from the manifest and the reason to failure log
+                        download_error_handler(conf[FAILURE_LOG], ln, repr(e))
+    except IOError as e:
+        logging.critical(f"Can't open critical file. {repr(e)}")
+        print(f"Can't open critical file. {repr(e)}", file=sys.stderr)
+        exit(os.EX_IOERR)
 
