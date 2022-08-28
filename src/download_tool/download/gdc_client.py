@@ -66,7 +66,7 @@ class gdc_client:
             if not file_checksum(out_path, md5sum):
                 raise DownloadIntegrityError()
 
-            logging.info("Download finished for uuid %s, filename %s", uuid, filename)
+            logging.info("Download finished for uuid %s, filename %s", uuid, out_path)
         except HTTPError as e:
             status = e.response.status_code
             msg = f"HTTPError  with code {status}"
