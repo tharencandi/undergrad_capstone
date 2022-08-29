@@ -40,5 +40,3 @@ sure_fg = np.unit8(sure_fg)
 unknown = cv.subtract(sure_bg, sure_fg)
 # plt.imshow(unknown, cmap = "gray")
 
-
-
