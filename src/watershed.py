@@ -40,3 +40,20 @@ sure_fg = np.unit8(sure_fg)
 unknown = cv.subtract(sure_bg, sure_fg)
 # plt.imshow(unknown, cmap = "gray")
 
+# Create marker and label the regions
+r3, markers = cv.connectedComponents(sure_fg)
+# plt.imshow(markers)
+markers = markers + 10
+markers[unknown == 255] = 0
+# plt.imshow(markers, cmap = "jet")
+markers = cv.watershed(img, markers)
+img[markers == -1] = [0, 255, 255]
+
+# return an RBG image where color-coded labels are painted over
+img2 = color.label2rgb(markers, bg_label = 0)
+
+# display images
+plt.imshow(img2)
+plt.imshow("Overlay", img)
+plt.imshow("Color Grains", img2)
+cv.waitKey(0)
