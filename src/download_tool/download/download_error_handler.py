@@ -1,17 +1,16 @@
 import logging
 
-ERR_LOG_FILE = "download_failures.log"
 APPEND_FAIL_MSG = """
 Unable to append component to download error message while handling a download error.
 """
 
 
-def download_error_handler(*args):
+def download_error_handler(fpath, *args):
     err_str = ""
     for arg in args:
         append_err_comp(err_str, arg)
 
-    with open(ERR_LOG_FILE, "a") as f:
+    with open(fpath, "a") as f:
         f.write(err_str)
 
 
