@@ -30,3 +30,15 @@ sure_bg = cv.dilate(opening, kernel, iteration = 10)
 
 # watershed for area that is sure foreground
 dist_transform = cv.distanceTransform(opening, cv.DIST_L2, 5)
+# plt.imshow(dist_transform, cmap = "gray")
+max_dist_transform = dist_transform.max()
+r2, sure_fg = cv.threshold(dist_transform, 0.5*max_dist_transform, 255, 0)
+# plt.imshow(sure_fg, cmap = "gray")
+
+# getting unknown ambiguous region (background - foreground)
+sure_fg = np.unit8(sure_fg)
+unknown = cv.subtract(sure_bg, sure_fg)
+# plt.imshow(unknown, cmap = "gray")
+
+
+
