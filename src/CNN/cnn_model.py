@@ -138,6 +138,16 @@ def decoder(x, decoder_num):
         x = layers.Conv2D(1024, (5,5), strides = 1, padding = 'valid')(x)
         x = layers.Conv2D(1024, (3,3), groups=256, strides = 1, padding = 'valid')(x)
         x = layers.Conv2D(512, (1,1), strides = 1, padding = 'valid')(x)
+    
+    #for the MDRAN
+    elif decoder_num == 4:
+        #"We note that decoder4 uses padding convolution"
+        x = layers.Conv2D(128, (5,5), padding='same', strides=1)(x)
+        print(x.shape)
+        x = layers.Conv2D(256, (3,3),padding='same',strides=1,groups=64)(x)
+        print(x.shape)
+        x = layers.Conv2D(256, (1,1), strides=1, padding = 'same')(x)
+        print(x.shape)
     return x
  
 
