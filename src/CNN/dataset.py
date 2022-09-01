@@ -109,13 +109,14 @@ def gen_NBL(data, location):
         #random cropping
         for j in range(30):
             seed = random.randint(LOW, HIGH)
-            c_img = tf.image.stateless_random_crop(imgs[i], size=(200, 200, 3), seed=seed)  
-            c_lbl = tf.image.stateless_random_crop(lbls[i], size = (200,200), seed=seed)
+            c_img = tf.image.stateless_random_crop(imgs[i], size=(200, 200, 3), seed=(seed,seed))  
+            c_lbl = tf.image.stateless_random_crop(lbls[i], size = (200,200), seed=(seed,seed))
 
             cv.imwrite(location+"image{:04d}.png".format(count), np.array(c_img))
             cv.imwrite(location+"image{:04d}_mask.png".format(count), np.array(c_lbl))
-            count += 1
             
+            count += 1
+          
        
 
 
