@@ -79,12 +79,12 @@ def unet(img_size, num_classes, classify):
 
     # Add a per-pixel classification layer (semantic segmentation)
     #
-
-    if classify:
-        y = layers.Flatten()(x)
-        outputs = layers.Dense(num_classes, activation = "softmax")(y)
-    else:
-        outputs = layers.Conv2D(num_classes, 4, activation="softmax", padding="same")(x)
+    #outputs = None
+    #if classify:
+        #y = layers.Flatten()(x)
+        #outputs = layers.Dense(num_classes, activation = "softmax")(y)
+    #else:
+    outputs = layers.Conv2D(num_classes, 1, activation="softmax", padding="same")(x)
  
     # Define the model
     model = keras.Model(inputs, outputs)
