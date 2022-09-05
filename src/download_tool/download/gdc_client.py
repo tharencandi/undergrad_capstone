@@ -69,7 +69,7 @@ class gdc_client:
             if not file_checksum(out_path + PARTIAL_FILE_POSTFIX, md5sum):
                 raise DownloadIntegrityError()
 
-            # data has been validated and downloaded, remove .part postfix
+            # data has been validated and downloaded, remove .part postfix 
             os.rename(out_path + PARTIAL_FILE_POSTFIX, out_path)
             logging.info("Download finished for uuid %s, filename %s", uuid, out_path)
         except HTTPError as e:
