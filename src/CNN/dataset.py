@@ -1,4 +1,5 @@
 
+from logging import raiseExceptions
 from re import I
 import cv2 as cv
 import numpy as np
@@ -6,16 +7,24 @@ import openslide as osl
 import tensorflow as tf
 import random
 from skimage.util.shape import view_as_windows 
-TRAIN_LOCATION = "data/training/images-and-masks/"
+
+
+
+TRAIN_LOCATION = "data/training/"
 VAL_LOCATION = "data/validation/"
+
+
 IMG_SIZE = (102, 102)
 LBL_SIZE = (54, 54)
 NUM = 15
 
 
 """
-    takes labels.txt and produces binary image / numpy array
-    dimensions are first line of txt fime
+    takes labels.txt and produces:
+    - img_mask: binary image mask
+    - cell_masks: list of binary images that isolate each cell
+
+    see data/training/README_training.txt for input file format
 """
 def decode_label(filename):
     f = open(filename)
@@ -23,91 +32,86 @@ def decode_label(filename):
     f.close()
     size = lines[0].split()
     size = (int(size[1]), int(size[0]))
-    label_array = np.zeros(size)
+    img_mask = np.zeros(size)
     
     l = []
     x = 0
     y = 0
-
     lines = lines[1:]
     lines = list(map(int, lines))
     num_cells = max(lines)
-    comp_labels = np.zeros((num_cells, size[0], size[1]))
-    print(comp_labels.shape)
+    cell_masks = np.zeros((num_cells, size[0], size[1]))
     for num in lines:
         num = int(num)
         if num != 0:
-            label_array[x][y] = 255
-            comp_labels[num-1,x,y] = 255
+            img_mask[x][y] = 255
+            cell_masks[num-1,x,y] = 255
         else:
-            label_array[x][y] = 0
+            img_mask[x][y] = 0
         if y == size[1]-1 :
             x += 1
             y = 0
         else:
             y += 1
-    return label_array, comp_labels
-
+    return img_mask, cell_masks
 
 """
-    load dataset as np arrays
-    normalisation and resizing applied
-    image flip augmentation applied to double dataset
+    load training and validation images as np arrays
 """
 def load_dataset():
-    train_images = []
-    train_labels = []
-    comp_labels_ls = []
-    val_images = []
-    val_labels = []
+    
+    train_imgs = []
+    train_img_mask_ls = []
+    train_cell_masks_ls = []
+
+    val_imgs = []
+    val_img_mask_ls = []
+    val_cell_masks_ls = []
+
     for i in range(1, NUM+1):
         #train
         img = cv.imread(TRAIN_LOCATION + "image{:02d}.png".format(i))
-        label, comp_labels = decode_label(TRAIN_LOCATION + "image{:02d}_mask.txt".format(i))
+        mask, cell_masks = decode_label(TRAIN_LOCATION + "image{:02d}_mask.txt".format(i))
+     
+        train_imgs.append(np.array(img))
+        train_img_mask_ls.append(mask)
+        train_cell_masks_ls.append(cell_masks)
         
-        """
-        s_label = cv.resize(label,LBL_SIZE , interpolation=cv.INTER_NEAREST)
-        s_img = cv.resize(img, IMG_SIZE, interpolation=cv.INTER_NEAREST)
-        n_img = np.zeros(IMG_SIZE+(3,))
-        cv.normalize(s_img, n_img,0,1)  
-        """
-        train_labels.append(label)
-        train_images.append(np.array(img))
-        comp_labels_ls.append(comp_labels)
-        
-        #train_labels.append(cv.flip(s_label,0))
-        #train_images.append(cv.flip(n_img,0))
-
         #validation
-        """
         v_img = cv.imread(VAL_LOCATION + "image{:02d}.png".format(i))
-        v_lbl = decode_label(VAL_LOCATION + "image{:02d}_mask.txt".format(i))
-        sv_lbl = cv.resize(v_lbl,LBL_SIZE , interpolation=cv.INTER_NEAREST)
-        sv_img = cv.resize(v_img,IMG_SIZE, interpolation=cv.INTER_NEAREST)
-        nv_img = np.zeros(LBL_SIZE+(3,))
-        cv.normalize(sv_img, nv_img)
+        v_mask, v_cell_masks = decode_label(VAL_LOCATION + "image{:02d}_mask.txt".format(i))
 
-        val_labels.append(sv_lbl)
-        val_images.append(nv_img)
-        val_labels.append(cv.flip(sv_lbl,0))
-        val_images.append(cv.flip(nv_img,0))
-        """
-
-    return train_images, train_labels, comp_labels_ls, val_images, val_labels
+        val_imgs.append(v_img)
+        val_img_mask_ls.append(v_mask)
+        val_cell_masks_ls.append(v_cell_masks)
+        
+    
+    return train_imgs, train_img_mask_ls, train_cell_masks_ls, val_imgs, val_img_mask_ls, val_cell_masks_ls
 
 LOW =  -2147483648 
 HIGH = 2147483647
 
-"slide window with a step of 54 pixels and random cropping to produce patches"
+"""
+    slide window with a step of 54 pixels and random cropping to produce patches
+
+    data is a tuple containing (img_list, label_list)
+    
+    images and labels are expected to be larger than 200x200. 
+    The corresponding image and label is expected to be the same size.
+    labels are expected to be binary images.
+"""
 def gen_NBL(data, location):
     imgs, lbls = data
     count = 0
     for i in range(len(imgs)):
         
+        if imgs[i].shape[0] != lbls[i].shape[0] or imgs[i].shape[1] != lbls[i].shape[1]:
+            raise NameError("inconsistent sized arrays")
+
         #window slide
-    
         c_img = view_as_windows(imgs[i], window_shape=(200,200,3), step=54)
         c_lbl = view_as_windows(lbls[i], window_shape=(200,200), step=54)
+
         for x in range(c_img.shape[0]):
             for y in range(c_img.shape[1]):
                 cv.imwrite(location+"image{:04d}.png".format(count), c_img[x,y,0])
@@ -126,13 +130,8 @@ def gen_NBL(data, location):
             count += 1
 
 
-
-
-
 """
-    get average position of a component.
-    (from tharen graphics a2 2021)
-    
+    Get average position of foreground in binary image.
 """
 def get_component_position(single_component_frame):
     
@@ -147,13 +146,18 @@ def get_component_position(single_component_frame):
                 x_sum += x
                 y_sum += y
     
- 
     return int(x_sum/count), int(y_sum/count)
 
 """
 Nuclei Boundary (NBD) dataset is generated by centering each
-nucleus at the center of each patch, producing 2,785 patches that
-are used for nuclei boundary detection.     
+nucleus at the center of each patch. This dataset is used for 
+nuclei boundary detection.   
+
+data is a tuple containing (img_list, label_list)
+    
+images and labels are expected to be larger than 200x200. 
+The corresponding image and label is expected to be the same size.
+labels are expected to be binary images.
 """    
 def gen_NBD_and_SN(data, location_NBD, location_SN):
      #isolate blobs in image
@@ -162,6 +166,10 @@ def gen_NBD_and_SN(data, location_NBD, location_SN):
     count_NBD = 0
     count_SN = 0 
     for i in range(len(imgs)):
+
+        if imgs[i].shape[0] != lbls[i].shape[0] or imgs[i].shape[1] != lbls[i].shape[1]:
+            raise NameError("inconsistent sized arrays")
+
         img = imgs[i]
         shape = img.shape
         comp_lbls = c_lbls[i]
@@ -223,7 +231,9 @@ def create_grid(svs_file,location, zoom):
     slide.close()
 
 
-imgs, lbls, comp_labels, v_imgs, v_lbls = load_dataset()
+
+
+#
 
 #gen_NBL((imgs, lbls), "data/NBL/")
 #gen_NBD_and_SN((imgs, lbls, comp_labels), "data/NBD/", "data/SN/")
