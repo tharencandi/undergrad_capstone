@@ -170,15 +170,14 @@ def ran_shear(img, mask):
     # cv2.imwrite(mask_dest_path, mask_sheared)
     return img_sheared, mask_sheared
 
-def center_crop(img, mask, dim):
+def center_crop(img, dim):
     """
     crop the senter of the imgs with dim x dim
 
-    input: image (read by cv2)
-            correspanding mask (read by cv2)
+    input: image (np array), dim
             
-    output: img_cropped, 
-            mask_cropped
+    output: img_cropped
+            
     """
 
     width = img.shape[1]
@@ -188,9 +187,9 @@ def center_crop(img, mask, dim):
     mid_x, mid_y = int(width/2), int(height/2)
     cw2, ch2 = int(crop_width/2), int(crop_height/2) 
     img_cropped = img[mid_y-ch2:mid_y+ch2, mid_x-cw2:mid_x+cw2]
-    mask_cropped = mask[mid_y-ch2:mid_y+ch2, mid_x-cw2:mid_x+cw2]
+    #mask_cropped = mask[mid_y-ch2:mid_y+ch2, mid_x-cw2:mid_x+cw2]
 
-    return img_cropped, mask_cropped
+    return img_cropped
 
 
 
@@ -198,73 +197,61 @@ def center_crop(img, mask, dim):
 # n = len(os.listdir(src_img_dir_path))
 
 # CHANGE THE VALUE OF n TO NUMBER OF IMAGES IN SRC_IMG OR SRC_MASK
-n = 1
-counter = 0
-for i in range(n):
-    img_path = src_img_dir_path+"/"+"image"+ "{:04d}".format(i) + ".png"
-    mask_path = src_mask_dir_path+"/"+"image"+ "{:04d}".format(i) + "_mask.png"
-    
-    img = cv2.imread(img_path)
-    img = np.array(img)
-    mask = cv2.imread(mask_path)
-    mask = np.array(mask)
+"""
+        apply augmentation to dataset specified by file path and return (images, masks)
+"""
+def augment(src_img_dir_path, src_mask_dir_path, n):
+        images = []
+        masks = []
 
-    ori_img_cropped, ori_mask_cropped = center_crop(img, mask, 102)
+        counter = 0
+        for i in range(n):
+                img_path = src_img_dir_path+"/"+"image"+ "{:04d}".format(i) + ".png"
+                mask_path = src_mask_dir_path+"/"+"image"+ "{:04d}".format(i) + "_mask.png"
+                
+                img = cv2.imread(img_path)
+                img = np.array(img)
+                mask = cv2.imread(mask_path)
+                
+                mask = np.array(mask)
+             
 
-    cv2.imwrite(result_img_dir_path+"/"+"image"+ "{:04d}".format(counter) + ".png", ori_img_cropped)
-    cv2.imwrite(result_mask_dir_path+"/"+"image"+ "{:04d}".format(counter) + "_mask.png", ori_mask_cropped)
-    counter += 1
+                #normalise mask
+                mask = np.array(mask/mask.max(),dtype=np.uint8)
+                
+                ori_img_cropped = center_crop(img, 102)
+                ori_mask_cropped = center_crop(mask, 54)
 
-    for j in range(3):
-        img_shifted, mask_shifted = ran_vh_shift(img, mask)
-        img_rotated, mask_rotated = ran_rotation(img_shifted, mask_shifted)
-        img_flipped, mask_flipped = ran_flip(img_rotated, mask_rotated)
-        img_sheared, mask_sheared = ran_shear(img_flipped, mask_flipped)
-        img_resized, mask_resized = ran_resize(img_sheared, mask_sheared)
-        img_f, mask_f = center_crop(img_resized, mask_resized, 102) 
-        img_path_f = result_img_dir_path+"/"+"image"+ "{:04d}".format(counter) + ".png"
-        mask_path_f = result_mask_dir_path+"/"+"image"+ "{:04d}".format(counter) + "_mask.png"
-        counter += 1
-        cv2.imwrite(img_path_f, img_f)
-        cv2.imwrite(mask_path_f, mask_f)
-        print("{:04d}".format(counter), str(img_f.shape[1]), str(img_f.shape[0]), str(mask_f.shape[1]), str(mask_f.shape[0]))
+                #cv2.imwrite(result_img_dir_path+"/"+"image"+ "{:04d}".format(counter) + ".png", ori_img_cropped)
+                #cv2.imwrite(result_mask_dir_path+"/"+"image"+ "{:04d}".format(counter) + "_mask.png", ori_mask_cropped)
+                images.append(ori_img_cropped)
+
+                #must be 2d  
+                masks.append(ori_mask_cropped[:,:,0])
+
+                counter += 1
+
+                for j in range(3):
+                        img_shifted, mask_shifted = ran_vh_shift(img, mask)
+                        img_rotated, mask_rotated = ran_rotation(img_shifted, mask_shifted)
+                        img_flipped, mask_flipped = ran_flip(img_rotated, mask_rotated)
+                        img_sheared, mask_sheared = ran_shear(img_flipped, mask_flipped)
+                        img_resized, mask_resized = ran_resize(img_sheared, mask_sheared)
+                        img_f = center_crop(img_resized, 102) 
+                        mask_f = center_crop(mask_resized, 54)
+                        img_path_f = result_img_dir_path+"/"+"image"+ "{:04d}".format(counter) + ".png"
+                        mask_path_f = result_mask_dir_path+"/"+"image"+ "{:04d}".format(counter) + "_mask.png"
+                        counter += 1
+                        #cv2.imwrite(img_path_f, img_f)
+                        #cv2.imwrite(mask_path_f, mask_f)
+                        images.append(img_f)
+
+                        #normalise mask
+                        mask_f = np.array(mask_f/mask_f.max(),dtype=np.uint8)
+                        #must be 2d
+                        masks.append(mask_f[:,:,0])
+                        #print("{:04d}".format(counter), str(img_f.shape[1]), str(img_f.shape[0]), str(mask_f.shape[1]), str(mask_f.shape[0]))
+                #print(f"{i+1}/{n}")        
+        return images, masks
+
         
-        # img_sheared, mask_sheared = ran_shear(img, mask)
-        # cv2.imwrite(img_path_f, img_resized)
-        # cv2.imwrite(mask_path_f, mask_resized)
-
-
-    # # a random vertical and horizontal shift in a range of [−0.05, 0.05] 
-    # # with respected to the patch’s width and height
-    # vhs_img_dest_path = result_img_dir_path+"/"+"image"+ "{:04d}".format(i+n) + ".png"
-    # vhs_mask_dest_path = result_mask_dir_path+"/"+"image"+ "{:04d}".format(i+n) + "_mask.png"
-    # vh_shift(img, mask, vhs_img_dest_path, vhs_mask_dest_path)
-
-
-    # # a random rotation in a range of [−45◦, 45◦] degree
-    # rot_img_dest_path = result_img_dir_path+"/"+"image"+ "{:04d}".format(i+2*n) + ".png"
-    # rot_mask_dest_path = result_mask_dir_path+"/"+"image"+ "{:04d}".format(i+2*n) + "_mask.png"
-    # rotation(img, mask, rot_img_dest_path, rot_mask_dest_path)
-
-    # # a random vertical and horizontal flipping with probability 0.5
-    # flip_img_dest_path = result_img_dir_path+"/"+"image"+ "{:04d}".format(i+3*n) + ".png"
-    # flip_mask_dest_path = result_mask_dir_path+"/"+"image"+ "{:04d}".format(i+3*n) + "_mask.png"
-    # ran_flip(img, mask, flip_img_dest_path, flip_mask_dest_path)
-
-    # # a random resizing with a ratio in a range of [0.7, 2.0]
-    # resize_img_dest_path = result_img_dir_path+"/"+"image"+ "{:04d}".format(i+4*n) + ".png"
-    # resize_mask_dest_path = result_mask_dir_path+"/"+"image"+ "{:04d}".format(i+4*n) + "_mask.png"
-    # resize(img, mask, resize_img_dest_path, resize_mask_dest_path)
-
-    # # a random shear with intensity in a range of [−0.4π, 0.4π]
-    # shear_img_dest_path = result_img_dir_path+"/"+"image"+ "{:04d}".format(i+5*n) + ".png"
-    # shear_mask_dest_path = result_mask_dir_path+"/"+"image"+ "{:04d}".format(i+5*n) + "_mask.png"
-    # ran_shear(img, mask, shear_img_dest_path, shear_mask_dest_path)
-
-
-    # window_name='Rotate Image by Angle in Python'
-    # cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
-    # cv2.imshow(window_name,img_rotated)
-    # cv2.imshow(window_name,mask_rotated)
-    # cv2.waitKey(0)
-    # cv2.destroyAllWindows()

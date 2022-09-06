@@ -120,7 +120,7 @@ def identity_block(x, filters):
 
 def resize(x, size):
     x = layers.UpSampling2D((size//x.shape[1], size //x.shape[2]), interpolation='nearest')(x)
-    print(x.shape)
+    
     return x
 
 # DRAN decoder unit
@@ -143,11 +143,8 @@ def decoder(x, decoder_num):
     elif decoder_num == 4:
         #"We note that decoder4 uses padding convolution"
         x = layers.Conv2D(128, (5,5), padding='same', strides=1)(x)
-        print(x.shape)
         x = layers.Conv2D(256, (3,3),padding='same',strides=1,groups=64)(x)
-        print(x.shape)
         x = layers.Conv2D(256, (1,1), strides=1, padding = 'same')(x)
-        print(x.shape)
     return x
  
 
