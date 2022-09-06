@@ -2,7 +2,7 @@ import cv2 as cv
 import numpy as np
 import tensorflow as tf
 import matplotlib.pyplot as plt
-import src.CNN.cnn_model as cnn_model
+import CNN.cnn_model as cnn_model
 from skimage.util.shape import view_as_windows 
 IMG_SIZE = (102, 102)
 MODEL = 'data/models/model_76'

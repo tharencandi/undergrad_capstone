@@ -1,6 +1,6 @@
 
 import numpy as np
-from src.CNN.dataset import decode_label
+from CNN.dataset import decode_label
 
 def test_mask():
     e_out = np.array([[0,0,0,0,0], [0,255,255,0,0], [255,255,255,0,0], [0,255,255,255,0]])

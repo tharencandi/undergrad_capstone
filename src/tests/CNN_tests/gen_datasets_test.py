@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from src.CNN.dataset import *
+from CNN.dataset import *
 
 def test_NBL_exception():
     image = np.array([[[0,0,0], [0,0,0]], [[0,0,0], [0,0,0]]])
