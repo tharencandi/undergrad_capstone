@@ -8,7 +8,7 @@ Unable to append component to download error message while handling a download e
 def download_error_handler(fpath, *args):
     err_str = ""
     for arg in args:
-        append_err_comp(err_str, arg)
+        err_str = append_err_comp(err_str, arg)
 
     with open(fpath, "a") as f:
         f.write(err_str)
@@ -16,6 +16,7 @@ def download_error_handler(fpath, *args):
 
 def append_err_comp(msg, comp):
     try:
-        msg += str(comp) + "\t"
+        return msg + str(comp) + "\t"
+
     except (ValueError, TypeError):
         logging.exception(APPEND_FAIL_MSG)
