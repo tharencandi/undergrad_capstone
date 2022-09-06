@@ -2,11 +2,12 @@ import cv2 as cv
 import numpy as np
 import tensorflow as tf
 import matplotlib.pyplot as plt
-import cnn_model
+import src.CNN.cnn_model as cnn_model
 from skimage.util.shape import view_as_windows 
 IMG_SIZE = (102, 102)
 MODEL = 'data/models/model_76'
 WEIGHTS = 'data/models/new_weights.h5'
+
 # hacky script to see result
 
 model = tf.keras.models.load_model(MODEL, custom_objects = {"UpdatedMeanIoU": cnn_model.UpdatedMeanIoU})
@@ -48,13 +49,9 @@ def predict_image(img):
 for i in range(1,18):
    
     img = cv.imread("data/validation/image{:02d}.png".format(i))
-    
-    
     mask = predict_image(img)
     mask= cv.cvtColor(np.float32(mask),cv.COLOR_GRAY2RGB)
-    
     true_mask =  cv.imread("data/validation/image{:02d}_mask.png".format(i))
-    
     vis = np.concatenate((img, true_mask, mask), axis=1)
     vis = cv.resize(vis, (vis.shape[1]*4, vis.shape[0]*4))
     cv.imwrite(f'data/results/out{i}.png', vis)

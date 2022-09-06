@@ -1,8 +1,7 @@
 import sys
 import os.path
 from os import path
-
-import dataset
+import src.CNN.dataset as dataset
 
 """
     Run various functions of the CNN src code.
@@ -12,9 +11,6 @@ import dataset
     TO DO: add prediction
 
 """
-
-
-
 def main():
     if len(sys.argv) > 3:
 
