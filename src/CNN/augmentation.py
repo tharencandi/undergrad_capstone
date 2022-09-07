@@ -5,14 +5,7 @@ import numpy as np
 import imutils
 import random
 import tensorflow
-# from skimage import data
-# from skimage import transform
 
-# def rotate_image(image, angle):
-#   image_center = tuple(np.array(image.shape[1::-1]) / 2)
-#   rot_mat = cv2.getRotationMatrix2D(image_center, angle, 1.0)
-#   result = cv2.warpAffine(image, rot_mat, image.shape[1::-1], flags=cv2.INTER_LINEAR)
-#   return result
 
 dir = os.getcwd()
 result_img_dir_path = dir + "/result_img"
@@ -50,8 +43,6 @@ def ran_vh_shift(img, mask):
 
     return img_shifted, mask_shifted
     
-    # cv2.imwrite(img_dest_path, img_shifted)
-    # cv2.imwrite(mask_dest_path, mask_shifted)
 
 def ran_rotation(img, mask):
     """
@@ -70,8 +61,6 @@ def ran_rotation(img, mask):
     img_rotated = imutils.rotate(img, rotate_factor)
     mask_rotated = imutils.rotate(mask, rotate_factor)
 
-    # cv2.imwrite(img_dest_path, img_rotated)
-    # cv2.imwrite(mask_dest_path, mask_rotated)
     return img_rotated, mask_rotated
 
 def ran_flip(img, mask):
@@ -100,8 +89,6 @@ def ran_flip(img, mask):
     img_flipped = cv2.flip(img, flip_factor)
     mask_flipped = cv2.flip(mask, flip_factor)
 
-    # cv2.imwrite(img_dest_path, img_flipped)
-    # cv2.imwrite(mask_dest_path, mask_flipped)
     return img_flipped, mask_flipped
 
 
@@ -124,8 +111,6 @@ def ran_resize(img, mask):
     img_resized = cv2.resize(img, dsize)
     mask_resized = cv2.resize(mask, dsize)
 
-    # cv2.imwrite(img_dest_path, img_resized)
-    # cv2.imwrite(mask_dest_path, mask_resized)
     return img_resized, mask_resized
 
 
@@ -140,34 +125,12 @@ def ran_shear(img, mask):
     output: img_sheared, 
             mask_sheared
     """
-    # LOW =  -2147483648 
-    # HIGH = 2147483647
-    # tensorflow.random.set_seed(random.randint(LOW, HIGH))
-
-    # seed = random.randint(LOW, HIGH)
-
-    # scikit_img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    # scikit_mask = cv2.cvtColor(mask, cv2.COLOR_BGR2RGB)
-    # do something in scikit
-    # opencv_img = cv2.cvtColor(scikit_img, cv2.COLOR_RGB2BGR)
-    # # do something in opencv
-        
+   
     shear_factor = random.uniform(-0.4, 0.4)*180
-
-    # afine_tf = transform.AffineTransform(shear=shear_factor)
-
-    # # Apply transform to image data
-    # img_sheared = transform.warp(scikit_img, inverse_map=afine_tf)
-    # mask_sheared = transform.warp(scikit_mask, inverse_map=afine_tf)
-    # tensorflow.random.set_seed(random.randint(LOW, HIGH))
-    # img_sheared = tensorflow.keras.preprocessing.image.random_shear(img, shear_factor, row_axis=1, col_axis=0, channel_axis=2)
+    # Apply transform to image data
     img_sheared = tensorflow.keras.preprocessing.image.apply_affine_transform(img, shear=shear_factor, row_axis=1, col_axis=0, channel_axis=2)
     mask_sheared = tensorflow.keras.preprocessing.image.apply_affine_transform(mask, shear=shear_factor, row_axis=1, col_axis=0, channel_axis=2)
-    # tensorflow.random.set_seed(random.randint(LOW, HIGH))
-    # mask_sheared = tensorflow.keras.preprocessing.image.random_shear(mask, shear_factor, row_axis=1, col_axis=0, channel_axis=2)
 
-    # cv2.imwrite(img_dest_path, img_sheared)
-    # cv2.imwrite(mask_dest_path, mask_sheared)
     return img_sheared, mask_sheared
 
 def center_crop(img, dim):
@@ -192,11 +155,6 @@ def center_crop(img, dim):
     return img_cropped
 
 
-
-# disable due to unknow hidden files in dir
-# n = len(os.listdir(src_img_dir_path))
-
-# CHANGE THE VALUE OF n TO NUMBER OF IMAGES IN SRC_IMG OR SRC_MASK
 """
         apply augmentation to dataset specified by file path and return (images, masks)
 """
@@ -215,17 +173,13 @@ def augment(src_img_dir_path, src_mask_dir_path, n):
                 
                 mask = np.array(mask)
              
-
                 #normalise mask
                 mask = np.array(mask/mask.max(),dtype=np.uint8)
                 
                 ori_img_cropped = center_crop(img, 102)
                 ori_mask_cropped = center_crop(mask, 54)
 
-                #cv2.imwrite(result_img_dir_path+"/"+"image"+ "{:04d}".format(counter) + ".png", ori_img_cropped)
-                #cv2.imwrite(result_mask_dir_path+"/"+"image"+ "{:04d}".format(counter) + "_mask.png", ori_mask_cropped)
                 images.append(ori_img_cropped)
-
                 #must be 2d  
                 masks.append(ori_mask_cropped[:,:,0])
 
@@ -239,19 +193,16 @@ def augment(src_img_dir_path, src_mask_dir_path, n):
                         img_resized, mask_resized = ran_resize(img_sheared, mask_sheared)
                         img_f = center_crop(img_resized, 102) 
                         mask_f = center_crop(mask_resized, 54)
-                        img_path_f = result_img_dir_path+"/"+"image"+ "{:04d}".format(counter) + ".png"
-                        mask_path_f = result_mask_dir_path+"/"+"image"+ "{:04d}".format(counter) + "_mask.png"
+                        #img_path_f = result_img_dir_path+"/"+"image"+ "{:04d}".format(counter) + ".png"
+                        #mask_path_f = result_mask_dir_path+"/"+"image"+ "{:04d}".format(counter) + "_mask.png"
                         counter += 1
-                        #cv2.imwrite(img_path_f, img_f)
-                        #cv2.imwrite(mask_path_f, mask_f)
+         
                         images.append(img_f)
 
                         #normalise mask
                         mask_f = np.array(mask_f/mask_f.max(),dtype=np.uint8)
                         #must be 2d
-                        masks.append(mask_f[:,:,0])
-                        #print("{:04d}".format(counter), str(img_f.shape[1]), str(img_f.shape[0]), str(mask_f.shape[1]), str(mask_f.shape[0]))
-                #print(f"{i+1}/{n}")        
+                        masks.append(mask_f[:,:,0])        
         return images, masks
 
         

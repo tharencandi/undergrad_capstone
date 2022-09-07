@@ -9,16 +9,27 @@ import cnn_model
 import pydot
 import os
 from CNN.augmentation import augment
+
 NUM = 1609
 IMG_SIZE = (102, 102)
 LBL_SIZE = (54, 54)
 EPOCHS = 64
 BATCH_SIZE = 32
-SHUFFLE_BUFFER_SIZE = 100
+SHUFFLE_BUFFER_SIZE = 1000
 MODEL_SAVE_LOCATION = "data/models/"
 MODEL_FILE_NAME = "test_model.model"
 TRAIN_LOCATION = "data/NBL"
 TEST_LOCATION = "data/nbl_test"
+CELL_CLASS_WEIGHT = 1
+BG_CLASS_WEIGHT = 1
+
+if not os.path.exists(TRAIN_LOCATION):
+    print("train path does not exist.")
+    exit(1)
+if not os.path.exists(TRAIN_LOCATION):
+    print("train path does not exist.")
+    exit(1)
+
 
 
 print("loading dataset...")
@@ -40,9 +51,9 @@ print(len(masks), masks.shape)
 print(len(v_imgs), v_imgs.shape)
 print(len(v_masks), v_masks.shape)
 
-#imgs,masks,weights = cnn_model.add_sample_weights(imgs,masks,[1,3])
+imgs,masks,weights = cnn_model.add_sample_weights(imgs,masks,[BG_CLASS_WEIGHT,CELL_CLASS_WEIGHT])
 
-train_dataset = tf.data.Dataset.from_tensor_slices((imgs, masks))
+train_dataset = tf.data.Dataset.from_tensor_slices((imgs, masks, weights))
 train_dataset = train_dataset.shuffle(SHUFFLE_BUFFER_SIZE).batch(BATCH_SIZE)
 
 test_dataset = tf.data.Dataset.from_tensor_slices((v_imgs, v_masks))
@@ -62,6 +73,7 @@ print("commencing training...")
 model_history = model.fit (
     train_dataset, epochs=EPOCHS, validation_data=test_dataset
 )
+
 
 model.save_weights(MODEL_SAVE_LOCATION + MODEL_FILE_NAME)
 
