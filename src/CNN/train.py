@@ -8,7 +8,7 @@ import cv2 as cv
 import cnn_model
 import pydot
 import os
-from augmentation import augment
+from CNN.augmentation import augment
 NUM = 1609
 IMG_SIZE = (102, 102)
 LBL_SIZE = (54, 54)
