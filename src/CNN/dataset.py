@@ -3,7 +3,7 @@ from logging import raiseExceptions
 from re import I
 import cv2 as cv
 import numpy as np
-import openslide as osl
+#import openslide as osl
 import tensorflow as tf
 import random
 from skimage.util.shape import view_as_windows 
@@ -215,7 +215,7 @@ def gen_NBD_and_SN(data, location_NBD, location_SN):
 
 """
     preserves image aspect ratio
-"""
+
 def create_grid(svs_file,location, zoom):
     slide = osl.OpenSlide(svs_file)
     size = (int(slide.properties["aperio.OriginalHeight"]), int(slide.properties["aperio.OriginalWidth"]))
@@ -229,7 +229,7 @@ def create_grid(svs_file,location, zoom):
             cv.imwrite(f"{location}/{i}_ {j}.jpg", cv_image)
 
     slide.close()
-
+"""
 
 
 
