@@ -13,8 +13,9 @@ pipelines:
           caches:
             - pip
           script:
+            - apt-get update
+            - apt-get install -y python3-opencv
             - if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-            - apt-get install python3-opencv
             - pip install pytest
             - pytest -v --junitxml=test-reports/report.xml
       - step:
