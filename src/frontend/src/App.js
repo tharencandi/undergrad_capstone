@@ -1,11 +1,11 @@
-import Home from "./pages/Home.js"
+import { Table, TopBar } from "./components/Sections";
+import Layout from "./components/Layout";
 
-function App() {
+export default function App() {
   return (
-    <>
-      <Home />
-    </>
+    <Layout>
+      <TopBar></TopBar>
+      <Table></Table>
+    </Layout>
   );
 }
-
-export default App;
