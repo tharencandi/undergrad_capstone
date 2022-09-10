@@ -1,5 +1,5 @@
-import { Table, TopBar } from "./components/Sections";
-import Layout from "./components/Layout";
+import { Table, TopBar } from "components/Sections";
+import Layout from "components/Layout";
 
 export default function App() {
   return (
