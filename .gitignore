@@ -48,3 +48,6 @@ Thumbs.db
 *.mov
 *.wmv
 
+*.svs
+.venv
+ gdc_manifest*
