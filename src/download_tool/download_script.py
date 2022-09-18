@@ -23,15 +23,29 @@ TGCA_PREFIX = "TGCA"
 GBM = "GBM"
 LGG = "LGG"
 
-# DL_CHUNK_SIZE=8192
 
 
+OUTPUT_DIR="OUTPUT_DIR"
+PROGRESS_LOG="PROGRESS_LOG"
+FAILURE_LOG="FAILURE_LOG"
+CHUNK_SIZE="CHUNK_SIZE"
+CONCURRENT_DOWNLOADS="CONCURRENT_DOWNLOADS"
+LOGFILE="LOGFILE"
+LOGLEVEL="LOGLEVEL"
+
+MAND_FIELDS = [
+    OUTPUT_DIR,
+    PROGRESS_LOG,
+    FAILURE_LOG,
+    CHUNK_SIZE,
+    CONCURRENT_DOWNLOADS,
+    LOGFILE,
+    LOGLEVEL
+]
 
 
-
-# def has_file_ext(fname, ext):
-#     r = re.compile("[\S]+\." + ext + "$")
-#     return r.match(fname)
+def v_mandate_fields(conf):
+    field_validator(conf, *MAND_FIELDS) 
 
 
 def setup_output_dir(path):

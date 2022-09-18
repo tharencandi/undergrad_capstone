@@ -22,7 +22,7 @@ def query_db(query, args=(), one=False):
     return (rv[0] if rv else None) if one else rv
 
 
-def init_db(flask_app):
+def  init_db(flask_app):
     with app.context():
         db = get_db()
         with app.open_resources(SCHEMAS, mode="r") as f:
