@@ -1,4 +1,4 @@
-import Table from "./Table";
+import FileTable from "./FileTable";
 import TopBar from "./TopBar";
 
-export { Table, TopBar };
+export { FileTable, TopBar };
