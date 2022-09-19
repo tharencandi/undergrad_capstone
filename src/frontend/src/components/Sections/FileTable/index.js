@@ -1,7 +1,7 @@
 import { DataGrid, GridColDef, GridValueGetterParams } from "@mui/x-data-grid";
 
 const columns: GridColDef[] = [
-  { field: "filename", headerName: "Filename", width: 256 },
+  { field: "filename", headerName: "Filename", width: 256, editable: true },
   { field: "tif", headerName: ".tif", width: 128 },
   { field: "png", headerName: ".png", width: 128 },
   { field: "mask", headerName: "Mask", width: 128 },
