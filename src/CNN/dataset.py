@@ -55,6 +55,26 @@ def decode_label(filename):
             y += 1
     return img_mask, cell_masks
 
+def encode_label(mask, file_location, filename):
+    file_location = file_location.strip()
+    filename = filename.strip()
+    if file_location[-1] != '/':
+        file_location += "/"
+    f = file_location + filename
+    if len(mask.shape) != 2:
+        return -1
+    
+    out = ""
+    out += f"{mask.shape[1]} {mask.shape[0]}\n"
+    for i in range(mask.shape[0]):
+        for j in range(mask.shape[1]):
+            out += str(int(mask[i,j])) + "\n"
+    
+    file = open(f, "w")
+    file.write(out)
+    file.close()
+    return 0
+
 """
     load training and validation images as np arrays
 """
