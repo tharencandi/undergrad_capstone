@@ -44,3 +44,10 @@
   border-style: solid;
   border-color: #CBCBCB;
 }
+
+.topBar button, .topBar label {
+  background-color: #1665F5;
+  margin: 2rem;
+  font-family: Inter, sans-serif;
+  border-radius: 2px;
+}
