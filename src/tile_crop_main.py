@@ -5,7 +5,8 @@ import tiles
 import filter
 
 #.svs images must follow naming convention seen in /data/training_slides
-#output of .png tiles with threshold above x are located in data/tiles_png/"imageNumber"
+#output of .png tiles are located in data/tiles_png/"imageNumber"
+#if threshold above x, _keep added to filename, else _delete
 
 if __name__ == "__main__":
   # show_slide(1)
