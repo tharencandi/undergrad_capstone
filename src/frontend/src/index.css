@@ -29,3 +29,18 @@
 
 @layer components {
 }
+
+.MuiDataGrid-columnHeaders {
+  background-color: #E1E9F2;
+  font-family: Inter, sans-serif;
+}
+
+.MuiDataGrid-columnHeaderTitle {
+  font-weight: bold !important;
+}
+
+.MuiDataGrid-cell {
+  border-left: 1px;
+  border-style: solid;
+  border-color: #CBCBCB;
+}
