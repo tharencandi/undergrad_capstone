@@ -26,7 +26,7 @@ const rows = [
 
 const FileTable = () => {
   return (
-    <div style={{ height: 400, width: "100%" }}>
+    <div style={{ height: "80vh", width: "100%" }}>
       <DataGrid
         rows={rows}
         columns={columns}
