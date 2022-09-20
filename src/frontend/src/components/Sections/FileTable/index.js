@@ -72,15 +72,15 @@ const columns: GridColDef[] = [
 ];
 
 const rows = [
-  { id: 1, filename: "example1", tif: 3, png: 3, mask: 3, dateCreated: "Tuesday" },
-  { id: 2, filename: "example2", tif: 3, png: 3, mask: 3, dateCreated: "Tuesday" },
-  { id: 3, filename: "example3", tif: 3, png: 3, mask: 3, dateCreated: "Tuesday" },
-  { id: 4, filename: "example4", tif: 0, png: 3, mask: 3, dateCreated: "Tuesday" },
-  { id: 5, filename: "example5", tif: 0, png: 3, mask: 3, dateCreated: "Tuesday" },
-  { id: 6, filename: "example6", tif: 0, png: 3, mask: 2, dateCreated: "Tuesday" },
-  { id: 7, filename: "example7", tif: 0, png: 3, mask: 1, dateCreated: "Tuesday" },
-  { id: 8, filename: "example8", tif: 0, png: 3, mask: 1, dateCreated: "Tuesday" },
-  { id: 9, filename: "example8", tif: 0, png: 3, mask: 1, dateCreated: "Tuesday" },
+  { id: 1, filename: "example1", tif: 3, png: 3, mask: 3, dateCreated: new Date(2022, 6, 8) },
+  { id: 2, filename: "example2", tif: 3, png: 3, mask: 3, dateCreated: new Date(2022, 6, 8) },
+  { id: 3, filename: "example3", tif: 3, png: 3, mask: 3, dateCreated: new Date(2022, 6, 8) },
+  { id: 4, filename: "example4", tif: 0, png: 3, mask: 3, dateCreated: new Date(2022, 7, 16) },
+  { id: 5, filename: "example5", tif: 0, png: 3, mask: 3, dateCreated: new Date(2022, 7, 16) },
+  { id: 6, filename: "example6", tif: 0, png: 3, mask: 2, dateCreated: new Date(2022, 7, 16) },
+  { id: 7, filename: "example7", tif: 0, png: 3, mask: 1, dateCreated: new Date(2022, 8, 24) },
+  { id: 8, filename: "example8", tif: 0, png: 3, mask: 1, dateCreated: new Date(2022, 8, 24) },
+  { id: 9, filename: "example8", tif: 0, png: 3, mask: 1, dateCreated: new Date(2022, 8, 24) },
 ];
 
 const FileTable = () => {
