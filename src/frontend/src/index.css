@@ -30,6 +30,10 @@
 @layer components {
 }
 
+.Mui-checked {
+  color: #1665F5 !important;
+}
+
 .MuiDataGrid-columnHeaders {
   background-color: #E1E9F2;
   font-family: Inter, sans-serif;
