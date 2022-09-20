@@ -1,3 +1,4 @@
+import Button from '@mui/material/Button';
 import { useTabsList } from "@mui/base";
 import { DataGrid, GridColDef, GridValueGetterParams } from "@mui/x-data-grid";
 import { IconContext } from "react-icons";
@@ -8,7 +9,7 @@ function filenameCell(cell) {
     <div style={{width: "100%"}}>
       {cell.value}
       <span style={{float: "right"}}>
-        <BsFillPencilFill />
+        <Button variant="text"><BsFillPencilFill /></Button>
       </span>
     </div>
   )
