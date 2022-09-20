@@ -1,5 +1,6 @@
 import { useTabsList } from "@mui/base";
 import { DataGrid, GridColDef, GridValueGetterParams } from "@mui/x-data-grid";
+import { IconContext } from "react-icons";
 import { BsThreeDots, BsHourglassSplit, BsFileEarmarkCheckFill } from "react-icons/bs";
 
 function getTifStatus(params) {
@@ -10,7 +11,11 @@ function getTifStatus(params) {
   } else if (params.row.tif === 2) {
     return <BsHourglassSplit />
   } else if (params.row.tif === 3) {
-    return <BsFileEarmarkCheckFill />
+    return (
+      <IconContext.Provider value={{ color: "#1665F5" }}>
+        <BsFileEarmarkCheckFill />
+      </IconContext.Provider>
+    )
   }
 }
 
@@ -22,7 +27,11 @@ function getPngStatus(params) {
   } else if (params.row.png === 2) {
     return <BsHourglassSplit />
   } else if (params.row.png === 3) {
-    return <BsFileEarmarkCheckFill />
+    return (
+      <IconContext.Provider value={{ color: "#1665F5" }}>
+        <BsFileEarmarkCheckFill />
+      </IconContext.Provider>
+    )
   }
 }
 
@@ -34,7 +43,11 @@ function getMaskStatus(params) {
   } else if (params.row.mask === 2) {
     return <BsHourglassSplit />
   } else if (params.row.mask === 3) {
-    return <BsFileEarmarkCheckFill />
+    return (
+      <IconContext.Provider value={{ color: "#1665F5" }}>
+        <BsFileEarmarkCheckFill />
+      </IconContext.Provider>
+    )
   }
 }
 

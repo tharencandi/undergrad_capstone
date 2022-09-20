@@ -1,4 +1,5 @@
 import Button from '@mui/material/Button';
+import { IconContext } from "react-icons";
 import { BsThreeDots, BsHourglassSplit, BsFileEarmarkCheckFill } from "react-icons/bs";
 
 const TopBar = () => {
@@ -15,7 +16,14 @@ const TopBar = () => {
       <div className="infoBox">
         <div className="infoBoxCell"><center><BsThreeDots /></center><span className="caption">Waiting</span></div>
         <div className="infoBoxCell"><center><BsHourglassSplit /></center>Processing</div>
-        <div className="infoBoxCell"><center><BsFileEarmarkCheckFill /></center>Ready</div>
+        <div className="infoBoxCell">
+          <center>
+            <IconContext.Provider value={{ color: "#1665F5" }}>
+              <BsFileEarmarkCheckFill />
+            </IconContext.Provider>
+          </center>
+          Ready
+        </div>
       </div>
     </div>
     </>
