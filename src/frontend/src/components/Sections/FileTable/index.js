@@ -88,6 +88,7 @@ const FileTable = () => {
         pageSize={100}
         rowsPerPageOptions={[5]}
         checkboxSelection
+        disableSelectionOnClick
       />
     </div>
   );
