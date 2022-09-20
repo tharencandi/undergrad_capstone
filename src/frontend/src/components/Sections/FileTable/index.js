@@ -21,12 +21,14 @@ function getChildFileStatus(cell) {
   } else if (cell.value === 1) {
     return <BsThreeDots />
   } else if (cell.value === 2) {
-    return <BsHourglassSplit />
-  } else if (cell.value === 3) {
     return (
       <IconContext.Provider value={{ color: "#1665F5" }}>
-        <BsFileEarmarkCheckFill />
+        <BsHourglassSplit />
       </IconContext.Provider>
+    )
+  } else if (cell.value === 3) {
+    return (
+      <BsFileEarmarkCheckFill />
     )
   }
 }

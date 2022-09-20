@@ -14,14 +14,20 @@ const TopBar = () => {
       <Button variant="contained">Generate</Button>
       <Button variant="contained">Delete</Button>
       <div className="infoBox">
-        <div className="infoBoxCell"><center><BsThreeDots /></center><span className="caption">Waiting</span></div>
-        <div className="infoBoxCell"><center><BsHourglassSplit /></center>Processing</div>
+        <div className="infoBoxCell">
+          <center><BsThreeDots /></center>
+          Waiting
+        </div>
         <div className="infoBoxCell">
           <center>
             <IconContext.Provider value={{ color: "#1665F5" }}>
-              <BsFileEarmarkCheckFill />
+            <BsHourglassSplit />
             </IconContext.Provider>
           </center>
+          Processing
+        </div>
+        <div className="infoBoxCell">
+          <center><BsFileEarmarkCheckFill /></center>
           Ready
         </div>
       </div>
