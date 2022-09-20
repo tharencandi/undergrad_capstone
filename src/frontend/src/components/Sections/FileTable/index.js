@@ -3,10 +3,10 @@ import { DataGrid, GridColDef, GridValueGetterParams } from "@mui/x-data-grid";
 import { IconContext } from "react-icons";
 import { BsFillPencilFill, BsThreeDots, BsHourglassSplit, BsFileEarmarkCheckFill } from "react-icons/bs";
 
-function filenameCell(params) {
+function filenameCell(cell) {
   return (
     <div style={{width: "100%"}}>
-      {params.row.filename}
+      {cell.value}
       <span style={{float: "right"}}>
         <BsFillPencilFill />
       </span>
@@ -14,46 +14,14 @@ function filenameCell(params) {
   )
 }
 
-function getTifStatus(params) {
-  if (params.row.tif === 0) {
+function getChildFileStatus(cell) {
+  if (cell.value === 0) {
     return ""
-  } else if (params.row.tif === 1) {
+  } else if (cell.value === 1) {
     return <BsThreeDots />
-  } else if (params.row.tif === 2) {
+  } else if (cell.value === 2) {
     return <BsHourglassSplit />
-  } else if (params.row.tif === 3) {
-    return (
-      <IconContext.Provider value={{ color: "#1665F5" }}>
-        <BsFileEarmarkCheckFill />
-      </IconContext.Provider>
-    )
-  }
-}
-
-function getPngStatus(params) {
-  if (params.row.png === 0) {
-    return ""
-  } else if (params.row.png === 1) {
-    return <BsThreeDots />
-  } else if (params.row.png === 2) {
-    return <BsHourglassSplit />
-  } else if (params.row.png === 3) {
-    return (
-      <IconContext.Provider value={{ color: "#1665F5" }}>
-        <BsFileEarmarkCheckFill />
-      </IconContext.Provider>
-    )
-  }
-}
-
-function getMaskStatus(params) {
-  if (params.row.mask === 0) {
-    return ""
-  } else if (params.row.mask === 1) {
-    return <BsThreeDots />
-  } else if (params.row.mask === 2) {
-    return <BsHourglassSplit />
-  } else if (params.row.mask === 3) {
+  } else if (cell.value === 3) {
     return (
       <IconContext.Provider value={{ color: "#1665F5" }}>
         <BsFileEarmarkCheckFill />
@@ -74,19 +42,19 @@ const columns: GridColDef[] = [
     field: "tif",
     headerName: ".tif",
     width: 128,
-    renderCell: getTifStatus
+    renderCell: getChildFileStatus
   },
   {
     field: "png",
     headerName: ".png",
     width: 128,
-    renderCell: getPngStatus
+    renderCell: getChildFileStatus
   },
   {
     field: "mask",
     headerName: "Mask",
     width: 128,
-    renderCell: getMaskStatus
+    renderCell: getChildFileStatus
   },
   {
     field: "dateCreated",
