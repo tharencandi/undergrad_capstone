@@ -6,11 +6,9 @@ import { BsFillPencilFill, BsThreeDots, BsHourglassSplit, BsFileEarmarkCheckFill
 
 function filenameCell(cell) {
   return (
-    <div style={{width: "100%"}}>
+    <div className="filenameCell">
       {cell.value}
-      <span style={{float: "right"}}>
-        <Button variant="text"><BsFillPencilFill /></Button>
-      </span>
+      <Button variant="text"><BsFillPencilFill /></Button>
     </div>
   )
 }
@@ -19,16 +17,22 @@ function getChildFileStatus(cell) {
   if (cell.value === 0) {
     return ""
   } else if (cell.value === 1) {
-    return <BsThreeDots />
+    return (
+      <IconContext.Provider value={{ className: "waitingIcon" }}>
+        <BsThreeDots />
+      </IconContext.Provider>
+    )
   } else if (cell.value === 2) {
     return (
-      <IconContext.Provider value={{ color: "#1665F5" }}>
+      <IconContext.Provider value={{ className: "processingIcon" }}>
         <BsHourglassSplit />
       </IconContext.Provider>
     )
   } else if (cell.value === 3) {
     return (
-      <BsFileEarmarkCheckFill />
+      <IconContext.Provider value={{ className: "readyIcon" }}>
+        <BsFileEarmarkCheckFill />
+      </IconContext.Provider>
     )
   }
 }
@@ -81,7 +85,7 @@ const rows = [
 
 const FileTable = () => {
   return (
-    <div style={{ height: "80vh", width: "100%" }}>
+    <div className="fileTable">
       <DataGrid
         rows={rows}
         columns={columns}
