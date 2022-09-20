@@ -1,7 +1,18 @@
 import { useTabsList } from "@mui/base";
 import { DataGrid, GridColDef, GridValueGetterParams } from "@mui/x-data-grid";
 import { IconContext } from "react-icons";
-import { BsThreeDots, BsHourglassSplit, BsFileEarmarkCheckFill } from "react-icons/bs";
+import { BsFillPencilFill, BsThreeDots, BsHourglassSplit, BsFileEarmarkCheckFill } from "react-icons/bs";
+
+function filenameCell(params) {
+  return (
+    <div style={{width: "100%"}}>
+      {params.row.filename}
+      <span style={{float: "right"}}>
+        <BsFillPencilFill />
+      </span>
+    </div>
+  )
+}
 
 function getTifStatus(params) {
   if (params.row.tif === 0) {
@@ -56,7 +67,8 @@ const columns: GridColDef[] = [
     field: "filename",
     headerName: "Filename",
     width: 256,
-    editable: true
+    editable: true,
+    renderCell: filenameCell
   },
   {
     field: "tif",
