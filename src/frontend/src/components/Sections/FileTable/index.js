@@ -1,52 +1,34 @@
+import Button from '@mui/material/Button';
 import { useTabsList } from "@mui/base";
 import { DataGrid, GridColDef, GridValueGetterParams } from "@mui/x-data-grid";
 import { IconContext } from "react-icons";
-import { BsThreeDots, BsHourglassSplit, BsFileEarmarkCheckFill } from "react-icons/bs";
+import { BsFillPencilFill, BsThreeDots, BsHourglassSplit, BsFileEarmarkCheckFill } from "react-icons/bs";
 
-function getTifStatus(params) {
-  if (params.row.tif === 0) {
-    return ""
-  } else if (params.row.tif === 1) {
-    return <BsThreeDots />
-  } else if (params.row.tif === 2) {
-    return <BsHourglassSplit />
-  } else if (params.row.tif === 3) {
-    return (
-      <IconContext.Provider value={{ color: "#1665F5" }}>
-        <BsFileEarmarkCheckFill />
-      </IconContext.Provider>
-    )
-  }
+function filenameCell(cell) {
+  return (
+    <div style={{width: "100%"}}>
+      {cell.value}
+      <span style={{float: "right"}}>
+        <Button variant="text"><BsFillPencilFill /></Button>
+      </span>
+    </div>
+  )
 }
 
-function getPngStatus(params) {
-  if (params.row.png === 0) {
+function getChildFileStatus(cell) {
+  if (cell.value === 0) {
     return ""
-  } else if (params.row.png === 1) {
+  } else if (cell.value === 1) {
     return <BsThreeDots />
-  } else if (params.row.png === 2) {
-    return <BsHourglassSplit />
-  } else if (params.row.png === 3) {
+  } else if (cell.value === 2) {
     return (
       <IconContext.Provider value={{ color: "#1665F5" }}>
-        <BsFileEarmarkCheckFill />
+        <BsHourglassSplit />
       </IconContext.Provider>
     )
-  }
-}
-
-function getMaskStatus(params) {
-  if (params.row.mask === 0) {
-    return ""
-  } else if (params.row.mask === 1) {
-    return <BsThreeDots />
-  } else if (params.row.mask === 2) {
-    return <BsHourglassSplit />
-  } else if (params.row.mask === 3) {
+  } else if (cell.value === 3) {
     return (
-      <IconContext.Provider value={{ color: "#1665F5" }}>
-        <BsFileEarmarkCheckFill />
-      </IconContext.Provider>
+      <BsFileEarmarkCheckFill />
     )
   }
 }
@@ -56,25 +38,26 @@ const columns: GridColDef[] = [
     field: "filename",
     headerName: "Filename",
     width: 256,
-    editable: true
+    editable: true,
+    renderCell: filenameCell
   },
   {
     field: "tif",
     headerName: ".tif",
     width: 128,
-    renderCell: getTifStatus
+    renderCell: getChildFileStatus
   },
   {
     field: "png",
     headerName: ".png",
     width: 128,
-    renderCell: getPngStatus
+    renderCell: getChildFileStatus
   },
   {
     field: "mask",
     headerName: "Mask",
     width: 128,
-    renderCell: getMaskStatus
+    renderCell: getChildFileStatus
   },
   {
     field: "dateCreated",
@@ -105,6 +88,7 @@ const FileTable = () => {
         pageSize={100}
         rowsPerPageOptions={[5]}
         checkboxSelection
+        disableSelectionOnClick
       />
     </div>
   );
