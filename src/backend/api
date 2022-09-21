@@ -1,0 +1,112 @@
+api
+
+
+
+GET /all
+Get all scans
+Return:
+	{
+		id: "asd.png"
+		extensions: ["png", "svs"]
+		creation_date: "01/04/2020"
+	}, ...
+
+----------------------------------------------
+
+GET /scan
+Get specificed scan and extension
+Params:
+	id: string
+	extension: string {"svs", "png", "tiff"}
+Return:
+	file: asd.png
+	id.meta: asd.meta
+
+----------------------------------------------
+
+POST /scan
+upload a new scan
+Params:
+	extenstion: string {"svs", "png", "tiff"}
+	file: file
+Return:
+	id: "asd.png"
+	file_name: "asd"
+	meta: asd.meta
+
+-----------------------------------------------
+
+DELETE /scan/<id>/<extension>
+delete scan with id <id>
+Params:
+	id: string
+	extenstion: string {"svs", "png", "tiff"}
+Return:
+	id: "asd.png"
+	extension: "png"
+
+-----------------------------------------------
+
+UPDATE /scan/<id>
+change the name of the scan
+Params:
+	id: string
+	new_name: string
+return:
+	id: "asd.png"
+	new_name: "qwe.png"
+
+-----------------------------------------------
+
+POST /scan/<id>/convert/<extension>
+convert scan to a new file format
+Params:
+	id: string
+	extension: string {"svs", "png", "tiff"}
+Return:
+	id: "asd.png"
+	extension: "png"
+
+-----------------------------------------------
+
+GET /mask/<id>
+get mask for scan with id <id>
+Params:
+	id: string
+Return:
+	id: "asd"
+	mask: asd.mask
+
+------------------------------------------------
+
+POST /mask/<id>
+create new mask for scan with id <id>
+Params:
+	id: string
+Return:
+	id: "asd.mask"
+	mask: asd.mask
+
+-------------------------------------------------
+
+DELETE /mask/<id>
+delete mask for scan with id <id>
+Params:
+	id: string
+Return:
+	id: "asd.mask"
+	mask: asd.mask
+
+-------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+	
