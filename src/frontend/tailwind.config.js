@@ -8,6 +8,7 @@ module.exports = {
       secondary: "#E1E9F2",
       black: "#000000",
       white: "#FCFCFC",
+      grey: "#DDDDDD",
     },
     fontSize: {
       subtitle1: ["1.25rem", { fontWeight: 600 }],

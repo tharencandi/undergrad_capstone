@@ -32,81 +32,23 @@
 }
 
 @layer components {
-  .topBar {
-    padding: 1rem;
-    display: flex;
-    justify-content: space-between;
-  }
-
-  .actionPanel {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-evenly;
-  }
-  /* 
-  .actionPanel button,
-  .actionPanel label {
-    padding-left: 1rem;
-    padding-right: 1rem;
-    padding-top: 0.5rem !important;
-    padding-bottom: 0.5rem;
-    margin: 2rem;
-    background-color: #1665f5;
-    font-family: Inter, sans-serif;
-    border-radius: 2px;
-  } */
-
-  .infoBox {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-evenly;
-    padding: 1rem;
-    border: 2px solid #cbcbcb;
-  }
-
-  .infoBoxCell {
-    padding: 1rem;
-  }
-
   .fileTable {
-    width: 100%;
-    height: 80vh;
-  }
-
-  .fileTable .Mui-checked {
-    color: #1665f5 !important;
+    @apply w-full h-[80vh];
   }
 
   .fileTable .MuiDataGrid-columnHeaders {
-    background-color: #e1e9f2;
-    font-family: Inter, sans-serif;
+    @apply bg-secondary;
   }
 
   .fileTable .MuiDataGrid-columnHeaderTitle {
-    font-weight: bold !important;
+    @apply text-subtitle2;
   }
 
   .fileTable .MuiDataGrid-cell {
-    border-left: 1px;
-    border-style: solid;
-    border-color: #cbcbcb;
-  }
-
-  .waitingIcon {
-    color: black;
-  }
-
-  .processingIcon {
-    color: #1665f5;
-  }
-
-  .readyIcon {
-    color: black;
+    @apply border-l-[1px] border-grey;
   }
 
   .filenameCell {
-    display: flex;
-    justify-content: space-between;
-    width: 100%;
+    @apply flex w-full justify-between;
   }
 }
