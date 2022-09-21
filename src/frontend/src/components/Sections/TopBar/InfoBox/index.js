@@ -25,7 +25,7 @@ const InfoBox = () => {
   });
 
   return (
-    <div className="flex justify-evenly px-4 py-1 border-solid border-4 border-secondary rounded gap-4">
+    <div className="flex justify-evenly px-1 py-0 xl:px-4 xl:py-1 border-solid border-4 border-secondary rounded xl:gap-4">
       {infoItemElements}
     </div>
   );
