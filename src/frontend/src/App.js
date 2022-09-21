@@ -1,4 +1,4 @@
-import { FileTable, TopBar } from "components/Sections";
+import { FileTable, TopBar, Test } from "components/Sections";
 import Layout from "components/Layout";
 
 export default function App() {
@@ -6,6 +6,7 @@ export default function App() {
     <Layout>
       <TopBar></TopBar>
       <FileTable></FileTable>
+      <Test></Test>
     </Layout>
   );
 }
