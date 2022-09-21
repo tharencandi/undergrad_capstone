@@ -18,6 +18,10 @@
     @apply text-subtitle2;
   }
 
+  p {
+    @apply text-body1;
+  }
+
   .body1 {
     @apply text-body1;
   }
@@ -28,81 +32,81 @@
 }
 
 @layer components {
-}
+  .topBar {
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+  }
 
-.topBar {
-  padding: 1rem;
-  display: flex;
-  justify-content: space-between;
-}
+  .actionPanel {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-evenly;
+  }
+  /* 
+  .actionPanel button,
+  .actionPanel label {
+    padding-left: 1rem;
+    padding-right: 1rem;
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem;
+    margin: 2rem;
+    background-color: #1665f5;
+    font-family: Inter, sans-serif;
+    border-radius: 2px;
+  } */
 
-.actionPanel {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-evenly;
-}
+  .infoBox {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-evenly;
+    padding: 1rem;
+    border: 2px solid #cbcbcb;
+  }
 
-.actionPanel button, .actionPanel label {
-  padding-left: 1rem;
-  padding-right: 1rem;
-  padding-top: 0.5rem !important;
-  padding-bottom: 0.5rem;
-  margin: 2rem;
-  background-color: #1665F5;
-  font-family: Inter, sans-serif;
-  border-radius: 2px;
-}
+  .infoBoxCell {
+    padding: 1rem;
+  }
 
-.infoBox {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-evenly;
-  padding: 1rem;
-  border: 2px solid #CBCBCB;
-}
+  .fileTable {
+    width: 100%;
+    height: 80vh;
+  }
 
-.infoBoxCell {
-  padding: 1rem;
-}
+  .fileTable .Mui-checked {
+    color: #1665f5 !important;
+  }
 
-.fileTable {
-  width: 100%;
-  height: 80vh;
-}
+  .fileTable .MuiDataGrid-columnHeaders {
+    background-color: #e1e9f2;
+    font-family: Inter, sans-serif;
+  }
 
-.fileTable .Mui-checked {
-  color: #1665F5 !important;
-}
+  .fileTable .MuiDataGrid-columnHeaderTitle {
+    font-weight: bold !important;
+  }
 
-.fileTable .MuiDataGrid-columnHeaders {
-  background-color: #E1E9F2;
-  font-family: Inter, sans-serif;
-}
+  .fileTable .MuiDataGrid-cell {
+    border-left: 1px;
+    border-style: solid;
+    border-color: #cbcbcb;
+  }
 
-.fileTable .MuiDataGrid-columnHeaderTitle {
-  font-weight: bold !important;
-}
+  .waitingIcon {
+    color: black;
+  }
 
-.fileTable .MuiDataGrid-cell {
-  border-left: 1px;
-  border-style: solid;
-  border-color: #CBCBCB;
-}
+  .processingIcon {
+    color: #1665f5;
+  }
 
-.waitingIcon {
-  color: black;
-}
+  .readyIcon {
+    color: black;
+  }
 
-.processingIcon {
-  color: #1665F5;
-}
-
-.readyIcon {
-  color: black;
-}
-
-.filenameCell {
-  display: flex;
-  justify-content: space-between;
-  width: 100%;
+  .filenameCell {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+  }
 }
