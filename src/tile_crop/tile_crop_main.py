@@ -12,7 +12,7 @@ import filter
 # if tissue proportion of slide threshold above x, _keep added to filename, else _delete
 
 
-def single_image_to_folder_of_labelled_png(image_numbers = [1], cell_threshold = 0, save=False):
+def multiple_images_to_folders_of_labelled_png(image_numbers = [1], cell_threshold = 0, save=False):
 
   ''' 
   Takes list of svs image numbers, produces corresponding folders containing tiles of H/SCALE_FACTOR * W/SCALE_FACTOR

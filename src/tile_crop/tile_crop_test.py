@@ -8,7 +8,7 @@ class Test(unittest.TestCase):
 
     #Runs function without saving files, save=False
     def test_return(self):
-        self.assertEqual(single_image_to_folder_of_labelled_png([1], 100, save=False), [[1,(18,16)]])
+        self.assertEqual(multiple_images_to_folders_of_labelled_png([1], 100, save=False), [[1,(18,16)]])
 
 if __name__ == '__main__':
     unittest.main()
