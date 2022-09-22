@@ -21,9 +21,9 @@ def single_image_to_folder_of_labelled_png(image_numbers = [1], cell_threshold =
   Inputs: list of image numbers corresponding to svs naming convention 
   e.g. [1,2] == [CELLCIRC-001.svs,CELLCIRC-002.svs] 
 
-  Outputs: tile_directory (STR), number of row and columns of tiles (TUPLE)
+  Outputs: tile_number, number of row and columns of tiles (TUPLE)
 
-  E.g. ["./data/tiles_png/001/CELLCIRC-001-tile-r10-c2-x1025-y9228-w1024-h1024_delete.png",(10,10) ]
+  E.g. [1,(10,10) ]
   to change SCALE_FACTOR: update this macro in slide.py
 
   '''
