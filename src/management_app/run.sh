@@ -6,11 +6,12 @@ if [[ $# -ne 2 ]]; then
 	exit 1
 fi
 
+DOMAIN="JTjkRajnVdExwo.glioblastoma"
 # mount the hardrive
 source hardrive_mount.sh
 
 # run the flask process
-python3 run.py
+python3 app.py
 
 # run the ngrok instance
-sudo docker run  --net=host -it -e NGROK_AUTHTOKEN=$1 ngrok/ngrok:alpine http --basic-auth=$2 5000
+sudo docker run  --net=host -it -e NGROK_AUTHTOKEN=$1 ngrok/ngrok:alpine http --region=au --hostname=jtjkrajnvdexwo.glioblastoma.au.ngrok.io --basic-auth=$2 5000

@@ -18,5 +18,6 @@ if [[ $CONFIRM == "y" ]]; then
 	sudo mount -t ntfs3 $DEVICE $MOUNTPOINT
 else
 	echo "aborting..."
+	exit 1
 fi
 
