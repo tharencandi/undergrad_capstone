@@ -9,7 +9,7 @@ from skimage.segmentation import clear_border
     when DEBUG flag is set to true image segmentation process
     can be viewed (original image to segmented image)
 """
-DEBUG = False
+DEBUG = True
 
 """
     Functions takes the path to an image as an argument,
@@ -104,7 +104,7 @@ def ambiguous_region(arr):
     # watershed for area that is sure foreground
     dist_transform = cv.distanceTransform(arr[0], cv.DIST_L2, 5)
     max_dist_transform = dist_transform.max()
-    r2, sure_fg = cv.threshold(dist_transform, 0.7*max_dist_transform, 255, 0)
+    r2, sure_fg = cv.threshold(dist_transform, 0.2*max_dist_transform, 255, 0)
 
     # getting unknown ambiguous region (background - foreground)
     sure_fg = np.uint8(sure_fg)
