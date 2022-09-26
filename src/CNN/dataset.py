@@ -70,9 +70,9 @@ def encode_label(mask, file_location, filename):
         for j in range(mask.shape[1]):
             out += str(int(mask[i,j])) + "\n"
     
-    file = open(f, "w")
-    file.write(out)
-    file.close()
+    with open(f, "w") as file:
+        file.write(out)
+   
     return 0
 
 """

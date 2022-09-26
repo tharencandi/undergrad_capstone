@@ -1,18 +1,21 @@
-from curses.panel import top_panel
 import os
-from pickletools import uint8
+import subprocess as sb
+import sys
+
+print(sys.path)
 import cv2 as cv
 import numpy as np
 import tensorflow as tf
-import matplotlib.pyplot as plt
-import cnn_model as cnn_model
-import openslide as osl
-import openslide.deepzoom
-from skimage.util.shape import view_as_windows 
-import time
+import cnn_model, file_management, dataset
 from iou import get_iou
 import math
-import json 
+import json
+
+
+#from src.download_tool.config import field_validator, load_config
+from yaml import safe_load
+
+
 
 IMG_SIZE = (102, 102)
 MODEL = 'data/models/model_76'
@@ -115,35 +118,117 @@ def predict_image(img):
     return img_mask
 
 
-def predict_validation_set(n, save_location):
-    iou_sum = 0
-    out_str = "iou,\n"
-    count = 0
-    for i in range(1,n+1):
-        img = cv.imread("data/validation/image{:02d}.png".format(i))
-    
-        mask = predict_image(img)
-        mask= cv.cvtColor(np.float32(mask),cv.COLOR_GRAY2RGB)
-        true_mask =  cv.imread("data/validation/image{:02d}_mask.png".format(i))
-        true_mask = val_mask_to_bin(true_mask)
+def tile_slide(file,zoom, save_loc):
+    return
 
-        vis = np.concatenate((img, true_mask, mask), axis=1)
-        cv.imwrite(f'{save_location}/out_combined_{i}.png', vis)
-        print(f"\nResult saved as out_combined_{i}.png in {save_location}!\n")
+
+def predict_slide(svs_id, svs_file, tmp_dir, masks_dir):
+    ZOOM = 30
+    TILE_NAME_PREDICT = "tile_{}_{}.png"
+    TILE_NAME_IGNORE = "tile_{}_{}_delete.png"
+    TILE_JSON = "meta.json"
+    json_file_path = f"{tmp_dir}/{TILE_JSON}"
+    if os.path.exists(json_file_path):
+        with open(json_file_path, "r") as json_fd:
+            j_dict = json.load(json_fd)
+        num_tiles = j_dict["num_tiles"]
         
-        accuracy = get_iou(mask, true_mask)
-        iou_sum += accuracy*100
-        out_str += str(accuracy) + ",\n"
-        count += 1
+        tile_ls = [file for file in os.listdir(tmp_dir) if ("tile" in file)]
+        if (num_tiles[0] * num_tiles[1]) != len(tile_ls):
+            print("tiles not found, retiling.")
+            num_tiles = tile_slide(svs_file, ZOOM, tmp_dir)
+    else:
+        num_tiles  = tile_slide(svs_file, ZOOM, tmp_dir)
+        j_dict = {"svs_image": svs_id, "num_tiles": num_tiles, "current_tile": (0,0)}
+       
 
-    f = open(f"{save_location}/results.csv", "w")
-    f.write(out_str)
-    f.close()
-    print("mean iou: " + str(iou_sum / count))
+    current_tile = j_dict["current_tile"]
+    for i in range(current_tile[0], num_tiles[0]):
+        for j in range(current_tile[1], num_tiles[1]):
+            j_dict["current_tile"] = (i,j)
+            with open(json_file_path, "w") as json_fd:
+                json.dump(j_dict, json_fd)
+
+            #scuffed solution
+            if os.path.exists(TILE_NAME_IGNORE.format(i,j)):
+                tile = cv.imread(TILE_NAME_IGNORE.format(i,j))
+                mask = np.zeros((tile.shape[0], tile.shape[1]))
+            else:
+                tile = cv.imread(TILE_NAME_PREDICT.format(i,j))
+                mask = predict_image(tile)
+            #save mask
+            dataset.encode_label(mask, f"{masks_dir}/{i}_{j}.mask")
     
-
-
+    return 
     
+def predict_manifest():
+   
+    current_svs = svs_manager.get_new_svs()
+    print(f"checking if svs with id {current_svs} is downloaded.")
+    while current_svs != None:
+        if not svs_manager.is_downloaded(current_svs):
+            continue
+        
+        print(f"processing svs with id {current_svs}.")
 
-predict_validation_set(18, "data/results")
+        svs_file = svs_manager.find_file_from_id(current_svs)
+        #mask_file = predict_slide(f"{p_conf[metadata.SVS_DIR]}/{svs_file}", p_conf[metadata.TMP_DIR])
+        
+        
+        svs_img = cv.imread(f"{p_conf[file_management.SVS_DIR]}/{svs_file}")
+        mask = predict_image(svs_img)
+        if dataset.encode_label(mask, p_conf[file_management.MASK_DIR], f"{current_svs}.mask") != 0:
+            print("error encoding mask.")
+        else:
+            svs_manager.append_manifest_out(current_svs, svs_file, f"{current_svs}.mask")
+        
+
+        print(f"Processing complete. Deleting svs with id {current_svs}")
+
+        current_svs = svs_manager.get_new_svs()
+
+
+
+#predict_manifest()
 #predict_slide("data/example_WSI.svs", "s")
+ARGS_LEN = 1
+if __name__ == "__main__":
+    #get config
+    if len(sys.argv) < ARGS_LEN + 1:
+        err_msg = """
+        run program with the following format:
+        python3 predict.py predict_config_.yaml
+        """
+        print(err_msg)
+        exit(os.EX_USAGE)
+
+    p_config_file = sys.argv[1].strip()
+  
+    if not os.path.exists(p_config_file or not os.path.isfile(p_config_file)):
+        raise FileNotFoundError("predict config file does not exists.")
+
+    p_conf = {}
+    with open(p_config_file, "r") as conf:
+        p_conf =  safe_load(conf)
+    try:
+        file_management.conf_init(p_conf)
+    except Exception as err:
+        print(str(err))
+        exit(os.EX_CONFIG)
+
+    svs_manager = file_management.metadata(p_conf)
+
+    try:
+        file_management.check_manifest(p_conf[file_management.MANIFEST_IN])
+    except Exception as err:
+        print(str(err))
+        exit(os.EX_CONFIG)
+
+    predict_manifest()
+
+
+
+
+
+
+    
