@@ -1,36 +1,30 @@
 import os
 import subprocess as sb
 import sys
-
-print(sys.path)
 import cv2 as cv
 import numpy as np
 import tensorflow as tf
 import cnn_model, file_management, dataset
-from iou import get_iou
 import math
 import json
-
-
-#from src.download_tool.config import field_validator, load_config
 from yaml import safe_load
-
 
 
 IMG_SIZE = (102, 102)
 MODEL = 'data/models/model_76'
 WEIGHTS = 'data/models/sep_15_aug_val.h5'
-
+TILE_MASK_NAME_F = "{}_{}.mask"
 
 model = tf.keras.models.load_model(MODEL, custom_objects = {"UpdatedMeanIoU": cnn_model.UpdatedMeanIoU})
 if WEIGHTS != None:
     model.load_weights(WEIGHTS)
 
-"""
+
+def get_mask_img(mask):
+    """
     input is prediction of CNN
     output is a 2d binary image.
-"""
-def get_mask_img(mask):
+    """
     mask_img = np.zeros((54, 54))
     for y in range(mask.shape[0]):
         for x in range(mask.shape[1]):
@@ -43,6 +37,11 @@ def get_mask_img(mask):
 
 
 def val_mask_to_bin(true_mask):
+    """
+    convert mask with many values to binary values:
+    bg = 0
+    fg = 255
+    """
     for i in range(true_mask.shape[0]):
             for j in range(true_mask.shape[1]):
                 if true_mask[i,j,2] != 0:
@@ -50,15 +49,16 @@ def val_mask_to_bin(true_mask):
     return true_mask
 
 
-"""
+
+def create_windows(img):
+    """
     Produce list of 102x102 images such that the centre 54x54
     of all images exactly cover the image image
 
     returns:
         - windows (list)
         - tile_dim (tuple that defines how many tiles span width and height of image)
-"""
-def create_windows(img):
+    """
     og_img = np.copy(img)
     og_shape = og_img.shape
     windows = []
@@ -85,6 +85,7 @@ def create_windows(img):
     return np.float32(windows), tile_dim
 
 
+ 
 def predict_image(img):
     """
     CNN prediction takes 102x102 centre of 
@@ -93,7 +94,7 @@ def predict_image(img):
     to product all inputs that need to be predicted 
     to reconstruct the image
     """
-
+   
     bot_cen_pad = img.shape[0] % 54
     right_cen_pad = img.shape[1] % 54
     
@@ -118,13 +119,40 @@ def predict_image(img):
     return img_mask
 
 
-def tile_slide(file,zoom, save_loc):
-    return
+def construct_whole_mask(tile_dim, num_tiles, in_loc, out_loc, out_name):
+    """
+    constructs an entire image mask (.mask format) from tile masks (.mask formats)
+    used for WSI mask creation.
+    """
+    whole_mask = np.zeros((tile_dim[0]*num_tiles[0], tile_dim[1]*num_tiles[1]))
 
-# to do: delete all temp shit when prediction complete
-#combine masks predictions to produce svs mask. 
-# error checking
+    for i in range(num_tiles[0]):
+        for j in range(num_tiles[1]):
+            f_name = TILE_MASK_NAME_F.format(i,j)
+            tile_mask = dataset.decode_label(f"{in_loc}/{f_name}")
+            whole_mask [
+                i*tile_dim[0]:i*tile_dim[0] + tile_dim[0], 
+                j*tile_dim[1]:j*tile_dim[1] + tile_dim[1]
+            ] = tile_mask
+    if dataset.encode_label(whole_mask, out_loc, out_name) != 0:
+        return None
+    
+    return f"{out_loc}/{out_name}"
+
+
 def predict_slide(svs_id, svs_file, tmp_dir, masks_dir):
+    """
+    produces svs_id.mask in masks_dir.
+    used to predict WSI masks.
+    saves current progress in tmp_dir in a .json 
+    so progress can be resumed.
+
+    tiles svs. Uses hueristics to determine if a tile has any tissue.
+    if not, the mask for that tile will be all bg.
+
+    progress is resumed by to first unpredicted tile.
+    
+    """
     ZOOM = 40
     TILE_NAME_PREDICT = "tile_{}_{}_keep.png"
     TILE_NAME_IGNORE = "tile_{}_{}_delete.png"
@@ -174,14 +202,35 @@ def predict_slide(svs_id, svs_file, tmp_dir, masks_dir):
             #save mask of tile.
             dataset.encode_label (
                 mask = mask, 
-                file_location = masks_dir, 
-                filename = f"{i}_{j}.mask"
+                file_location = "f{tmp_dir}/masks", 
+                filename = TILE_MASK_NAME_F.format(i,j)
             )
-        file_management.clear_dir(tmp_dir)
-    return 
+
+    mask_loc = construct_whole_mask (
+        tile_dim = j_dict["tile_dim"], 
+        num_tiles = num_tiles, 
+        in_loc = "f{tmp_dir}/masks", 
+        out_loc = masks_dir, 
+        out_name = f"{svs_id}.mask"
+    )
+    
+    # clean up
+    file_management.clear_dir(tmp_dir)
+
+    return mask_loc
     
 def predict_manifest():
-   
+    """
+        attempts to predict all svs files from manifest_in in yaml config. 
+        searches for the first svs in manifest that has not been predicted
+        (is not recorded in manifest_out). 
+
+        assumes that download script is running, will wait for svs to be downloaded.
+        Note. The function will not search first svs that is downloaded and is not predicted.
+
+        Download script assumed to be using the same manifest_in, and therefore has the same 
+        download/processing order. 
+    """
     current_svs = svs_manager.get_new_svs()
     print(f"checking if svs with id {current_svs} is downloaded.")
     while current_svs != None:
@@ -199,24 +248,20 @@ def predict_manifest():
             p_conf[file_management.MASK_DIR]
         )
         
-        """
-        svs_img = cv.imread(f"{p_conf[file_management.SVS_DIR]}/{svs_file}")
-        mask = predict_image(svs_img)
-        
-        if dataset.encode_label(mask, p_conf[file_management.MASK_DIR], f"{current_svs}.mask") != 0:
-            print("error encoding mask.")
-        else:
-            svs_manager.append_manifest_out(current_svs, svs_file, f"{current_svs}.mask")
-        """
+        if mask_file == None:
+            print("error predicting mask. Re-processing image.")
+            continue
+
+        svs_manager.append_manifest_out(current_svs, svs_file, f"{current_svs}.mask")
 
         print(f"Processing complete. Deleting svs with id {current_svs}")
+
+        svs_manager.delete_svs(current_svs)
 
         current_svs = svs_manager.get_new_svs()
 
 
 
-#predict_manifest()
-#predict_slide("data/example_WSI.svs", "s")
 ARGS_LEN = 1
 if __name__ == "__main__":
     #get config

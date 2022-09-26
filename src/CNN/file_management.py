@@ -1,4 +1,5 @@
 
+from genericpath import isfile
 import os
 #PATH = "data/meta/"
 
@@ -20,7 +21,12 @@ KEYS = [TMP_DIR, MANIFEST_IN, MANIFEST_OUT, MASK_DIR, SVS_DIR]
 MANIFEST_HEADERS = "id\tfilename\tmd5\tsize\tstate\n"
 
 def clear_dir(dir):
-    pass
+    for file in os.listdir(dir):
+        if os.isfile(file):
+            os.remove(f"{dir}/{file}")
+        else:
+            folder = file
+            clear_dir(f"{dir}/{folder}")
 
 def conf_init(conf):
         for key in conf:
@@ -29,6 +35,11 @@ def conf_init(conf):
         if not os.path.exists(conf[TMP_DIR]):
             print(f"tmp directory created: {TMP_DIR}.")
             os.mkdir(conf[TMP_DIR])
+
+        tmp_masks = f"{conf[TMP_DIR]}/masks"
+        if not os.path.exists(tmp_masks):
+            print(f"tmp  sub-directory created: {tmp_masks}.")
+            os.mkdir(tmp_masks)
 
         if not os.path.exists(conf[MASK_DIR]):
             print(f"tmp directory created: {MASK_DIR}.")
@@ -111,6 +122,10 @@ class svs_management:
     def append_manifest_out(self, id, file_name, mask_file_name):
         with open(self.conf[MANIFEST_OUT], "a") as man_out:
             man_out.write(f"{id}\t{file_name}\t{mask_file_name}\n")
+
+    def delete_svs(self, id):
+        f_name = self.find_file_from_id(id)
+        os.remove(f"{self.conf[SVS_DIR]}/{f_name}")
      
 
 
