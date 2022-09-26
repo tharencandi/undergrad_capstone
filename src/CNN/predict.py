@@ -121,44 +121,63 @@ def predict_image(img):
 def tile_slide(file,zoom, save_loc):
     return
 
-
+# to do: delete all temp shit when prediction complete
+#combine masks predictions to produce svs mask. 
+# error checking
 def predict_slide(svs_id, svs_file, tmp_dir, masks_dir):
-    ZOOM = 30
-    TILE_NAME_PREDICT = "tile_{}_{}.png"
+    ZOOM = 40
+    TILE_NAME_PREDICT = "tile_{}_{}_keep.png"
     TILE_NAME_IGNORE = "tile_{}_{}_delete.png"
     TILE_JSON = "meta.json"
     json_file_path = f"{tmp_dir}/{TILE_JSON}"
+
+    #init
     if os.path.exists(json_file_path):
         with open(json_file_path, "r") as json_fd:
             j_dict = json.load(json_fd)
         num_tiles = j_dict["num_tiles"]
         
+        #integrity check
         tile_ls = [file for file in os.listdir(tmp_dir) if ("tile" in file)]
         if (num_tiles[0] * num_tiles[1]) != len(tile_ls):
-            print("tiles not found, retiling.")
-            num_tiles = tile_slide(svs_file, ZOOM, tmp_dir)
+            print("json exists but tiles not found, retiling.")
+            #num_tiles = tile_slide(svs_file, ZOOM, tmp_dir)
+            num_tiles = dataset.create_grid(svs_file, tmp_dir, ZOOM)
     else:
-        num_tiles  = tile_slide(svs_file, ZOOM, tmp_dir)
+        print("tiling current svs.")
+        #num_tiles  = tile_slide(svs_file, ZOOM, tmp_dir)
+        num_tiles = dataset.create_grid(svs_file, tmp_dir, ZOOM)
         j_dict = {"svs_image": svs_id, "num_tiles": num_tiles, "current_tile": (0,0)}
        
-
     current_tile = j_dict["current_tile"]
+
+    #start at current tile. 
     for i in range(current_tile[0], num_tiles[0]):
         for j in range(current_tile[1], num_tiles[1]):
+
+            #update json.
             j_dict["current_tile"] = (i,j)
             with open(json_file_path, "w") as json_fd:
                 json.dump(j_dict, json_fd)
+            
+            print(f"\npredicting {current_tile}\n")
 
-            #scuffed solution
+            #if tile labelled "delete". mask is all bg.
             if os.path.exists(TILE_NAME_IGNORE.format(i,j)):
                 tile = cv.imread(TILE_NAME_IGNORE.format(i,j))
                 mask = np.zeros((tile.shape[0], tile.shape[1]))
             else:
-                tile = cv.imread(TILE_NAME_PREDICT.format(i,j))
+                name = TILE_NAME_PREDICT.format(i,j)
+                tile = cv.imread(f"{tmp_dir}/{name}")
                 mask = predict_image(tile)
-            #save mask
-            dataset.encode_label(mask, f"{masks_dir}/{i}_{j}.mask")
-    
+
+            #save mask of tile.
+            dataset.encode_label (
+                mask = mask, 
+                file_location = masks_dir, 
+                filename = f"{i}_{j}.mask"
+            )
+        file_management.clear_dir(tmp_dir)
     return 
     
 def predict_manifest():
@@ -172,16 +191,23 @@ def predict_manifest():
         print(f"processing svs with id {current_svs}.")
 
         svs_file = svs_manager.find_file_from_id(current_svs)
-        #mask_file = predict_slide(f"{p_conf[metadata.SVS_DIR]}/{svs_file}", p_conf[metadata.TMP_DIR])
         
+        mask_file = predict_slide(
+            current_svs,
+            f"{p_conf[file_management.SVS_DIR]}/{svs_file}", 
+            p_conf[file_management.TMP_DIR], 
+            p_conf[file_management.MASK_DIR]
+        )
         
+        """
         svs_img = cv.imread(f"{p_conf[file_management.SVS_DIR]}/{svs_file}")
         mask = predict_image(svs_img)
+        
         if dataset.encode_label(mask, p_conf[file_management.MASK_DIR], f"{current_svs}.mask") != 0:
             print("error encoding mask.")
         else:
             svs_manager.append_manifest_out(current_svs, svs_file, f"{current_svs}.mask")
-        
+        """
 
         print(f"Processing complete. Deleting svs with id {current_svs}")
 
@@ -216,7 +242,7 @@ if __name__ == "__main__":
         print(str(err))
         exit(os.EX_CONFIG)
 
-    svs_manager = file_management.metadata(p_conf)
+    svs_manager = file_management.svs_management(p_conf)
 
     try:
         file_management.check_manifest(p_conf[file_management.MANIFEST_IN])

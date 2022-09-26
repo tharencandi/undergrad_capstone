@@ -18,6 +18,10 @@ MASK_DIR = "MASK_DIR"
 SVS_DIR =  "SVS_DIR"
 KEYS = [TMP_DIR, MANIFEST_IN, MANIFEST_OUT, MASK_DIR, SVS_DIR]
 MANIFEST_HEADERS = "id\tfilename\tmd5\tsize\tstate\n"
+
+def clear_dir(dir):
+    pass
+
 def conf_init(conf):
         for key in conf:
             if key not in KEYS:
@@ -52,8 +56,8 @@ def check_manifest(manifest_file):
     lines = lines[1:]
     i = 1
     for line in lines:
-        if line.split("\t") != MANIFEST_HEADERS.split("\t"):
-            raise MANIFEST_FORMAT_EXCEPTION(f"incorrect format on line {i} - {line}.")
+        if len(line.split("\t")) != len(MANIFEST_HEADERS.split("\t")):
+            raise MANIFEST_FORMAT_EXCEPTION(f"incorrect format on line {i}: {line}.")
         i += 1
     
 class svs_management:
