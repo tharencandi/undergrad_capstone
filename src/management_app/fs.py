@@ -32,20 +32,3 @@ def uuid_object_exists(case, uuid, fname):
     if os.path.exists(path):
         return True
     return False
-
-
-
-
-def write_uuid_data(uuid, data, fname):
-    if not isinstance(case, str):
-        raise TypeError("Case must be a string")
-    if not (case == GBM or case ==LGG):
-        raise ValueError("Not a valid case",  case)
-    
-    uuid_dir = os.path.join(PATH_TO_DATA, CASE_DATA_DIR[case], uuid)
-    if not os.path.isdir(uuid_dir):
-        os.mkdir(uuid_dir)
-    
-    path = os.path.join(uuid_dir, fname)
-    with open(path, "w"):
-        path.write(data)
