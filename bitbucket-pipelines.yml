@@ -15,7 +15,7 @@ pipelines:
           script:
             - apt-get update
             - apt-get install -y python3-opencv
-            - apt-get install openslide-tools
+            - apt-get install -y openslide-tools
             - if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
             - pip install pytest
             - pytest -v --junitxml=test-reports/report.xml
