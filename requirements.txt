@@ -9,4 +9,4 @@ numpy==1.23.2
 scikit-image==0.19.3
 tensorflow==2.9.1
 imutils==0.5.4
-#sopenslide-python==1.2.0
+openslide-python==1.2.0
