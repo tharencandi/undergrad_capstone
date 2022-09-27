@@ -196,7 +196,7 @@ def get_tile_image_path_name(tile, directory):
   # tile_path = os.path.join(directory, t.image_name + "-" + TILE_SUFFIX + "-r%d-c%d-x%d-y%d-w%d-h%d" % (
   #                            t.r, t.c, t.o_c_s, t.o_r_s, t.o_c_e - t.o_c_s, t.o_r_e - t.o_r_s) + "." + DEST_TRAIN_EXT)
 
-  tile_path = os.path.join(directory, t.image_name + "-r%d-c%d" % (
+  tile_path = os.path.join(directory, "r%d-c%d" % (
                             t.r, t.c) + "." + DEST_TRAIN_EXT)
   return tile_path
 
