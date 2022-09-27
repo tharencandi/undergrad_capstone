@@ -8,7 +8,7 @@ const ActionPanel = () => {
 
   return (
     <div className="grid grid-cols-2 lg:flex justify-evenly gap-4 xl:gap-6">
-      <div className="relative overflow-hidden inline-block md:mr-6 xl:mr-12 ">
+      <div className="relative overflow-hidden inline-block md:mr-6 xl:mr-12 cursor-pointer">
         <Button variant="highlight">Upload SVS</Button>
         <input
           accept="image/*"
