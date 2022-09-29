@@ -1,5 +1,7 @@
 import logging
 
+logger = logging.getLogger(("download_error"))
+
 APPEND_FAIL_MSG = """
 Unable to append component to download error message while handling a download error.
 """
@@ -19,4 +21,4 @@ def append_err_comp(msg, comp):
         return msg + str(comp) + "\t"
 
     except (ValueError, TypeError):
-        logging.exception(APPEND_FAIL_MSG)
+        logger.exception(APPEND_FAIL_MSG)
