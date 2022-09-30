@@ -23,8 +23,8 @@ def file_checksum(fname, md5sum):
 
 
 def byte_obj_checksum(obj, md5sum):
-    h = MD5.new()
     try:
+        h = MD5.new()
         h.update(obj)
         return h.hexdigest() == md5sum
     except (TypeError, ValueError):

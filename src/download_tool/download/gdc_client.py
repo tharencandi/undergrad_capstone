@@ -1,13 +1,18 @@
 import requests
-import shutil
+import os
 import json
 import logging
-import functools
 import gzip
+import sys
+import signal
+from tqdm import tqdm
 from requests import HTTPError
+from download.DownloadError import DownloadIntegrityError
 from integrity import *
 
-TEMP_FILE_POSTFIX = ".tmp"
+PARTIAL_FILE_POSTFIX = ".part"
+
+# def sig_handler(sig, frame):
 
 class gdc_client:
     def __init__(self):
@@ -40,16 +45,9 @@ class gdc_client:
         except IOError:
             logging.exception("Unable to write response content to file.")
             raise DownloadError(reason="Unable to write response content to file.")
-
-    def mk_tmp_unzip(zipped_path):
-        with gzip.open(zipped_path, "rb") as f_in:
-            with open(zipped_path + TEMP_FILE_POSTFIX, "wb") as f_out:
-                shutil.copyfileobj(f_in, f_out)
-        
-        return zipped_path + TEMP_FILE_POSTFIX
         
 
-    def stream_download_file(self, uuid: str, md5sum: str,  out_path: str,  decode_content=False):
+    def stream_download_file(self, uuid: str, md5sum: str,  out_path: str,  chunk_size: int):
         param = json.dumps({"ids": uuid})
         headers={
             "Content-Type": "application/json",
@@ -57,37 +55,32 @@ class gdc_client:
         }
         logging.info("Beginning download for uuid: %s, filename %s", uuid, out_path)
         try:
-            with requests.post(
-                self.data_url, data=param, headers=headers, stream=True
-            ) as r:
-                print(r.headers)
-                input()
+            # send request to begin download
+            with requests.post(self.data_url, data=param, headers=headers, stream=True) as r:
                 r.raise_for_status()
-                if decode_content:
-                    response.raw.read = functools.partial(response.raw.read, decode_content=True)
-                with open(out_path, "wb") as out:
-                    shutil.copyfileobj(r.raw, out)
-                
-                is_valid = False
-                if  not decode_content:
-                    temp_f = self.gunzip(out_path)
-                    is_valid = file_checksum(temp_f, md5sum)
-                    os.remove(temp_f)
-                else:
-                    is_valid = file_checksum(fname, md5sum)
-                
-                if not is_valid:
-                    raise DownloadError(
-                        reason="Data written to file did not match checksum"
-                    )
-                logging.info("Download finished for uuid %s, filename %s", uuid, filename)
-        except HTTPError:
-            logging.exception("HTTP request failed")
-            raise DownloadError(reason="HTTPError")
+
+                #  stream data to temp file with .part postfix
+                with open(out_path + PARTIAL_FILE_POSTFIX, "wb") as out:
+                    pbar = tqdm(total=int(r.headers["content-length"]), unit="iB", unit_scale=True)
+                    for chunk in r.iter_content(chunk_size=chunk_size):
+                        pbar.update(len(chunk))
+                        out.write(chunk)
+                    pbar.close()
+            if not file_checksum(out_path + PARTIAL_FILE_POSTFIX, md5sum):
+                raise DownloadIntegrityError()
+
+            # data has been validated and downloaded, remove .part postfix 
+            os.rename(out_path + PARTIAL_FILE_POSTFIX, out_path)
+            logging.info("Download finished for uuid %s, filename %s", uuid, out_path)
+        except HTTPError as e:
+            status = e.response.status_code
+            msg = f"HTTPError  with code {status}"
+            logging.exception(msg)
+            raise DownloadError(msg)
         except IOError:
             logging.exception("Unable to write response content to file.")
-            raise DownloadError(reason="Unable to write response content to file.")
-                
+            raise DownloadError("Unable to write response content to file.")
+
 
             
          
