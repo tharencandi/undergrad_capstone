@@ -48,7 +48,6 @@ if __name__ == "__main__":
     # open the svs whole slide image
     img_name = "tp.svs"
     slide = open_slide(img_name)
-    
 
     # get dimensions of slide
     dims = slide.dimensions
@@ -56,7 +55,6 @@ if __name__ == "__main__":
     # read given region of the slide
     # result is a pillow object in mode RGBA
     region_slide = slide.read_region((0,0), 0, dims)
-
 
     # convert region image to RGB
     # note: if DEBUG is set to true loaded image will be shown
@@ -67,7 +65,6 @@ if __name__ == "__main__":
     # note: if DEBUG is set to true loaded image will be shown
     region_np = np.array(region_slide_RGB)
     if DEBUG: plt.imshow(region_np)
-
 
     # convert and save the image
     convert_image(region_np, img_name)
