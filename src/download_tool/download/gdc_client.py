@@ -12,7 +12,7 @@ from integrity import *
 
 PARTIAL_FILE_POSTFIX = ".part"
 
-logger = logging.getLogger("download_error")
+logger = logging.getLogger("download_tool")
 
 class gdc_client:
     def __init__(self):

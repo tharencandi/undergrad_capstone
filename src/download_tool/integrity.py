@@ -3,8 +3,7 @@ from Crypto.Hash import MD5
 
 CHUNK_SIZE = 1024
 
-logger = logging.getLogger(("download_error"))
-
+logger = logging.getLogger("download_tool")
 def file_checksum(fname, md5sum):
     h = MD5.new()
     try:

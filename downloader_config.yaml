@@ -1,6 +1,7 @@
 ---
-OUTPUT_DIR: "/home/haeata/glioblastoma_processing/data"
+OUTPUT_DIR: "/home/haeata/glib_mount/Cell/Test"
 PROGRESS_LOG: "/home/haeata/glioblastoma_processing/progress.log"
+FAILURE_LOG: "/home/haeata/glioblastoma_processing/failure.log"
 # Increasing chunk size will speed things up but will increase ram usage
 CHUNK_SIZE: 16384
 # Concurrent downloads does nothing currently - not implemented

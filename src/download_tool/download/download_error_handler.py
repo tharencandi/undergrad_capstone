@@ -1,6 +1,6 @@
 import logging
 
-logger = logging.getLogger(("download_error"))
+logger = logging.getLogger("download_tool")
 
 APPEND_FAIL_MSG = """
 Unable to append component to download error message while handling a download error.

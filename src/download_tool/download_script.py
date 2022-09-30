@@ -9,7 +9,7 @@ from download.download_error_handler import download_error_handler
 from cml.cml_validator import *
 from config import *
 
-logger = logging.getLogger("download_error")
+logger = logging.getLogger("download_tool")
 
 # create console handler with a higher log level
 efh = logging.FileHandler('download_error.log')
@@ -81,61 +81,66 @@ if __name__ == "__main__":
     # output directory for downloaded files
     setup_output_dir(conf[OUTPUT_DIR])
     setup_progress_log(conf[PROGRESS_LOG])
+
     gdc = gdc_client()
 
+    finished = False
+    while not finished:
     # skip to line in manifest we are up to
-    last_id = ""
-    with open(conf[PROGRESS_LOG], "r") as f:
-        lns = f.readlines()
-        if len(lns) > 0:
-            last_id = lns[-1].split(",")[0]
-    
+
+        last_id = ""
+        with open(conf[PROGRESS_LOG], "r") as f:
+            lns = f.readlines()
+            if len(lns) > 0:
+                last_id = lns[-1].split(",")[0]
+        
 
 
-    try:
-        with open(sys.argv[I_CML_MANIFEST_FILE], "r") as f:
-            if last_id:
-                found = False
-                while not found:
-                    ln = f.readline()
-                    if ln.split(DELIM)[0] == last_id:
-                        found = True
+        try:
+            with open(sys.argv[I_CML_MANIFEST_FILE], "r") as f:
+                if last_id:
+                    found = False
+                    while not found:
+                        ln = f.readline()
+                        if ln.split(DELIM)[0] == last_id:
+                            found = True
 
-            with open(conf[PROGRESS_LOG], "a") as p:
-                for ln in f:
-                    ln = f.readline().strip()
-                    logger.info("Manifest line read: %s", ln)
-                    sln = ln.split(DELIM)
-                    if len(ln) < 3:
-                        logger.warning(
-                            "Unexpected data format: Split line has length: %s, expected length of 4. Line was: %s",
-                            len(sln),
-                            ln,
-                        )
-                        continue
+                with open(conf[PROGRESS_LOG], "a") as p:
+                    for ln in f:
+                        ln = ln.strip()
+                        logger.info("Manifest line read: %s", ln)
+                        sln = ln.split(DELIM)
+                        if len(ln) < 3:
+                            logger.warning(
+                                "Unexpected data format: Split line has length: %s, expected length of 4. Line was: %s",
+                                len(sln),
+                                ln,
+                            )
+                            continue
 
-                    try:
-                        # output dir
-                        out_path = conf[OUTPUT_DIR]
+                        try:
+                            # output dir
+                            out_path = conf[OUTPUT_DIR]
 
-                        # object dir
-                        out_path = os.path.join(out_path, sln[I_ID])
-                        if not os.path.exists(out_path) and os.path.isdir(out_path):
-                            os.mkdir(out_path)
+                            # object dir
+                            out_path = os.path.join(out_path, sln[I_ID])
+                            if not os.path.exists(out_path) and not os.path.isdir(out_path):
+                                print(out_path)
+                                os.mkdir(out_path)
 
-                        out_path =  os.path.join(out_path, sln[I_FILENAME])
-                        # download data as a stream to limit RAM usage
-                        gdc.stream_download_file(sln[I_ID], sln[I_MD5_SUM], out_path, conf[CHUNK_SIZE])
-                        
-                        # write the file details to the progress log
-                        p.write(sln[I_ID]  + "," + out_path + "\n")
+                            out_path =  os.path.join(out_path, sln[I_FILENAME])
+                            # download data as a stream to limit RAM usage
+                            gdc.stream_download_file(sln[I_ID], sln[I_MD5_SUM], out_path, conf[CHUNK_SIZE])
+                            
+                            # write the file details to the progress log
+                            p.write(sln[I_ID]  + "," + out_path + "\n")
+            
 
-                    except DownloadError as e:
-                        logger.warning("Download failed with reason: %s", repr(e))
-                        # log the origin line from the manifest and the reason to failure log
-                        download_error_handler(conf[FAILURE_LOG], ln, repr(e))
-    except IOError as e:
-        logging.critical(f"Can't open critical file. {repr(e)}")
-        print(f"Can't open critical file. {repr(e)}", file=sys.stderr)
-        exit(os.EX_IOERR)
+                        except DownloadError as e:
+                            logger.exception(repr(e))
+                            download_error_handler(conf[FAILURE_LOG], ln)
+        except IOError as e:
+            logging.critical(f"Can't open critical file. {repr(e)}")
+            print(f"Can't open critical file. {repr(e)}", file=sys.stderr)
+            exit(os.EX_IOERR)
 
