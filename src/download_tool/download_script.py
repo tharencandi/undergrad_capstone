@@ -1,5 +1,6 @@
 import logging
 import re
+import time
 import sys
 import os
 from Crypto.Hash import MD5
@@ -87,7 +88,6 @@ if __name__ == "__main__":
     finished = False
     while not finished:
     # skip to line in manifest we are up to
-
         last_id = ""
         with open(conf[PROGRESS_LOG], "r") as f:
             lns = f.readlines()
@@ -139,8 +139,15 @@ if __name__ == "__main__":
                         except DownloadError as e:
                             logger.exception(repr(e))
                             download_error_handler(conf[FAILURE_LOG], ln)
+                    
+                    finished = True
         except IOError as e:
             logging.critical(f"Can't open critical file. {repr(e)}")
             print(f"Can't open critical file. {repr(e)}", file=sys.stderr)
             exit(os.EX_IOERR)
+        
+        except Exception as e:
+            logging.exception(repr(e))
+            time.sleep(120)
+            continue
 

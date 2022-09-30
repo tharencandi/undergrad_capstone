@@ -1,5 +1,5 @@
 ---
-OUTPUT_DIR: "/home/haeata/glib_mount/Cell/Test"
+OUTPUT_DIR: "/home/haeata/glioblastoma_processing/data"
 PROGRESS_LOG: "/home/haeata/glioblastoma_processing/progress.log"
 FAILURE_LOG: "/home/haeata/glioblastoma_processing/failure.log"
 # Increasing chunk size will speed things up but will increase ram usage
