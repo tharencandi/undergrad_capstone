@@ -29,6 +29,7 @@ import skimage.future as sk_future
 import skimage.morphology as sk_morphology
 import skimage.segmentation as sk_segmentation
 
+
 import slide
 import util
 from util import Time
@@ -1073,6 +1074,58 @@ def apply_image_filters(np_img, slide_num=None, info=None, save=False, display=F
   return img
 
 
+def apply_image_filters_name(np_img, image_name, info=None, save=False, display=False):
+  """
+  Apply filters to image as NumPy array and optionally save and/or display filtered images.
+
+  Args:
+    np_img: Image as NumPy array.
+    slide_num: The slide number (used for saving/displaying).
+    info: Dictionary of slide information (used for HTML display).
+    save: If True, save image.
+    display: If True, display image.
+
+  Returns:
+    Resulting filtered image as a NumPy array.
+  """
+  rgb = np_img
+  save_display_name(save, display, info, rgb, image_name, 1, "Original", "rgb")
+
+  mask_not_green = filter_green_channel(rgb)
+  rgb_not_green = util.mask_rgb(rgb, mask_not_green)
+  save_display_name(save, display, info, rgb_not_green, image_name, 2, "Not Green", "rgb-not-green")
+
+  mask_not_gray = filter_grays(rgb)
+  rgb_not_gray = util.mask_rgb(rgb, mask_not_gray)
+  save_display_name(save, display, info, rgb_not_gray, image_name, 3, "Not Gray", "rgb-not-gray")
+
+  mask_no_red_pen = filter_red_pen(rgb)
+  rgb_no_red_pen = util.mask_rgb(rgb, mask_no_red_pen)
+  save_display_name(save, display, info, rgb_no_red_pen, image_name, 4, "No Red Pen", "rgb-no-red-pen")
+
+  mask_no_green_pen = filter_green_pen(rgb)
+  rgb_no_green_pen = util.mask_rgb(rgb, mask_no_green_pen)
+  save_display_name(save, display, info, rgb_no_green_pen, image_name, 5, "No Green Pen", "rgb-no-green-pen")
+
+  mask_no_blue_pen = filter_blue_pen(rgb)
+  rgb_no_blue_pen = util.mask_rgb(rgb, mask_no_blue_pen)
+  save_display_name(save, display, info, rgb_no_blue_pen, image_name, 6, "No Blue Pen", "rgb-no-blue-pen")
+
+  mask_gray_green_pens = mask_not_gray & mask_not_green & mask_no_red_pen & mask_no_green_pen & mask_no_blue_pen
+  rgb_gray_green_pens = util.mask_rgb(rgb, mask_gray_green_pens)
+  save_display_name(save, display, info, rgb_gray_green_pens, image_name, 7, "Not Gray, Not Green, No Pens",
+               "rgb-no-gray-no-green-no-pens")
+
+  mask_remove_small = filter_remove_small_objects(mask_gray_green_pens, min_size=500, output_type="bool")
+  rgb_remove_small = util.mask_rgb(rgb, mask_remove_small)
+  save_display_name(save, display, info, rgb_remove_small, image_name, 8,
+               "Not Gray, Not Green, No Pens,\nRemove Small Objects",
+               "rgb-not-green-not-gray-no-pens-remove-small")
+
+  img = rgb_remove_small
+  return img
+
+
 def apply_filters_to_image(slide_num, save=True, display=False):
   """
   Apply a set of filters to an image and optionally save and/or display filtered images.
@@ -1114,6 +1167,49 @@ def apply_filters_to_image(slide_num, save=True, display=False):
   return filtered_np_img, info
 
 
+
+def apply_filters_to_image_name(image_name, save=True, display=False):
+  """
+  Apply a set of filters to an image and optionally save and/or display filtered images.
+
+  Args:
+    slide_num: The slide number.
+    save: If True, save filtered images.
+    display: If True, display filtered images to screen.
+
+  Returns:
+    Tuple consisting of 1) the resulting filtered image as a NumPy array, and 2) dictionary of image information
+    (used for HTML page generation).
+  """
+  t = Time()
+  print("Processing slide #%s" % image_name)
+
+  info = dict()
+
+  if save and not os.path.exists(slide.FILTER_DIR):
+    os.makedirs(slide.FILTER_DIR)
+  img_path = slide.get_training_image_path_name(image_name)
+  np_orig = slide.open_image_np(img_path)
+  filtered_np_img = apply_image_filters_name(np_orig, image_name, info, save=save, display=display)
+
+  if save:
+    t1 = Time()
+    result_path = slide.get_filter_image_result_name(image_name)
+    pil_img = util.np_to_pil(filtered_np_img)
+    pil_img.save(result_path)
+    print("%-20s | Time: %-14s  Name: %s" % ("Save Image", str(t1.elapsed()), result_path))
+
+    t1 = Time()
+    # thumbnail_path = slide.get_filter_thumbnail_result(slide_num)
+    # slide.save_thumbnail(pil_img, slide.THUMBNAIL_SIZE, thumbnail_path)
+    # print("%-20s | Time: %-14s  Name: %s" % ("Save Thumbnail", str(t1.elapsed()), thumbnail_path))
+
+  print("Slide #%s processing time: %s\n" % (image_name, str(t.elapsed())))
+
+  return filtered_np_img, info
+
+
+
 def save_display(save, display, info, np_img, slide_num, filter_num, display_text, file_text,
                  display_mask_percentage=True):
   """
@@ -1148,6 +1244,42 @@ def save_display(save, display, info, np_img, slide_num, filter_num, display_tex
     save_filtered_image(np_img, slide_num, filter_num, file_text)
   if info is not None:
     info[slide_num * 1000 + filter_num] = (slide_num, filter_num, display_text, file_text, mask_percentage)
+
+
+def save_display_name(save, display, info, np_img, image_name, filter_num, display_text, file_text,
+                 display_mask_percentage=True):
+  """
+  Optionally save an image and/or display the image.
+
+  Args:
+    save: If True, save filtered images.
+    display: If True, display filtered images to screen.
+    info: Dictionary to store filter information.
+    np_img: Image as a NumPy array.
+    slide_num: The slide number.
+    filter_num: The filter number.
+    display_text: Filter display name.
+    file_text: Filter name for file.
+    display_mask_percentage: If True, display mask percentage on displayed slide.
+  """
+  # mask_percentage = None
+  # if display_mask_percentage:
+  #   mask_percentage = mask_percent(np_img)
+  #   display_text = display_text + "\n(" + mask_percentage_text(mask_percentage) + " masked)"
+  # if image_name is None and filter_num is None:
+  #   pass
+  # elif filter_num is None:
+  #   display_text = "S%03d " % slide_num + display_text
+  # elif slide_num is None:
+  #   display_text = "F%03d " % filter_num + display_text
+  # else:
+  #   display_text = "S%03d-F%03d " % (slide_num, filter_num) + display_text
+  # if display:
+  #   util.display_img(np_img, display_text)
+  if save:
+    save_filtered_image_name(np_img, image_name, filter_num, file_text)
+  # if info is not None:
+  #   info[slide_num * 1000 + filter_num] = (slide_num, filter_num, display_text, file_text, mask_percentage)
 
 
 def mask_percentage_text(mask_percentage):
@@ -1239,6 +1371,28 @@ def save_filtered_image(np_img, slide_num, filter_num, filter_text):
   thumbnail_filepath = slide.get_filter_thumbnail_path(slide_num, filter_num, filter_text)
   slide.save_thumbnail(pil_img, slide.THUMBNAIL_SIZE, thumbnail_filepath)
   print("%-20s | Time: %-14s  Name: %s" % ("Save Thumbnail", str(t1.elapsed()), thumbnail_filepath))
+
+
+def save_filtered_image_name(np_img, image_name, filter_num, filter_text):
+  """
+  Save a filtered image to the file system.
+
+  Args:
+    np_img: Image as a NumPy array.
+    slide_num:  The slide number.
+    filter_num: The filter number.
+    filter_text: Descriptive text to add to the image filename.
+  """
+  t = Time()
+  filepath = slide.get_filter_image_path_name(image_name, filter_num, filter_text)
+  pil_img = util.np_to_pil(np_img)
+  pil_img.save(filepath)
+  print("%-20s | Time: %-14s  Name: %s" % ("Save Image", str(t.elapsed()), filepath))
+
+  # t1 = Time()
+  # thumbnail_filepath = slide.get_filter_thumbnail_path(slide_num, filter_num, filter_text)
+  # slide.save_thumbnail(pil_img, slide.THUMBNAIL_SIZE, thumbnail_filepath)
+  # print("%-20s | Time: %-14s  Name: %s" % ("Save Thumbnail", str(t1.elapsed()), thumbnail_filepath))
 
 
 def generate_filter_html_result(html_page_info):
@@ -1341,6 +1495,8 @@ def apply_filters_to_image_list(image_num_list, save, display):
   return image_num_list, html_page_info
 
 
+
+
 def apply_filters_to_image_range(start_ind, end_ind, save, display):
   """
   Apply filters to a range of images.
@@ -1360,6 +1516,9 @@ def apply_filters_to_image_range(start_ind, end_ind, save, display):
     _, info = apply_filters_to_image(slide_num, save=save, display=display)
     html_page_info.update(info)
   return start_ind, end_ind, html_page_info
+
+
+
 
 
 def singleprocess_apply_filters_to_images(save=True, display=False, html=True, image_num_list=None):
@@ -1385,6 +1544,9 @@ def singleprocess_apply_filters_to_images(save=True, display=False, html=True, i
 
   if html:
     generate_filter_html_result(info)
+
+
+
 
 
 def multiprocess_apply_filters_to_images(save=True, display=False, html=True, image_num_list=None):

@@ -3,51 +3,31 @@ import tiles
 import filter
 
 
-#Please note the below formatting and input assumptions
-
-# .svs images must be placed in /data/training_slides 
-# .svs images must follow naming convention e.g. CELLCIRC-001.svs
-# To change this, update PREFIX macro in slide.py
-# output of .png tiles are located in data/tiles_png/"imageNumber"/
-# if tissue proportion of slide threshold above x, _keep added to filename, else _delete
-
-
-def multiple_images_to_folders_of_labelled_png(image_numbers = [1], cell_threshold = 0, save=False):
+def single_image_to_folder_of_tiles(image_name = "", cell_threshold = 0, save=False, save_dir = ""):
 
   ''' 
-  Takes list of svs image numbers, produces corresponding folders containing tiles of H/SCALE_FACTOR * W/SCALE_FACTOR
+  Takes svs file, produces folder of rgb png tiles of H/1024 * W/1024 within specified destination folder
   Tiles are appended with _keep or _delete based on specified tissue coverage threshold
 
-  Inputs: list of image numbers corresponding to svs naming convention 
-  e.g. [1,2] == [CELLCIRC-001.svs,CELLCIRC-002.svs] 
+  Inputs: filename of svs, folder name for output
 
-  Outputs: tile_number, number of row and columns of tiles (TUPLE)
+  Outputs: filename, number of row and columns of tile (TUPLE)
 
-  E.g. [1,(10,10) ]
-  to change SCALE_FACTOR: update this macro in slide.py
-
+  E.g. ["cells.svs",(10,10) ]
   '''
 
   #Choose image number to turn into a scaled down PNG
-  for image_number in image_numbers:
-    training_slide_to_image(image_number)
+  training_slide_name_to_image(image_name)
 
-  #converts all svs in training folder to png
-  multiprocess_training_slides_to_images()
-
-  #applies filters to scaled down image in order to more accurately determine tissue coverage of slides.
-  filter.multiprocess_apply_filters_to_images(image_num_list = image_numbers)
+  #applies filters to scaled down image in order to determine tissue coverage of slides.
+  filter.apply_filters_to_image_name(image_name)
 
   # produces and classifies tiles based on tissue coverage
-  slide_dict_results = tiles.multiprocess_filtered_images_to_tiles_threshold(image_num_list = image_numbers,threshold = cell_threshold, save=save)
+  # produces visual summary of keep/delete in tile_summary folders for manual inspeciton
+  tile_summary = tiles.save_above_threshold_name(image_name, display=False, save_summary=True, save_data=False, 
+  save_top_tiles=False, threshold=cell_threshold, save=save, directory = save_dir)
 
-  #summary is a dict
-  result_list = list()
- 
-  for slide_number,slide_summary in slide_dict_results.items():
-    result_list.append([slide_number,(slide_summary.num_row_tiles,slide_summary.num_col_tiles)] )
-  
-  return result_list
+  return [tile_summary.image_name, (tile_summary.num_row_tiles, tile_summary.num_col_tiles) ]
 
 
 
