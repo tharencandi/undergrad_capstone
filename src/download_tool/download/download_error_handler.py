@@ -13,7 +13,7 @@ def download_error_handler(fpath, *args):
         err_str = append_err_comp(err_str, arg)
 
     with open(fpath, "a") as f:
-        f.write(err_str)
+        f.write(err_str + "\n")
 
 
 def append_err_comp(msg, comp):
