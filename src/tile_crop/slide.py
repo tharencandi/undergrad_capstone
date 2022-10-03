@@ -156,7 +156,7 @@ def get_training_slide_path_name(image_name):
   Returns:
     Path to the WSI training slide file.
   """
-  slide_filepath = os.path.join(SRC_TRAIN_DIR, image_name.rstrip(".svs") + "." + SRC_TRAIN_EXT)
+  slide_filepath = os.path.join(".",image_name.rstrip(".svs") + "." + SRC_TRAIN_EXT)
   return slide_filepath
 
 
@@ -289,10 +289,10 @@ def get_training_image_path_name(image_name, large_w=None, large_h=None, small_w
   """
   
   if large_w is None and large_h is None and small_w is None and small_h is None:
-    wildcard_path = os.path.join(DEST_TRAIN_DIR, image_name.rstrip(".svs") + "*." + DEST_TRAIN_EXT)
+    wildcard_path = os.path.join(".", image_name.rstrip(".svs") + "*." + DEST_TRAIN_EXT)
     img_path = glob.glob(wildcard_path)[0]
   else:
-    img_path = os.path.join(DEST_TRAIN_DIR, image_name.rstrip(".svs") + "-" + str(
+    img_path = os.path.join(".", image_name.rstrip(".svs") + "-" + str(
       SCALE_FACTOR) + "x-" + DEST_TRAIN_SUFFIX + str(
       large_w) + "x" + str(large_h) + "-" + str(small_w) + "x" + str(small_h) + "." + DEST_TRAIN_EXT)
   return img_path
@@ -442,7 +442,7 @@ def get_filter_image_filename_name(image_name, filter_number, filter_name_info, 
   else:
     ext = DEST_TRAIN_EXT
   padded_fi_num = str(filter_number).zfill(3)
-  img_filename = image_name + "-" + padded_fi_num + "-" + FILTER_SUFFIX + filter_name_info + "." + ext
+  img_filename = image_name.split("/")[-1] + "-" + padded_fi_num + "-" + FILTER_SUFFIX + filter_name_info + "." + ext
   return img_filename
 
 
@@ -650,7 +650,7 @@ def get_tile_summary_image_filename_name(image_name, thumbnail=False):
 
   training_img_path = get_training_image_path_name(image_name)
   large_w, large_h, small_w, small_h = parse_dimensions_from_image_filename(training_img_path)
-  img_filename = image_name + "-" + str(SCALE_FACTOR) + "x-" + str(large_w) + "x" + str(
+  img_filename = image_name.split("/")[-1] + "-" + str(SCALE_FACTOR) + "x-" + str(large_w) + "x" + str(
     large_h) + "-" + str(small_w) + "x" + str(small_h) + "-" + TILE_SUMMARY_SUFFIX + "." + ext
 
   return img_filename
@@ -803,7 +803,7 @@ def get_filter_image_result_name(image_name):
 
   training_img_path = get_training_image_path_name(image_name)
   large_w, large_h, small_w, small_h = parse_dimensions_from_image_filename(training_img_path)
-  img_path = os.path.join(FILTER_DIR, image_name + "-" + str(
+  img_path = os.path.join(FILTER_DIR, image_name.split("/")[-1] + "-" + str(
     SCALE_FACTOR) + "x-" + FILTER_SUFFIX + str(large_w) + "x" + str(large_h) + "-" + str(small_w) + "x" + str(
     small_h) + "-" + FILTER_RESULT_TEXT + "." + DEST_TRAIN_EXT)
   return img_path
@@ -943,7 +943,7 @@ def slide_name_to_scaled_pil_image(slide_name):
   Returns:
     Tuple consisting of scaled-down PIL image, original width, original height, new width, and new height.
   """
-  dir = os.path.join(SRC_TRAIN_DIR,slide_name)
+  dir = os.path.join(".",slide_name)
   print("Opening Slide : %s" % (slide_name))
   slide = open_slide(dir)
 
