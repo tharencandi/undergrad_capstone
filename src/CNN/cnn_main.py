@@ -50,5 +50,10 @@ def main():
 
 
 
+<<<<<<< HEAD
 if __name__ == "__main__":
     main()
+=======
+#if __name__ == "__main__":
+ #   main()
+>>>>>>> 236bd7967dca3517b4225524750f078c6c20f053

@@ -60,6 +60,10 @@ train_dataset = train_dataset.shuffle(SHUFFLE_BUFFER_SIZE).batch(BATCH_SIZE)
 
 test_dataset = tf.data.Dataset.from_tensor_slices((v_imgs, v_masks))
 test_dataset = test_dataset.shuffle(SHUFFLE_BUFFER_SIZE).batch(BATCH_SIZE)
+<<<<<<< HEAD
+=======
+
+>>>>>>> 236bd7967dca3517b4225524750f078c6c20f053
 print("contructing and compiling model...")
 
 model = cnn_model.DRAN()

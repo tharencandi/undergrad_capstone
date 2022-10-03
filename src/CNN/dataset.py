@@ -7,7 +7,7 @@ import numpy as np
 import tensorflow as tf
 import random
 from skimage.util.shape import view_as_windows 
-
+import openslide as osl
 
 
 TRAIN_LOCATION = "data/training/"
@@ -70,9 +70,9 @@ def encode_label(mask, file_location, filename):
         for j in range(mask.shape[1]):
             out += str(int(mask[i,j])) + "\n"
     
-    file = open(f, "w")
-    file.write(out)
-    file.close()
+    with open(f, "w") as file:
+        file.write(out)
+   
     return 0
 
 """
@@ -235,21 +235,25 @@ def gen_NBD_and_SN(data, location_NBD, location_SN):
 
 """
     preserves image aspect ratio
-
+"""
 def create_grid(svs_file,location, zoom):
     slide = osl.OpenSlide(svs_file)
     size = (int(slide.properties["aperio.OriginalHeight"]), int(slide.properties["aperio.OriginalWidth"]))
     region_size = (size[0]//zoom, size[1]//zoom)
-
+    r = 0
+    c = 0
     for i in range(zoom):
+        c = 0
         for j in range(zoom):
 
             img = slide.read_region((i*region_size[1], j*region_size[0] ), 0, region_size )
             cv_image = np.array(img) 
-            cv.imwrite(f"{location}/{i}_ {j}.jpg", cv_image)
+            cv.imwrite(f"{location}/tile_{i}_{j}_keep.png", cv_image)
+            c+= 1
+        r += 1 
 
     slide.close()
-"""
+    return (r,c)
 
 
 

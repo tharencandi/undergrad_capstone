@@ -8,4 +8,5 @@ opencv-python==4.6.0.66
 numpy==1.23.2
 scikit-image==0.19.3
 tensorflow==2.9.1
-#sopenslide-python==1.2.0
+imutils==0.5.4
+openslide-python==1.2.0

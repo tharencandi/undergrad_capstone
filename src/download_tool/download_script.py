@@ -7,7 +7,7 @@ from download.gdc_client import gdc_client
 from download.DownloadError import DownloadError
 from download.download_error_handler import download_error_handler
 from cml.cml_validator import *
-from config import *
+from src.download_tool.config import *
 
 logging.basicConfig(level=logging.DEBUG)
 
