@@ -4,11 +4,14 @@ import sys
 import cv2 as cv
 import numpy as np
 import tensorflow as tf
-import cnn_model, file_management, dataset
+import cnn_model as cnn_model
+import file_management as file_management
+import dataset as dataset
 import math
 import json
 from yaml import safe_load
-
+#import src.tile_crop.tile_crop_main
+from tile_crop.tile_crop_main import single_image_to_folder_of_tiles as tile_image
 
 IMG_SIZE = (102, 102)
 MODEL = 'data/models/model_76'
@@ -159,6 +162,9 @@ def predict_slide(svs_id, svs_file, tmp_dir, masks_dir):
     TILE_JSON = "meta.json"
     json_file_path = f"{tmp_dir}/{TILE_JSON}"
 
+    svs_file_name = svs_file[len(p_conf[file_management.SVS_DIR])+1:]
+    
+
     #init
     if os.path.exists(json_file_path):
         with open(json_file_path, "r") as json_fd:
@@ -170,11 +176,12 @@ def predict_slide(svs_id, svs_file, tmp_dir, masks_dir):
         if (num_tiles[0] * num_tiles[1]) != len(tile_ls):
             print("json exists but tiles not found, retiling.")
             #num_tiles = tile_slide(svs_file, ZOOM, tmp_dir)
-            num_tiles = dataset.create_grid(svs_file, tmp_dir, ZOOM)
+            num_tiles =  tile_image(image_name = svs_file_name, img_path=p_conf[file_management.SVS_DIR], save_dir=tmp_dir)[1]
+            #num_tiles = dataset.create_grid(svs_file, tmp_dir, ZOOM)
     else:
         print("tiling current svs.")
         #num_tiles  = tile_slide(svs_file, ZOOM, tmp_dir)
-        num_tiles = dataset.create_grid(svs_file, tmp_dir, ZOOM)
+        num_tiles =  tile_image(image_name = svs_file_name, img_path=p_conf[file_management.SVS_DIR], save_dir=tmp_dir)[1]
         j_dict = {"svs_image": svs_id, "num_tiles": num_tiles, "current_tile": (0,0)}
        
     current_tile = j_dict["current_tile"]
