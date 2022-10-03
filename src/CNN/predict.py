@@ -1,3 +1,4 @@
+from genericpath import isfile
 import os
 import subprocess as sb
 import sys
@@ -81,9 +82,9 @@ def create_windows(img):
             x = (i * 54) + 24
             y = (j * 54) + 24
             window = img[x-24:x+78, y-24:y+78]
-
+            windows.append(window)
             #img_center = og_img[x-24:(x-24) + 54, y-24:(y-24) + 54]    
-            windows.append(np.array([window]))
+            #windows.append(np.array([window]))
         
     return np.float32(windows), tile_dim
 
@@ -103,13 +104,13 @@ def predict_image(img):
     
     img_mask = np.zeros((img.shape[0], img.shape[1]))
     imgs, tiles = create_windows(img)
-
+    masks = model.predict(imgs)
     i = 0
     for x in range(tiles[0]):
         for y in range(tiles[1]):
             
-            mask = model.predict(imgs[i])
-            mask = get_mask_img(mask[0])
+            #mask = model.predict(imgs[i])
+            mask = get_mask_img(masks[i])
             x_off = 54
             y_off = 54
 
@@ -157,8 +158,8 @@ def predict_slide(svs_id, svs_file, tmp_dir, masks_dir):
     
     """
     ZOOM = 40
-    TILE_NAME_PREDICT = "tile_{}_{}_keep.png"
-    TILE_NAME_IGNORE = "tile_{}_{}_delete.png"
+    TILE_NAME_PREDICT = "r{}-c{}_keep.png"
+    TILE_NAME_IGNORE = "r{}-c{}_delete.png"
     TILE_JSON = "meta.json"
     json_file_path = f"{tmp_dir}/{TILE_JSON}"
 
@@ -172,34 +173,37 @@ def predict_slide(svs_id, svs_file, tmp_dir, masks_dir):
         num_tiles = j_dict["num_tiles"]
         
         #integrity check
-        tile_ls = [file for file in os.listdir(tmp_dir) if ("tile" in file)]
-        if (num_tiles[0] * num_tiles[1]) != len(tile_ls):
+        tile_ls = [file for file in os.listdir(tmp_dir) if (".png" in file)]
+        if (num_tiles[0] * num_tiles[1]) != len(tile_ls) or j_dict["svs_image"] != svs_id:
             print("json exists but tiles not found, retiling.")
             #num_tiles = tile_slide(svs_file, ZOOM, tmp_dir)
-            num_tiles =  tile_image(image_name = svs_file_name, img_path=p_conf[file_management.SVS_DIR], save_dir=tmp_dir)[1]
+            num_tiles =  tile_image(image_path = svs_file, save_dir=tmp_dir)[1]
+            j_dict = {"svs_image": svs_id, "num_tiles": num_tiles, "current_tile": (1,1)}
             #num_tiles = dataset.create_grid(svs_file, tmp_dir, ZOOM)
+         
     else:
         print("tiling current svs.")
         #num_tiles  = tile_slide(svs_file, ZOOM, tmp_dir)
-        num_tiles =  tile_image(image_name = svs_file_name, img_path=p_conf[file_management.SVS_DIR], save_dir=tmp_dir)[1]
-        j_dict = {"svs_image": svs_id, "num_tiles": num_tiles, "current_tile": (0,0)}
+        num_tiles =  tile_image(image_path = svs_file, save_dir=tmp_dir)[1]
+        j_dict = {"svs_image": svs_id, "num_tiles": num_tiles, "current_tile": (1,1)}
        
     current_tile = j_dict["current_tile"]
 
     #start at current tile. 
-    for i in range(current_tile[0], num_tiles[0]):
-        for j in range(current_tile[1], num_tiles[1]):
+    for i in range(current_tile[0], num_tiles[0]+1):
+        for j in range(current_tile[1], num_tiles[1]+1):
 
             #update json.
             j_dict["current_tile"] = (i,j)
+            
             with open(json_file_path, "w") as json_fd:
                 json.dump(j_dict, json_fd)
             
-            print(f"\npredicting {current_tile}\n")
+            print(f"\npredicting {(i,j)}\n")
 
             #if tile labelled "delete". mask is all bg.
-            if os.path.exists(TILE_NAME_IGNORE.format(i,j)):
-                tile = cv.imread(TILE_NAME_IGNORE.format(i,j))
+            if os.path.isfile(tmp_dir + "/" + TILE_NAME_IGNORE.format(i,j)):
+                tile = cv.imread(tmp_dir + "/" + TILE_NAME_IGNORE.format(i,j))
                 mask = np.zeros((tile.shape[0], tile.shape[1]))
             else:
                 name = TILE_NAME_PREDICT.format(i,j)
@@ -209,7 +213,7 @@ def predict_slide(svs_id, svs_file, tmp_dir, masks_dir):
             #save mask of tile.
             dataset.encode_label (
                 mask = mask, 
-                file_location = "f{tmp_dir}/masks", 
+                file_location = f"{tmp_dir}/masks", 
                 filename = TILE_MASK_NAME_F.format(i,j)
             )
 
