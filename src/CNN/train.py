@@ -1,14 +1,14 @@
 import tensorflow as tf
 from tensorflow import keras
 from keras import layers
-import tensorflow_datasets as tfds
-import matplotlib.pyplot as plt
+#import tensorflow_datasets as tfds
+#import matplotlib.pyplot as plt
 import numpy as np
 import cv2 as cv
 import cnn_model
-import pydot
+#import pydot
 import os
-from CNN.augmentation import augment
+from augmentation import augment
 
 NUM = 1609
 IMG_SIZE = (102, 102)
@@ -19,7 +19,7 @@ SHUFFLE_BUFFER_SIZE = 1000
 MODEL_SAVE_LOCATION = "data/models/"
 MODEL_FILE_NAME = "test_model.model"
 TRAIN_LOCATION = "data/NBL"
-TEST_LOCATION = "data/nbl_test"
+TEST_LOCATION = "data/NBL_TEST"
 CELL_CLASS_WEIGHT = 1
 BG_CLASS_WEIGHT = 1
 
@@ -29,7 +29,9 @@ if not os.path.exists(TRAIN_LOCATION):
 if not os.path.exists(TRAIN_LOCATION):
     print("train path does not exist.")
     exit(1)
-
+if not os.path.exists(MODEL_SAVE_LOCATION):
+	print(f"creating {MODEL_SAVE_LOCATION}")
+	os.mkdir(MODEL_SAVE_LOCATION)
 
 
 print("loading dataset...")
@@ -57,7 +59,7 @@ train_dataset = tf.data.Dataset.from_tensor_slices((imgs, masks, weights))
 train_dataset = train_dataset.shuffle(SHUFFLE_BUFFER_SIZE).batch(BATCH_SIZE)
 
 test_dataset = tf.data.Dataset.from_tensor_slices((v_imgs, v_masks))
-
+test_dataset = test_dataset.shuffle(SHUFFLE_BUFFER_SIZE).batch(BATCH_SIZE)
 print("contructing and compiling model...")
 
 model = cnn_model.DRAN()
