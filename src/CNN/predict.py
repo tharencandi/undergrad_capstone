@@ -12,7 +12,7 @@ from yaml import safe_load
 
 IMG_SIZE = (102, 102)
 MODEL = 'data/models/model_76'
-WEIGHTS = 'data/models/sep_15_aug_val.h5'
+WEIGHTS = 'data/models/best_b8e40.h5'
 TILE_MASK_NAME_F = "{}_{}.mask"
 
 model = tf.keras.models.load_model(MODEL, custom_objects = {"UpdatedMeanIoU": cnn_model.UpdatedMeanIoU})
