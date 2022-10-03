@@ -123,21 +123,47 @@ def predict_image(img):
     return img_mask
 
 
-def construct_whole_mask(tile_dim, num_tiles, in_loc, out_loc, out_name):
+def construct_whole_mask(num_tiles, in_loc, out_loc, out_name):
     """
     constructs an entire image mask (.mask format) from tile masks (.mask formats)
     used for WSI mask creation.
     """
-    whole_mask = np.zeros((tile_dim[0]*num_tiles[0], tile_dim[1]*num_tiles[1]))
-
-    for i in range(num_tiles[0]):
-        for j in range(num_tiles[1]):
+    
+    masks = []
+    img_size = [0,0]
+    tile_dim = None
+    #read masks and get whole mask size
+    for i in range(1, num_tiles[0]+1):
+        for j in range(1, num_tiles[1] + 1):
             f_name = TILE_MASK_NAME_F.format(i,j)
-            tile_mask = dataset.decode_label(f"{in_loc}/{f_name}")
+            print("decoding mask for tile",(i,j))
+            tile_mask = dataset.decode_label(f"{in_loc}/{f_name}")[0]
+            if i == 1:
+                img_size[1] += tile_mask.shape[1]
+            if j == 1:
+                img_size[0] += tile_mask.shape[0]
+            if i == 1 and j == 1:
+                tile_dim = tile_mask.shape
+            masks.append(tile_mask)
+ 
+    print(img_size)
+    whole_mask = np.zeros((img_size[0], img_size[1]))
+    count = 0
+    for i in range(1, num_tiles[0]+1):
+        for j in range(1, num_tiles[1]+1):
+            tile_mask = masks[count]
+            end_0 = (i-1)*tile_dim[0] + tile_dim[0]
+            end_1 = (j-1)*tile_dim[1] + tile_dim[1]
+            print("stitching whole mask with tile", (i,j))
+            if whole_mask.shape[0] - (i-1)*tile_dim[0] < end_0:
+                end_0 = whole_mask.shape[0] - (i-1)*tile_dim[0] 
+            if whole_mask.shape[1] - (j-1)*tile_dim[1] < end_1:
+                end_1 = whole_mask.shape[1] - (j-1)*tile_dim[1]
             whole_mask [
-                i*tile_dim[0]:i*tile_dim[0] + tile_dim[0], 
-                j*tile_dim[1]:j*tile_dim[1] + tile_dim[1]
+                (i-1)*tile_dim[0]:end_0, 
+                (j-1)*tile_dim[1]:end_1
             ] = tile_mask
+            count += 1
     if dataset.encode_label(whole_mask, out_loc, out_name) != 0:
         return None
     
@@ -218,9 +244,8 @@ def predict_slide(svs_id, svs_file, tmp_dir, masks_dir):
             )
 
     mask_loc = construct_whole_mask (
-        tile_dim = j_dict["tile_dim"], 
         num_tiles = num_tiles, 
-        in_loc = "f{tmp_dir}/masks", 
+        in_loc = f"{tmp_dir}/masks", 
         out_loc = masks_dir, 
         out_name = f"{svs_id}.mask"
     )
