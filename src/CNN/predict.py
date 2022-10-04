@@ -1,3 +1,4 @@
+from base64 import encode
 from genericpath import isfile
 import os
 import subprocess as sb
@@ -13,11 +14,11 @@ import json
 from yaml import safe_load
 #import src.tile_crop.tile_crop_main
 from tile_crop.tile_crop_main import single_image_to_folder_of_tiles as tile_image
-
+#from bin_transcoder import encode_binary
 IMG_SIZE = (102, 102)
 MODEL = 'data/models/model_76'
 WEIGHTS = 'data/models/best_b8e40.h5'
-TILE_MASK_NAME_F = "{}_{}.mask"
+TILE_MASK_NAME_F = "{}_{}.png"
 
 model = tf.keras.models.load_model(MODEL, custom_objects = {"UpdatedMeanIoU": cnn_model.UpdatedMeanIoU})
 if WEIGHTS != None:
@@ -137,7 +138,8 @@ def construct_whole_mask(num_tiles, in_loc, out_loc, out_name):
         for j in range(1, num_tiles[1] + 1):
             f_name = TILE_MASK_NAME_F.format(i,j)
             print("decoding mask for tile",(i,j))
-            tile_mask = dataset.decode_label(f"{in_loc}/{f_name}")[0]
+            #tile_mask = dataset.decode_label(f"{in_loc}/{f_name}")[0]
+            tile_mask = cv.imread(f"{in_loc}/{f_name}",cv.IMREAD_GRAYSCALE)
             if i == 1:
                 img_size[1] += tile_mask.shape[1]
             if j == 1:
@@ -146,9 +148,11 @@ def construct_whole_mask(num_tiles, in_loc, out_loc, out_name):
                 tile_dim = tile_mask.shape
             masks.append(tile_mask)
  
-    print(img_size)
+   
     whole_mask = np.zeros((img_size[0], img_size[1]))
     count = 0
+
+    print("stitching whole mask of dimensions", img_size)
     for i in range(1, num_tiles[0]+1):
         for j in range(1, num_tiles[1]+1):
             tile_mask = masks[count]
@@ -158,7 +162,6 @@ def construct_whole_mask(num_tiles, in_loc, out_loc, out_name):
             end_0 = (i-1)*tile_dim[0] + tile_dim[0]
             end_1 = (j-1)*tile_dim[1] + tile_dim[1]
 
-            print("stitching whole mask with tile", (i,j))
             if whole_mask.shape[0] < end_0:
                 end_0 = whole_mask.shape[0]
             if whole_mask.shape[1]  < end_1:
@@ -167,8 +170,10 @@ def construct_whole_mask(num_tiles, in_loc, out_loc, out_name):
             whole_mask [start_0:end_0,start_1:end_1] = tile_mask
 
             count += 1
-    if dataset.encode_label(whole_mask, out_loc, out_name) != 0:
-        return None
+    #encode_binary(whole_mask,f"{out_loc}/{out_name}") 
+    cv.imwrite(f"{out_loc}/{out_name}", whole_mask)       
+    # if dataset.encode_label(whole_mask, out_loc, out_name) != 0:
+    #     return None
     
     return f"{out_loc}/{out_name}"
 
@@ -240,17 +245,20 @@ def predict_slide(svs_id, svs_file, tmp_dir, masks_dir):
                 mask = predict_image(tile)
 
             #save mask of tile.
-            dataset.encode_label (
-                mask = mask, 
-                file_location = f"{tmp_dir}/masks", 
-                filename = TILE_MASK_NAME_F.format(i,j)
-            )
+            f_name = TILE_MASK_NAME_F.format(i,j)
+            cv.imwrite(f"{tmp_dir}/masks/{f_name}", img = mask)
+
+            # dataset.encode_label (
+            #     mask = mask, 
+            #     file_location = f"{tmp_dir}/masks", 
+            #     filename = TILE_MASK_NAME_F.format(i,j)
+            # )
 
     mask_loc = construct_whole_mask (
         num_tiles = num_tiles, 
         in_loc = f"{tmp_dir}/masks", 
         out_loc = masks_dir, 
-        out_name = f"{svs_id}.mask"
+        out_name = f"{svs_id}.png"
     )
     
     # clean up

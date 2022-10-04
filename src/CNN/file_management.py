@@ -22,7 +22,7 @@ MANIFEST_HEADERS = "id\tfilename\tmd5\tsize\tstate\n"
 
 def clear_dir(dir):
     for file in os.listdir(dir):
-        if os.isfile(file):
+        if os.path.isfile(f"{dir}/{file}"):
             os.remove(f"{dir}/{file}")
         else:
             folder = file
