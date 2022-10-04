@@ -7,7 +7,7 @@ import numpy as np
 import tensorflow as tf
 import random
 from skimage.util.shape import view_as_windows 
-import openslide as osl
+# import openslide as osl
 
 
 TRAIN_LOCATION = "data/training/"

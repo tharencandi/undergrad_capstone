@@ -7,12 +7,12 @@ import tensorflow as tf
 import cnn_model, file_management, dataset
 import math
 import json
-from yaml import safe_load
+# from yaml import safe_load
 
 
 IMG_SIZE = (102, 102)
-MODEL = 'data/models/model_76'
-WEIGHTS = 'data/models/sep_15_aug_val.h5'
+MODEL = 'data/model_76 2'
+WEIGHTS = 'data/best_b8e40.h5'
 TILE_MASK_NAME_F = "{}_{}.mask"
 
 model = tf.keras.models.load_model(MODEL, custom_objects = {"UpdatedMeanIoU": cnn_model.UpdatedMeanIoU})
