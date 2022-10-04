@@ -1,7 +1,8 @@
 import os
 from case import GBM, LGG
 from flask import current_app
-PATH_TO_DATA="/home/haeata/temp/temp_data/Cell"
+
+PATH_TO_DATA="/home/haeata/glib_data/Cell/"
 
 CASE_DATA_DIR={
     GBM: "TCGA_GBM",
