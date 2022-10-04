@@ -152,17 +152,20 @@ def construct_whole_mask(num_tiles, in_loc, out_loc, out_name):
     for i in range(1, num_tiles[0]+1):
         for j in range(1, num_tiles[1]+1):
             tile_mask = masks[count]
+
+            start_0 = (i-1)*tile_dim[0]
+            start_1 = (j-1)*tile_dim[1]
             end_0 = (i-1)*tile_dim[0] + tile_dim[0]
             end_1 = (j-1)*tile_dim[1] + tile_dim[1]
+
             print("stitching whole mask with tile", (i,j))
-            if whole_mask.shape[0] - (i-1)*tile_dim[0] < end_0:
-                end_0 = whole_mask.shape[0] - (i-1)*tile_dim[0] 
-            if whole_mask.shape[1] - (j-1)*tile_dim[1] < end_1:
-                end_1 = whole_mask.shape[1] - (j-1)*tile_dim[1]
-            whole_mask [
-                (i-1)*tile_dim[0]:end_0, 
-                (j-1)*tile_dim[1]:end_1
-            ] = tile_mask
+            if whole_mask.shape[0] < end_0:
+                end_0 = whole_mask.shape[0]
+            if whole_mask.shape[1]  < end_1:
+                end_1 = whole_mask.shape[1]
+
+            whole_mask [start_0:end_0,start_1:end_1] = tile_mask
+
             count += 1
     if dataset.encode_label(whole_mask, out_loc, out_name) != 0:
         return None
