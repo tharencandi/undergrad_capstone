@@ -7,7 +7,7 @@ import logging
 from case import GBM, LGG
 from fs import *
 
-logging.basicConfig(filename='app.log',level=logging.DEBUG)
+logging.basicConfig(filename='management_server.log', level=logging.INFO, format=f'[%(asctime)s] %(levelname)s in %(module)s: %(message)s')
 
 app = Flask(__name__)
 
@@ -23,27 +23,27 @@ def receive_svs(case, uuid):
 
 @app.post("/<string:case>/<uuid>/mask")
 def receive_mask(case, uuid):
-    logging.info(f"Mask posted with case {case}, {uuid}")
+    app.logger.info(f"Mask posted with case {case}, {uuid}")
     if not (case == GBM or case == LGG):
-        logging.warning("Not a valid case")
+        app.logger.warning("Not a valid case")
         abort(404)
     
     fname = secure_filename(uuid+MASK_EXT)
     if uuid_object_exists(case, uuid, fname):
-        logging.warning(f"Object already exists. case: {case}, uuid: {uuid}, fname: {fname}")
+        app.logger.warning(f"Object already exists. case: {case}, uuid: {uuid}, fname: {fname}")
         abort(409)
     
     if "file" not in request.files:
-        logging.debug(request.files)
-        logging.warning(f"No file given. case: {case}, uuid: {uuid}, fname: {fname}")
+        app.logger.debug(request.files)
+        app.logger.warning(f"No file given. case: {case}, uuid: {uuid}, fname: {fname}")
         abort(400)
     
     file = request.files["file"]
     try:
-        logging.info(f"Writing data. case: {case}, uuid:{uuid}, fname:{fname}")
+        app.logger.info(f"Writing data. case: {case}, uuid:{uuid}, fname:{fname}")
         write_uuid_f(case, uuid, file, fname)
     except IOError as e:
-        logging.exception(f"IOError {str(e)} when saving mask. case:{case}, uuid:{uuid}, fname:{fname}")
+        app.logger.exception(f"IOError {str(e)} when saving mask. case:{case}, uuid:{uuid}, fname:{fname}")
         abort(500)
         
     return "", 200
