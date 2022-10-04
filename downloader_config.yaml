@@ -6,7 +6,4 @@ FAILURE_LOG: "/home/haeata/glioblastoma_processing/failure.log"
 CHUNK_SIZE: 16384
 # Concurrent downloads does nothing currently - not implemented
 CONCURRENT_DOWNLOADS: 4
-LOGFILE: "/home/haeata/glioblastoma_processing/downloader.log"
-LOGLEVEL: "DEBUG"
-
 
