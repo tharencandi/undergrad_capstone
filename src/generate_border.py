@@ -1,5 +1,5 @@
 """
-    Script uses provided binary masks to create boarder pixels.
+    Script uses provided binary masks to create border pixels.
 """
 
 
@@ -10,10 +10,10 @@ from matplotlib import pyplot as plt
 
 """
     Function defines borders and erodes a certain amount of pixels 
-    into objects. Then it dilates this object using the boarder
-    side provided. Final region is the boarder.
+    into objects. Then it dilates this object using the border
+    side provided. Final region is the border.
 """
-def generate_boarder(img, erosion_size, border_size):
+def generate_border(img, erosion_size, border_size):
 
     # erode edge pixels
     init_erosion = np.ones((3,3), np.uint8)
