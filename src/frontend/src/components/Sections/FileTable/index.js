@@ -19,11 +19,11 @@ function filenameCell(cell) {
 function getChildFileStatus(cell) {
   if (cell.value === 0) {
     return "";
-  } else if (cell.value === 1) {
-    return <DownloadReadyIcon />;
   } else if (cell.value === 2) {
-    return <ProcessingIcon></ProcessingIcon>;
+    return <DownloadReadyIcon />;
   } else if (cell.value === 3) {
+    return <ProcessingIcon></ProcessingIcon>;
+  } else if (cell.value === 1) {
     return <WaitingIcon></WaitingIcon>;
   }
 }
@@ -139,20 +139,40 @@ const rows = [
 
 const FileTable = () => {
   const data = useGetData();
-  console.log(data);
+
   const rows = data
-    ? data.map((entry) => {
-        const tif = entry[1].includes("tif") ? 1 : 0;
-        const mask = entry[1].includes("svs") ? 1 : 0;
-        const png = entry[1].includes("png") ? 1 : 0;
+    ? Object.keys(data).map((fileKey) => {
+        const fileStatusGenerator = (status) => {
+          if (status === "none") {
+            return 0;
+          }
+          if (status === "pending") {
+            return 1;
+          }
+          if (status === "completed") {
+            return 2;
+          }
+          return 3;
+        };
+
+        const {
+          fileId,
+          fileName,
+          maskStatus,
+          pngStatus,
+          tifStatus,
+          uploadStatus,
+          downloadStatus,
+          created,
+        } = data[fileKey];
 
         return {
-          id: uuidv4(),
-          filename: entry[0],
-          tif,
-          mask,
-          png,
-          dateCreated: entry[2],
+          id: fileId,
+          filename: fileName,
+          tif: fileStatusGenerator(tifStatus),
+          mask: fileStatusGenerator(maskStatus),
+          png: fileStatusGenerator(pngStatus),
+          dateCreated: created,
         };
       })
     : [];
