@@ -1,5 +1,6 @@
 import logging
 import re
+import time
 import sys
 import os
 from Crypto.Hash import MD5
@@ -9,7 +10,22 @@ from download.download_error_handler import download_error_handler
 from cml.cml_validator import *
 from download_tool.config import *
 
-logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger("download_tool")
+
+# create console handler with a higher log level
+efh = logging.FileHandler('download_error.log')
+efh.setLevel(logging.INFO)
+ch = logging.StreamHandler()
+ch.setLevel(logging.WARNING)
+# create formatter and add it to the handlers
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+efh.setFormatter(formatter)
+ch.setFormatter(formatter)
+# add the handlers to the logger
+logger.addHandler(efh)
+logger.addHandler(ch)
+
 
 DELIM = "\t"
 I_ID = 0
@@ -23,32 +39,20 @@ TGCA_PREFIX = "TGCA"
 GBM = "GBM"
 LGG = "LGG"
 
-# DL_CHUNK_SIZE=8192
-
-
-
-
-
-# def has_file_ext(fname, ext):
-#     r = re.compile("[\S]+\." + ext + "$")
-#     return r.match(fname)
-
 
 def setup_output_dir(path):
     if not os.path.exists(path):
         os.makedirs(path)
     elif os.path.isfile(path):
-        logging.critical("Can't create output directory for downloaded files.")
-        print("Can't create output_dir", file=sys.stderr)
+        logger.critical("Can't create output directory for downloaded files.")
         exit(os.EX_CANTCREAT)
 
 
 def setup_progress_log(path):
     if os.path.exists(path) and os.path.isdir(path):
-        logging.critical(
+        logger.critical(
             "Cannot create progress log. Path already exists and it is a directory."
         )
-        print("Can't create progress log.", file=sys.stderr)
         exit(os.EX_CANTCREAT)
     elif not os.path.exists(path):
         with open(path, "a") as f:
@@ -56,10 +60,9 @@ def setup_progress_log(path):
 
 def setup_download_failure_log(path):
         if os.path.exists(path) and os.path.isdir(path):
-            logging.critical(
+            logger.critical(
                 "Cannot create failure log. Path already exists and it is a directory."
             )
-            print("Can't create failure log.", file=sys.stderr)
             exit(os.EX_CANTCREAT)
         elif not os.path.exists(path):
             with open(path, "a") as f:
@@ -76,44 +79,75 @@ if __name__ == "__main__":
         print(f"Bad config: {repr(e)}", file=sys.stderr)
         exit(os.EX_CONFIG)
 
-    # Setup logging, output directory for downloaded files, progress and failure logs
-    logging.basicConfig(filename=conf[LOGFILE], level=conf[LOGLEVEL])
+    # output directory for downloaded files
     setup_output_dir(conf[OUTPUT_DIR])
     setup_progress_log(conf[PROGRESS_LOG])
-    setup_download_failure_log(conf[FAILURE_LOG])
 
     gdc = gdc_client()
-    try:
-        with open(sys.argv[I_CML_MANIFEST_FILE], "r") as f:
-            with open(conf[PROGRESS_LOG], "a") as p:
-                for ln in f:
-                    ln = f.readline().strip()
-                    logging.info("Manifest line read: %s", ln)
-                    sln = ln.split(DELIM)
-                    if len(ln) < 3:
-                        logging.warning(
-                            "Unexpected data format: Split line has length: %s, expected length of 4. Line was: %s",
-                            len(sln),
-                            ln,
-                        )
-                        continue
 
-                    try:
-                        # create an output path for the downloaded data
-                        out_path = conf[OUTPUT_DIR] + "/" + sln[I_FILENAME]
+    finished = False
+    while not finished:
+    # skip to line in manifest we are up to
+        last_id = ""
+        with open(conf[PROGRESS_LOG], "r") as f:
+            lns = f.readlines()
+            if len(lns) > 0:
+                last_id = lns[-1].split(",")[0]
+        
 
-                        # download data as a stream to limit RAM usage
-                        gdc.stream_download_file(sln[I_ID], sln[I_MD5_SUM], out_path, conf[CHUNK_SIZE])
-                        
-                        # write the file details to the progress log
-                        p.write(sln[I_ID] + "\t" + out_path + "\t" + sln[I_MD5_SUM] + "\n")
 
-                    except DownloadError as e:
-                        logging.warning("Download failed with reason: %s", repr(e))
-                        # log the origin line from the manifest and the reason to failure log
-                        download_error_handler(conf[FAILURE_LOG], ln, repr(e))
-    except IOError as e:
-        logging.critical(f"Can't open critical file. {repr(e)}")
-        print(f"Can't open critical file. {repr(e)}", file=sys.stderr)
-        exit(os.EX_IOERR)
+        try:
+            with open(sys.argv[I_CML_MANIFEST_FILE], "r") as f:
+                if last_id:
+                    found = False
+                    while not found:
+                        ln = f.readline()
+                        if ln.split(DELIM)[0] == last_id:
+                            found = True
+
+                with open(conf[PROGRESS_LOG], "a") as p:
+                    for ln in f:
+                        ln = ln.strip()
+                        logger.info("Manifest line read: %s", ln)
+                        sln = ln.split(DELIM)
+                        if len(ln) < 3:
+                            logger.warning(
+                                "Unexpected data format: Split line has length: %s, expected length of 4. Line was: %s",
+                                len(sln),
+                                ln,
+                            )
+                            continue
+
+                        try:
+                            # output dir
+                            out_path = conf[OUTPUT_DIR]
+
+                            # object dir
+                            out_path = os.path.join(out_path, sln[I_ID])
+                            if not os.path.exists(out_path) and not os.path.isdir(out_path):
+                                print(out_path)
+                                os.mkdir(out_path)
+
+                            out_path =  os.path.join(out_path, sln[I_FILENAME])
+                            # download data as a stream to limit RAM usage
+                            gdc.stream_download_file(sln[I_ID], sln[I_MD5_SUM], out_path, conf[CHUNK_SIZE])
+                            
+                            # write the file details to the progress log
+                            p.write(sln[I_ID]  + "," + out_path + "\n")
+            
+
+                        except DownloadError as e:
+                            logger.exception(repr(e))
+                            download_error_handler(conf[FAILURE_LOG], ln)
+                    
+                    finished = True
+        except IOError as e:
+            logging.critical(f"Can't open critical file. {repr(e)}")
+            print(f"Can't open critical file. {repr(e)}", file=sys.stderr)
+            exit(os.EX_IOERR)
+        
+        except Exception as e:
+            logging.exception(repr(e))
+            time.sleep(120)
+            continue
 
