@@ -86,34 +86,6 @@ def np_info(np_arr, name=None, elapsed=None):
       name, str(elapsed), min, max, mean, is_binary, np_arr.dtype, np_arr.shape))
 
 
-def display_img(np_img, text=None, font_path="/Library/Fonts/Arial Bold.ttf", size=48, color=(255, 0, 0),
-                background=(255, 255, 255), border=(0, 0, 0), bg=False):
-  """
-  Convert a NumPy array to a PIL image, add text to the image, and display the image.
-
-  Args:
-    np_img: Image as a NumPy array.
-    text: The text to add to the image.
-    font_path: The path to the font to use.
-    size: The font size
-    color: The font color
-    background: The background color
-    border: The border color
-    bg: If True, add rectangle background behind text
-  """
-  result = np_to_pil(np_img)
-  # if gray, convert to RGB for display
-  if result.mode == 'L':
-    result = result.convert('RGB')
-  draw = ImageDraw.Draw(result)
-  if text is not None:
-    font = ImageFont.truetype(font_path, size)
-    if bg:
-      (x, y) = draw.textsize(text, font)
-      draw.rectangle([(0, 0), (x + 5, y + 4)], fill=background, outline=border)
-    draw.text((2, 0), text, color, font=font)
-  result.show()
-
 
 def mask_rgb(rgb, mask):
   """
