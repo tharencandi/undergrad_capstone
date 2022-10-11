@@ -17,7 +17,8 @@ MANIFEST_IN = "MANIFEST_IN"
 MANIFEST_OUT = "MANIFEST_OUT"
 MASK_DIR = "MASK_DIR"
 SVS_DIR =  "SVS_DIR"
-KEYS = [TMP_DIR, MANIFEST_IN, MANIFEST_OUT, MASK_DIR, SVS_DIR]
+UPLOAD_LOG = "UPLOAD_LOG"
+KEYS = [TMP_DIR, MANIFEST_IN, MANIFEST_OUT, MASK_DIR, SVS_DIR, UPLOAD_LOG]
 MANIFEST_HEADERS = "id\tfilename\tmd5\tsize\tstate\n"
 
 def clear_dir(dir):
@@ -54,7 +55,14 @@ def conf_init(conf):
         if not os.path.isfile(conf[MANIFEST_OUT]):
             print(f"creating {conf[MANIFEST_OUT]}.")
             with open(conf[MANIFEST_OUT], 'w') as man:
-                man.write(MANIFEST_HEADERS)
+                man.write(MANIFEST_HEADERS)        
+        try:
+            f = open(conf[UPLOAD_LOG], 'w')
+            f.close()
+        except:
+            raise FileNotFoundError(f"upload_log cant be opened. {conf[UPLOAD_LOG]}.")
+
+            
             
 def check_manifest(manifest_file):
     lines = []
@@ -126,7 +134,11 @@ class svs_management:
     def delete_svs(self, id):
         f_name = self.find_file_from_id(id)
         os.remove(f"{self.conf[SVS_DIR]}/{f_name}")
-     
+    
+    def upload_log(self, id, err_code):
+        with open(self.conf[UPLOAD_LOG], "a") as log_f:
+            log_f.write(f"{id}, {err_code}\n")
+            
 
 
 

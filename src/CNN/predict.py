@@ -1,5 +1,3 @@
-from base64 import encode
-from genericpath import isfile
 import os
 import subprocess as sb
 import sys
@@ -14,6 +12,8 @@ import json
 from yaml import safe_load
 #import src.tile_crop.tile_crop_main
 from tile_crop.tile_crop_main import single_image_to_folder_of_tiles as tile_image
+from client import upload
+from multiprocessing import Process
 #from bin_transcoder import encode_binary
 IMG_SIZE = (102, 102)
 MODEL = 'data/models/model_76'
@@ -128,6 +128,8 @@ def construct_whole_mask(num_tiles, in_loc, out_loc, out_name):
     """
     constructs an entire image mask (.mask format) from tile masks (.mask formats)
     used for WSI mask creation.
+
+    returns file path of mask
     """
     
     masks = []
@@ -171,7 +173,8 @@ def construct_whole_mask(num_tiles, in_loc, out_loc, out_name):
 
             count += 1
     #encode_binary(whole_mask,f"{out_loc}/{out_name}") 
-    cv.imwrite(f"{out_loc}/{out_name}", whole_mask)       
+    if not cv.imwrite(f"{out_loc}/{out_name}", whole_mask):
+        return None     
     # if dataset.encode_label(whole_mask, out_loc, out_name) != 0:
     #     return None
     
@@ -305,7 +308,17 @@ def predict_manifest():
 
         svs_manager.delete_svs(current_svs)
 
+        print("forking process to upload mask to DB server.")
+
+        p = Process(target=uploader_wrapper, args=(current_svs, mask_file))
+
         current_svs = svs_manager.get_new_svs()
+
+
+def uploader_wrapper(svs_uid, mask_file_path):
+    ret = uploader.upload_mask(upload.GBM, svs_uid, mask_file_path)
+    if ret not in [upload.MASK_ALREADY_UPLOADED,upload.MASK_UPLOAD_SUCCESS]:
+        svs_manager.upload_log(svs_uid, ret)
 
 
 
@@ -321,7 +334,8 @@ if __name__ == "__main__":
         exit(os.EX_USAGE)
 
     p_config_file = sys.argv[1].strip()
-  
+    uploader = upload.MaskUploader("username", "password")
+    
     if not os.path.exists(p_config_file or not os.path.isfile(p_config_file)):
         raise FileNotFoundError("predict config file does not exists.")
 
