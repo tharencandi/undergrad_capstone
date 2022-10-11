@@ -1,8 +1,8 @@
 import tensorflow as tf
 from tensorflow import keras
 from keras import layers
-import tensorflow_datasets as tfds
-import matplotlib.pyplot as plt
+#import tensorflow_datasets as tfds
+#import matplotlib.pyplot as plt
 import numpy as np
 import cv2 as cv
 import cnn_model
@@ -67,7 +67,9 @@ if not os.path.exists(TRAIN_LOCATION):
 if not os.path.exists(TRAIN_LOCATION):
     print("train path does not exist.")
     exit(1)
-
+if not os.path.exists(MODEL_SAVE_LOCATION):
+	print(f"creating {MODEL_SAVE_LOCATION}")
+	os.mkdir(MODEL_SAVE_LOCATION)
 
 
 print("loading dataset...")

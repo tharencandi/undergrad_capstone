@@ -1,19 +1,24 @@
+from base64 import encode
+from genericpath import isfile
 import os
 import subprocess as sb
 import sys
 import cv2 as cv
 import numpy as np
 import tensorflow as tf
-import cnn_model, file_management, dataset
+import cnn_model as cnn_model
+import file_management as file_management
+import dataset as dataset
 import math
 import json
-# from yaml import safe_load
-
-
+from yaml import safe_load
+#import src.tile_crop.tile_crop_main
+from tile_crop.tile_crop_main import single_image_to_folder_of_tiles as tile_image
+#from bin_transcoder import encode_binary
 IMG_SIZE = (102, 102)
-MODEL = 'data/model_76 2'
-WEIGHTS = 'data/best_b8e40.h5'
-TILE_MASK_NAME_F = "{}_{}.mask"
+MODEL = 'data/models/model_76'
+WEIGHTS = 'data/models/best_b8e40.h5'
+TILE_MASK_NAME_F = "{}_{}.png"
 
 model = tf.keras.models.load_model(MODEL, custom_objects = {"UpdatedMeanIoU": cnn_model.UpdatedMeanIoU})
 if WEIGHTS != None:
@@ -78,9 +83,9 @@ def create_windows(img):
             x = (i * 54) + 24
             y = (j * 54) + 24
             window = img[x-24:x+78, y-24:y+78]
-
+            windows.append(window)
             #img_center = og_img[x-24:(x-24) + 54, y-24:(y-24) + 54]    
-            windows.append(np.array([window]))
+            #windows.append(np.array([window]))
         
     return np.float32(windows), tile_dim
 
@@ -100,13 +105,13 @@ def predict_image(img):
     
     img_mask = np.zeros((img.shape[0], img.shape[1]))
     imgs, tiles = create_windows(img)
-
+    masks = model.predict(imgs)
     i = 0
     for x in range(tiles[0]):
         for y in range(tiles[1]):
             
-            mask = model.predict(imgs[i])
-            mask = get_mask_img(mask[0])
+            #mask = model.predict(imgs[i])
+            mask = get_mask_img(masks[i])
             x_off = 54
             y_off = 54
 
@@ -119,23 +124,56 @@ def predict_image(img):
     return img_mask
 
 
-def construct_whole_mask(tile_dim, num_tiles, in_loc, out_loc, out_name):
+def construct_whole_mask(num_tiles, in_loc, out_loc, out_name):
     """
     constructs an entire image mask (.mask format) from tile masks (.mask formats)
     used for WSI mask creation.
     """
-    whole_mask = np.zeros((tile_dim[0]*num_tiles[0], tile_dim[1]*num_tiles[1]))
-
-    for i in range(num_tiles[0]):
-        for j in range(num_tiles[1]):
+    
+    masks = []
+    img_size = [0,0]
+    tile_dim = None
+    #read masks and get whole mask size
+    for i in range(1, num_tiles[0]+1):
+        for j in range(1, num_tiles[1] + 1):
             f_name = TILE_MASK_NAME_F.format(i,j)
-            tile_mask = dataset.decode_label(f"{in_loc}/{f_name}")
-            whole_mask [
-                i*tile_dim[0]:i*tile_dim[0] + tile_dim[0], 
-                j*tile_dim[1]:j*tile_dim[1] + tile_dim[1]
-            ] = tile_mask
-    if dataset.encode_label(whole_mask, out_loc, out_name) != 0:
-        return None
+            print("decoding mask for tile",(i,j))
+            #tile_mask = dataset.decode_label(f"{in_loc}/{f_name}")[0]
+            tile_mask = cv.imread(f"{in_loc}/{f_name}",cv.IMREAD_GRAYSCALE)
+            if i == 1:
+                img_size[1] += tile_mask.shape[1]
+            if j == 1:
+                img_size[0] += tile_mask.shape[0]
+            if i == 1 and j == 1:
+                tile_dim = tile_mask.shape
+            masks.append(tile_mask)
+ 
+   
+    whole_mask = np.zeros((img_size[0], img_size[1]))
+    count = 0
+
+    print("stitching whole mask of dimensions", img_size)
+    for i in range(1, num_tiles[0]+1):
+        for j in range(1, num_tiles[1]+1):
+            tile_mask = masks[count]
+
+            start_0 = (i-1)*tile_dim[0]
+            start_1 = (j-1)*tile_dim[1]
+            end_0 = (i-1)*tile_dim[0] + tile_dim[0]
+            end_1 = (j-1)*tile_dim[1] + tile_dim[1]
+
+            if whole_mask.shape[0] < end_0:
+                end_0 = whole_mask.shape[0]
+            if whole_mask.shape[1]  < end_1:
+                end_1 = whole_mask.shape[1]
+
+            whole_mask [start_0:end_0,start_1:end_1] = tile_mask
+
+            count += 1
+    #encode_binary(whole_mask,f"{out_loc}/{out_name}") 
+    cv.imwrite(f"{out_loc}/{out_name}", whole_mask)       
+    # if dataset.encode_label(whole_mask, out_loc, out_name) != 0:
+    #     return None
     
     return f"{out_loc}/{out_name}"
 
@@ -154,10 +192,13 @@ def predict_slide(svs_id, svs_file, tmp_dir, masks_dir):
     
     """
     ZOOM = 40
-    TILE_NAME_PREDICT = "tile_{}_{}_keep.png"
-    TILE_NAME_IGNORE = "tile_{}_{}_delete.png"
+    TILE_NAME_PREDICT = "r{}-c{}_keep.png"
+    TILE_NAME_IGNORE = "r{}-c{}_delete.png"
     TILE_JSON = "meta.json"
     json_file_path = f"{tmp_dir}/{TILE_JSON}"
+
+    svs_file_name = svs_file[len(p_conf[file_management.SVS_DIR])+1:]
+    
 
     #init
     if os.path.exists(json_file_path):
@@ -166,33 +207,37 @@ def predict_slide(svs_id, svs_file, tmp_dir, masks_dir):
         num_tiles = j_dict["num_tiles"]
         
         #integrity check
-        tile_ls = [file for file in os.listdir(tmp_dir) if ("tile" in file)]
-        if (num_tiles[0] * num_tiles[1]) != len(tile_ls):
+        tile_ls = [file for file in os.listdir(tmp_dir) if (".png" in file)]
+        if (num_tiles[0] * num_tiles[1]) != len(tile_ls) or j_dict["svs_image"] != svs_id:
             print("json exists but tiles not found, retiling.")
             #num_tiles = tile_slide(svs_file, ZOOM, tmp_dir)
-            num_tiles = dataset.create_grid(svs_file, tmp_dir, ZOOM)
+            num_tiles =  tile_image(image_path = svs_file, save_dir=tmp_dir)[1]
+            j_dict = {"svs_image": svs_id, "num_tiles": num_tiles, "current_tile": (1,1)}
+            #num_tiles = dataset.create_grid(svs_file, tmp_dir, ZOOM)
+         
     else:
         print("tiling current svs.")
         #num_tiles  = tile_slide(svs_file, ZOOM, tmp_dir)
-        num_tiles = dataset.create_grid(svs_file, tmp_dir, ZOOM)
-        j_dict = {"svs_image": svs_id, "num_tiles": num_tiles, "current_tile": (0,0)}
+        num_tiles =  tile_image(image_path = svs_file, save_dir=tmp_dir)[1]
+        j_dict = {"svs_image": svs_id, "num_tiles": num_tiles, "current_tile": (1,1)}
        
     current_tile = j_dict["current_tile"]
 
     #start at current tile. 
-    for i in range(current_tile[0], num_tiles[0]):
-        for j in range(current_tile[1], num_tiles[1]):
+    for i in range(current_tile[0], num_tiles[0]+1):
+        for j in range(current_tile[1], num_tiles[1]+1):
 
             #update json.
             j_dict["current_tile"] = (i,j)
+            
             with open(json_file_path, "w") as json_fd:
                 json.dump(j_dict, json_fd)
             
-            print(f"\npredicting {current_tile}\n")
+            print(f"\npredicting {(i,j)}\n")
 
             #if tile labelled "delete". mask is all bg.
-            if os.path.exists(TILE_NAME_IGNORE.format(i,j)):
-                tile = cv.imread(TILE_NAME_IGNORE.format(i,j))
+            if os.path.isfile(tmp_dir + "/" + TILE_NAME_IGNORE.format(i,j)):
+                tile = cv.imread(tmp_dir + "/" + TILE_NAME_IGNORE.format(i,j))
                 mask = np.zeros((tile.shape[0], tile.shape[1]))
             else:
                 name = TILE_NAME_PREDICT.format(i,j)
@@ -200,18 +245,20 @@ def predict_slide(svs_id, svs_file, tmp_dir, masks_dir):
                 mask = predict_image(tile)
 
             #save mask of tile.
-            dataset.encode_label (
-                mask = mask, 
-                file_location = "f{tmp_dir}/masks", 
-                filename = TILE_MASK_NAME_F.format(i,j)
-            )
+            f_name = TILE_MASK_NAME_F.format(i,j)
+            cv.imwrite(f"{tmp_dir}/masks/{f_name}", img = mask)
+
+            # dataset.encode_label (
+            #     mask = mask, 
+            #     file_location = f"{tmp_dir}/masks", 
+            #     filename = TILE_MASK_NAME_F.format(i,j)
+            # )
 
     mask_loc = construct_whole_mask (
-        tile_dim = j_dict["tile_dim"], 
         num_tiles = num_tiles, 
-        in_loc = "f{tmp_dir}/masks", 
+        in_loc = f"{tmp_dir}/masks", 
         out_loc = masks_dir, 
-        out_name = f"{svs_id}.mask"
+        out_name = f"{svs_id}.png"
     )
     
     # clean up

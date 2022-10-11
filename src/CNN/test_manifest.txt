@@ -1,4 +1,4 @@
 id	filename	md5	size	state
 2	TCGA-19-5947-01A-01-TS1.ab466a24-e917-4887-bc98-1dc8008ec851.svs	415d708d7ae2d175faba13d4e34ffc94	1424976435	validated
-1	image01.png	415d708d7ae2d175faba13d4e34ffc94	1424976435	validated
 2ec7fe7e-80e0-4e6d-837f-5bdffd422a73	downscaled.png	415d708d7ae2d175faba13d4e34ffc94	1424976435	validated
+1	image01.png	415d708d7ae2d175faba13d4e34ffc94	1424976435	validated
