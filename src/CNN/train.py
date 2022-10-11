@@ -8,6 +8,8 @@ import cv2 as cv
 import cnn_model
 import os
 from augmentation import augment
+from mpl_toolkits.mplot3d import Axes3D  
+import matplotlib.pyplot as plt
 
 NUM = 1609
 IMG_SIZE = (102, 102)
@@ -21,6 +23,43 @@ TRAIN_LOCATION = "data/nbl"
 TEST_LOCATION = "data/nbl_test"
 CELL_CLASS_WEIGHT = 1
 BG_CLASS_WEIGHT = 1
+
+def grid_search(epochs, batch_size, imgs, mask, v_imgs, v_masks, t_imgs, t_masks):
+    best_perfomance = 0
+    best_para = (None, None)
+    log = []
+    for b in batch_size:
+        for e in epochs:
+            print("log: ", log)
+            print("best_perfomance so far: ", best_perfomance)
+            print("best_para so far: ", best_para)
+            print("batch size: {}, epochs: {}".format(b, e))
+            model = cnn_model.DRAN()
+
+            model.compile(optimizer=keras.optimizers.Adam(),
+                                loss="sparse_categorical_crossentropy",
+                                metrics=[cnn_model.UpdatedMeanIoU(num_classes=2),])
+            model_history = model.fit (imgs, masks, batch_size=b, epochs=e, validation_data=(v_imgs, v_masks), shuffle=True)
+            result = model.evaluate(t_imgs, t_masks)
+            mean_iou = result[1]
+            print("batch size: {}, epochs: {}, mean iou: {}".format(b, e, mean_iou))
+            log.append((b,e,result))
+            if mean_iou >= best_perfomance:
+                best_perfomance = mean_iou
+                best_para = (b, e)
+    return best_para, log
+
+def make_graph(log):
+    x = [val[0] for val in log]
+    y = [val[1] for val in log]
+    z = [val[2][1]  for val in log]
+    fig = plt.figure()
+    ax = Axes3D(fig)
+    ax.invert_yaxis()
+    surf = ax.plot_trisurf(x, y, z, linewidth=0.1)
+    fig.colorbar(surf, shrink=0.5, aspect=5)
+    plt.show()
+
 
 if not os.path.exists(TRAIN_LOCATION):
     print("train path does not exist.")
