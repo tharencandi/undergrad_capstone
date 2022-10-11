@@ -154,6 +154,28 @@ def center_crop(img, dim):
 
     return img_cropped
 
+def black_border(img, dim):
+    """
+    keep dim x dim content in the center of the images 
+    and fill in other parts as black 
+    
+    input: image (read by cv2) (expects 102x102)
+            
+    output: img_bordered
+    """
+
+    width = img.shape[1]
+    height = img.shape[0]
+    img_cropped = center_crop(img, dim)
+
+    fill_width = int((width-dim)/2)
+    fill_height = int((height-dim)/2)
+    img_bordered = cv2.copyMakeBorder(img_cropped, fill_height, fill_height, 
+                                        fill_width, fill_width, cv2.BORDER_CONSTANT, 
+                                        None, value = 0)
+
+    return img_bordered
+
 
 """
         apply augmentation to dataset specified by file path and return (images, masks)
@@ -191,6 +213,7 @@ def augment(src_img_dir_path, src_mask_dir_path, n):
                         img_flipped, mask_flipped = ran_flip(img_rotated, mask_rotated)
                         img_sheared, mask_sheared = ran_shear(img_flipped, mask_flipped)
                         img_resized, mask_resized = ran_resize(img_sheared, mask_sheared)
+
                         img_f = center_crop(img_resized, 102) 
                         mask_f = center_crop(mask_resized, 54)
                         #img_path_f = result_img_dir_path+"/"+"image"+ "{:04d}".format(counter) + ".png"
@@ -203,6 +226,26 @@ def augment(src_img_dir_path, src_mask_dir_path, n):
                         mask_f = np.array(mask_f/mask_f.max(),dtype=np.uint8)
                         #must be 2d
                         masks.append(mask_f[:,:,0])        
+                
+                #add black border
+                img_shifted, mask_shifted = ran_vh_shift(img, mask)
+                img_rotated, mask_rotated = ran_rotation(img_shifted, mask_shifted)
+                img_flipped, mask_flipped = ran_flip(img_rotated, mask_rotated)
+                img_sheared, mask_sheared = ran_shear(img_flipped, mask_flipped)
+                img_resized, mask_resized = ran_resize(img_sheared, mask_sheared)
+
+                img_f = center_crop(img_resized, 102) 
+                img_f = black_border(img_f, 54)
+                
+                mask_f = center_crop(mask_resized, 54)
+                counter += 1
+        
+                images.append(img_f)
+
+                #normalise mask
+                mask_f = np.array(mask_f/mask_f.max(),dtype=np.uint8)
+                #must be 2d
+                masks.append(mask_f[:,:,0])  
         return images, masks
 
         

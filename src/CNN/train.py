@@ -6,9 +6,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import cv2 as cv
 import cnn_model
-import pydot
 import os
-from CNN.augmentation import augment
+from augmentation import augment
 
 NUM = 1609
 IMG_SIZE = (102, 102)
@@ -18,7 +17,7 @@ BATCH_SIZE = 32
 SHUFFLE_BUFFER_SIZE = 1000
 MODEL_SAVE_LOCATION = "data/models/"
 MODEL_FILE_NAME = "test_model.model"
-TRAIN_LOCATION = "data/NBL"
+TRAIN_LOCATION = "data/nbl"
 TEST_LOCATION = "data/nbl_test"
 CELL_CLASS_WEIGHT = 1
 BG_CLASS_WEIGHT = 1
