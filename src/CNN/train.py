@@ -11,7 +11,6 @@ from augmentation import augment
 from mpl_toolkits.mplot3d import Axes3D  
 import matplotlib.pyplot as plt
 
-NUM = 1609
 IMG_SIZE = (102, 102)
 LBL_SIZE = (54, 54)
 EPOCHS = 64
@@ -23,8 +22,9 @@ TRAIN_LOCATION = "data/nbl"
 TEST_LOCATION = "data/nbl_test"
 CELL_CLASS_WEIGHT = 1
 BG_CLASS_WEIGHT = 1
+LOG_FILE = "data/models/log.txt"
 
-def grid_search(epochs, batch_size, imgs, mask, v_imgs, v_masks, t_imgs, t_masks):
+def grid_search(epochs, batch_size, imgs, masks, v_imgs, v_masks, t_imgs, t_masks, save_weights):
     best_perfomance = 0
     best_para = (None, None)
     log = []
@@ -40,6 +40,7 @@ def grid_search(epochs, batch_size, imgs, mask, v_imgs, v_masks, t_imgs, t_masks
                                 loss="sparse_categorical_crossentropy",
                                 metrics=[cnn_model.UpdatedMeanIoU(num_classes=2),])
             model_history = model.fit (imgs, masks, batch_size=b, epochs=e, validation_data=(v_imgs, v_masks), shuffle=True)
+            model.save_weights(MODEL_SAVE_LOCATION + f"b{b}_e{e}_pre_blackaug.h5")
             result = model.evaluate(t_imgs, t_masks)
             mean_iou = result[1]
             print("batch size: {}, epochs: {}, mean iou: {}".format(b, e, mean_iou))
@@ -86,10 +87,10 @@ masks = np.array(masks)
 v_imgs = np.array(v_imgs)
 v_masks = np.array(v_masks)
 
-print(len(imgs), imgs.shape)
-print(len(masks), masks.shape)
-print(len(v_imgs), v_imgs.shape)
-print(len(v_masks), v_masks.shape)
+print("train images", len(imgs), imgs.shape)
+print("train masks", len(masks), masks.shape)
+print("validation images", len(v_imgs), v_imgs.shape)
+print("validation masks", len(v_masks), v_masks.shape)
 
 imgs,masks,weights = cnn_model.add_sample_weights(imgs,masks,[BG_CLASS_WEIGHT,CELL_CLASS_WEIGHT])
 
@@ -99,24 +100,34 @@ train_dataset = train_dataset.shuffle(SHUFFLE_BUFFER_SIZE).batch(BATCH_SIZE)
 test_dataset = tf.data.Dataset.from_tensor_slices((v_imgs, v_masks))
 test_dataset = test_dataset.shuffle(SHUFFLE_BUFFER_SIZE).batch(BATCH_SIZE)
 
-print("contructing and compiling model...")
+print("performing grid search...")
 
-model = cnn_model.DRAN()
 
-model.compile(optimizer=keras.optimizers.Adam(),
-                  loss="sparse_categorical_crossentropy",
-                  metrics=[cnn_model.UpdatedMeanIoU(num_classes=2),])
+# model = cnn_model.DRAN()
+
+# model.compile(optimizer=keras.optimizers.Adam(),
+#                   loss="sparse_categorical_crossentropy",
+#                   metrics=[cnn_model.UpdatedMeanIoU(num_classes=2),])
 
 #dot_img_file = 'model_1.png'
 #tf.keras.utils.plot_model(model, to_file=dot_img_file, show_shapes=True)
 
-print("commencing training...")
-model_history = model.fit (
-    train_dataset, epochs=EPOCHS, validation_data=test_dataset
-)
+# print("commencing training...")
+# model_history = model.fit (
+#     train_dataset, epochs=EPOCHS, validation_data=test_dataset
+# )
 
-
-model.save_weights(MODEL_SAVE_LOCATION + MODEL_FILE_NAME)
+best_para, log = grid_search ( 
+    epochs = [30,40,50,60,70], 
+    batch_size = [8,16,32,35,40,45],
+    imgs=imgs, masks=masks, 
+    v_imgs= v_imgs, v_masks=v_masks, 
+    t_imgs=v_imgs, t_masks=v_masks,
+    save_weights=True
+    )
+with open(LOG_FILE, "w") as log:
+    log.write(str(best_para))
+#model.save_weights(MODEL_SAVE_LOCATION + MODEL_FILE_NAME)
 
 #model.save(MODEL_FILE_NAME)
 
