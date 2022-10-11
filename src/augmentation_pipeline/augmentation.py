@@ -192,6 +192,36 @@ def center_crop(img, mask, dim):
 
     return img_cropped, mask_cropped
 
+def black_border(img, mask, dim):
+    """
+    keep dim x dim content in the center of the images 
+    and fill in other parts as black 
+    
+
+    input: image (read by cv2) expects 102x102
+            correspanding mask (read by cv2) expects 102x102
+            
+    output: img_bordered, 
+            mask_bordered
+
+    """
+
+    width = img.shape[1]
+    height = img.shape[0]
+    img_cropped, mask_cropped = center_crop(img, mask, dim)
+
+
+
+    fill_width = int((width-dim)/2)
+    fill_height = int((height-dim)/2)
+    img_bordered = cv2.copyMakeBorder(img_cropped, fill_height, fill_height, 
+                                        fill_width, fill_width, cv2.BORDER_CONSTANT, 
+                                        None, value = 0)
+    mask_bordered = cv2.copyMakeBorder(mask_cropped, fill_height, fill_height, 
+                                        fill_width, fill_width, cv2.BORDER_CONSTANT, 
+                                        None, value = 0)
+
+    return img_bordered, mask_bordered
 
 
 # disable due to unknow hidden files in dir
@@ -200,6 +230,7 @@ def center_crop(img, mask, dim):
 # CHANGE THE VALUE OF n TO NUMBER OF IMAGES IN SRC_IMG OR SRC_MASK
 n = 1
 counter = 0
+
 for i in range(n):
     img_path = src_img_dir_path+"/"+"image"+ "{:04d}".format(i) + ".png"
     mask_path = src_mask_dir_path+"/"+"image"+ "{:04d}".format(i) + "_mask.png"
@@ -213,6 +244,11 @@ for i in range(n):
 
     cv2.imwrite(result_img_dir_path+"/"+"image"+ "{:04d}".format(counter) + ".png", ori_img_cropped)
     cv2.imwrite(result_mask_dir_path+"/"+"image"+ "{:04d}".format(counter) + "_mask.png", ori_mask_cropped)
+    counter += 1
+
+    ori_img_bordered, ori_mask_bordered = black_border(ori_img_cropped, ori_mask_cropped, 54)
+    cv2.imwrite(result_img_dir_path+"/"+"image"+ "{:04d}".format(counter) + ".png", ori_img_bordered)
+    cv2.imwrite(result_mask_dir_path+"/"+"image"+ "{:04d}".format(counter) + "_mask.png", ori_mask_bordered)
     counter += 1
 
     for j in range(3):
