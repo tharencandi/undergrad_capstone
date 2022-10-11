@@ -1,6 +1,7 @@
 import tensorflow as tf
 from tensorflow import keras
 from keras import layers
+from enum import Enum
 
 """
     CNN MODELS - BASIC UNET and DRAN
@@ -8,6 +9,10 @@ from keras import layers
     TO MAKE:
     MDRAN
 """
+
+class myInitialiers(Enum):
+    myHeNormal = 1
+    myHeUniform = 2
 
 # This is a bug fix for the Keras MeanIoU metric 
 # From https://stackoverflow.com/questions/61824470/dimensions-mismatch-error-when-using-tf-metrics-meaniou-with-sparsecategorical
@@ -196,19 +201,24 @@ def add_sample_weights(image, label, weights_ls):
 # implementing DRAN - uses modified pre-activated RESNET for contracting path (from article we have data from)
 
 # resnet34: https://www.analyticsvidhya.com/blog/2021/08/how-to-code-your-resnet-from-scratch-in-tensorflow/#h2_9 
-def DRAN(shape = (102, 102, 3), classes = 2):
+def DRAN(shape = (102, 102, 3), classes = 2, initialiser=myInitialiers.myHeUniform):
     # Step 1 (Setup Input Layer)
     x_input = tf.keras.layers.Input(shape)
     #x = layers.ZeroPadding2D((3, 3))(x_input)
     x= x_input
     #modified pre-activated res-net used for contracting layers
 
+    if initialiser == myInitialiers.myHeNormal:
+        initializer = tf.keras.initializers.HeNormal()
+    elif initialiser == myInitialiers.myHeUniform:
+        initializer = tf.keras.initializers.HeUniform()
+
     # Initial Conv layer
     #  modified pre-activated resnet: NO maxPool, stride 1 NO PADDING
     # batch -> relu -> conv 
     x = tf.keras.layers.BatchNormalization()(x)
     x = tf.keras.layers.Activation('relu')(x)
-    x = tf.keras.layers.Conv2D(64, kernel_size=7, strides=1, padding='valid')(x)
+    x = tf.keras.layers.Conv2D(64, kernel_size=7, strides=1, padding='valid', kernel_initializer=initializer)(x)
     
    
     # Define size of sub-blocks and initial filter size (es-net 50s)
@@ -274,4 +284,3 @@ def DRAN(shape = (102, 102, 3), classes = 2):
     
     model = tf.keras.models.Model(inputs = x_input, outputs = x, name = "dran")
     return model
-
