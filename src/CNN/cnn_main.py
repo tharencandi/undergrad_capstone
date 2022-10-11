@@ -1,7 +1,7 @@
 import sys
 import os.path
 from os import path
-import CNN.dataset as dataset
+import dataset as dataset
 
 """
     Run various functions of the CNN src code.
@@ -51,4 +51,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+   main()
