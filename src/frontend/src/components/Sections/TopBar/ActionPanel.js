@@ -1,10 +1,25 @@
 import Button from "components/UI/Button";
 import Modal from "components/Modals";
+import UploadModalContent from "components/Modals/UploadModal";
+
 import { useState } from "react";
+import useUploadSVS from "hooks/useUploadSVS";
 
 const ActionPanel = () => {
   // Modal variants - "download", "generate", "none" (none means no modal open)
   const [modalVariant, setModalVariant] = useState("none");
+  const [
+    uploadQueue,
+    setUploadQueue,
+    uploadProgress,
+    currentUploadingFile,
+    numberUploaded,
+    numberToUpload,
+  ] = useUploadSVS();
+
+  const uploadFileChangeHandler = (e) => {
+    setUploadQueue(e.target.files);
+  };
 
   return (
     <div className="grid grid-cols-2 lg:flex justify-evenly gap-4 xl:gap-6">
@@ -15,6 +30,7 @@ const ActionPanel = () => {
           multiple
           type="file"
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+          onChange={uploadFileChangeHandler}
         />
       </div>
       <Button
@@ -35,6 +51,14 @@ const ActionPanel = () => {
       {modalVariant === "none" ? null : (
         <Modal modalController={setModalVariant} variant={modalVariant}></Modal>
       )}
+      {numberToUpload > 0 ? (
+        <UploadModalContent
+          numberToUpload={numberToUpload}
+          uploadProgress={uploadProgress}
+          currentUploadingFile={currentUploadingFile}
+          numberUploaded={numberUploaded}
+        ></UploadModalContent>
+      ) : null}
     </div>
   );
 };

@@ -26,6 +26,7 @@ const Overlay = ({ variant, modalController }) => {
         >
           Cancel
         </Button>
+        {/* Submit Button */}
         <Button variant="highlight">
           {variant[0].toUpperCase() + variant.substring(1)}
         </Button>
