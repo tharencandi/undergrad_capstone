@@ -16,8 +16,8 @@ from client import upload
 from multiprocessing import Process
 #from bin_transcoder import encode_binary
 IMG_SIZE = (102, 102)
-MODEL = 'data/models/model_76'
-WEIGHTS = 'data/models/best_b8e40.h5'
+MODEL = 'data/models/preactive'
+WEIGHTS = 'data/models/b16_e50_pre_blackaug.h5'
 TILE_MASK_NAME_F = "{}_{}.png"
 
 model = tf.keras.models.load_model(MODEL, custom_objects = {"UpdatedMeanIoU": cnn_model.UpdatedMeanIoU})

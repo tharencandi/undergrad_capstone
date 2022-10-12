@@ -26,12 +26,12 @@ class functions(Enum):
     HYPERBAND = 3
 
 
-FUNC = functions.GRID_SEARCH
+FUNC = functions.HYPERBAND
 
 MODEL_SAVE_LOCATION = "data/models/"
 MODEL_FILE_NAME = "test_model.model"
-TRAIN_LOCATION = "data/nbl"
-TEST_LOCATION = "data/nbl_test"
+TRAIN_LOCATION = "data/NBL"
+TEST_LOCATION = "data/NBL_TEST"
 CELL_CLASS_WEIGHT = 1
 BG_CLASS_WEIGHT = 1
 LOG_FILE = "data/models/log.txt"
@@ -52,9 +52,10 @@ def hyper_model_builder(hp):
     return model
 
 def hyperband(train, val):
-
+    train = train.batch(BATCH_SIZE)
+    val = val.batch(BATCH_SIZE)
     tuner = kt.Hyperband(hyper_model_builder,
-                        objective='val_updated_mean_io_u_1',
+                        objective=kt.Objective("val_updated_mean_io_u", direction="max"),
                         max_epochs=70,
                         factor=3,
                         directory='my_dir',
@@ -253,7 +254,7 @@ if __name__ == "__main__":
         print("performing grid search...")
         res = grid_search([30,40,50,60,70], [8,16,32,40], train, val, test, True)
     elif FUNC == functions.HYPERBAND:
-        hyperband(train, val, test)
+        hyperband(train, val)
 
 
 
