@@ -1,3 +1,4 @@
+from gc import callbacks
 import tensorflow as tf
 from tensorflow import keras
 from keras import layers
@@ -15,7 +16,7 @@ import keras_tuner as kt
 
 IMG_SIZE = (102, 102)
 LBL_SIZE = (54, 54)
-EPOCHS = 64
+EPOCHS = 70
 BATCH_SIZE = 32
 WEIGHT_INIT = cnn_model.myInitialiers.myHeUniform
 
@@ -119,14 +120,14 @@ def single_train(train, val, test):
 
     model = cnn_model.DRAN()
     model.compile (
-        optimizer=keras.optimizers.Adam(),
+        optimizer=keras.optimizers.Adam(learning_rate=1e-4),
         loss="sparse_categorical_crossentropy",
         metrics=[cnn_model.UpdatedMeanIoU(num_classes=2),]
     )
-
+    stop_early = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=5)
     print("commencing training...")
     model_history = model.fit (
-        train, epochs=EPOCHS, validation_data=val, shuffle=True
+        train, epochs=EPOCHS, validation_data=val, shuffle=True, callbacks=[stop_early]
     )
 
     result = model.evaluate(test)
