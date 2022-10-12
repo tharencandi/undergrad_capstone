@@ -28,8 +28,8 @@ import PIL
 from PIL import Image
 import re
 import sys
-import util
-from util import Time
+import tile_crop.util as util
+from tile_crop.util import Time
 
 BASE_DIR = os.path.join(".", "data")
 # BASE_DIR = os.path.join(os.sep, "Volumes", "BigData", "TUPAC")

@@ -29,10 +29,10 @@ import numpy as np
 import os
 from PIL import Image, ImageDraw, ImageFont
 from enum import Enum
-import util
-import filter
-import slide
-from util import Time
+import tile_crop.util as util
+import tile_crop.filter as filter
+import tile_crop.slide as slide
+from tile_crop.util import Time
 
 TISSUE_HIGH_THRESH = 80
 TISSUE_LOW_THRESH = 10

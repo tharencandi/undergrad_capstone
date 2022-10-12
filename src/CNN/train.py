@@ -43,16 +43,36 @@ def save_weights(model, epochs, batch_size, is_preactive, init):
         f"b{batch_size}_e{epochs}_pre{is_preactive}_w{init}.h5"
     )
 
-
-def hyperband(train, val, test):
-
+def hyper_model_builder(hp):
     model = cnn_model.DRAN()
-    tuner = kt.Hyperband(model,
-                        objective='val_accuracy',
-                        max_epochs=10,
+    hp_learning_rate = hp.Choice('learning_rate', values=[1e-2, 1e-3, 1e-4])
+    model.compile(optimizer=keras.optimizers.Adam(learning_rate=hp_learning_rate),
+                                loss="sparse_categorical_crossentropy",
+                                metrics=[cnn_model.UpdatedMeanIoU(num_classes=2),])
+    return model
+
+def hyperband(train, val):
+
+    tuner = kt.Hyperband(hyper_model_builder,
+                        objective='val_updated_mean_io_u_1',
+                        max_epochs=70,
                         factor=3,
                         directory='my_dir',
                         project_name='intro_to_kt')
+
+    #stop early if validation set loss too high
+    stop_early = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=5)
+
+
+    tuner.search(train, epochs=50, validation_data=val, callbacks=[stop_early])
+
+    # Get the optimal hyperparameters
+    best_hps=tuner.get_best_hyperparameters(num_trials=1)[0]
+
+    print(f"""
+    The optimal learning rate for the optimizer
+    is {best_hps.get('learning_rate')}.
+    """)
 
 def grid_search(epochs, batch_sizes, train_set, val_set, test_set, save=False):
     best_perfomance = 0
@@ -209,7 +229,6 @@ if __name__ == "__main__":
     elif FUNC == functions.GRID_SEARCH: 
         print("performing grid search...")
         res = grid_search([30,40,50,60,70], [8,16,32,40], train, val, test, True)
-    
     elif FUNC == functions.HYPERBAND:
         hyperband(train, val, test)
 
