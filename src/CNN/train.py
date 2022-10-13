@@ -245,6 +245,14 @@ def loss_plot(history):
 
 
 def main():
+
+    if not os.path.exists(MODEL_SAVE_LOCATION):
+        try:
+            os.mkdir(MODEL_SAVE_LOCATION)
+        except FileNotFoundError:
+            print(f"parent directory in {MODEL_SAVE_LOCATION} does not exist. Cannot create folder")
+            exit(1)
+
     train, val, test = load_dataset(0.5)
 
     if FUNC == functions.SINGLE_TRAIN:

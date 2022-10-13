@@ -1,6 +1,7 @@
 import tensorflow as tf
 from tensorflow import keras
 from keras import layers
+from keras import Model
 from enum import Enum
 
 """
@@ -166,7 +167,7 @@ def add_sample_weights(image, label, weights_ls):
 # implementing DRAN - uses modified pre-activated RESNET for contracting path (from article we have data from)
 
 # resnet34: https://www.analyticsvidhya.com/blog/2021/08/how-to-code-your-resnet-from-scratch-in-tensorflow/#h2_9 
-def DRAN(shape = (102, 102, 3), classes = 2, initialiser=myInitialiers.myHeUniform):
+def DRAN(shape = (102, 102, 3), classes = 2, initialiser=myInitialiers.myHeUniform) -> Model:
     # Step 1 (Setup Input Layer)
     x_input = tf.keras.layers.Input(shape)
     #x = layers.ZeroPadding2D((3, 3))(x_input)
@@ -249,3 +250,17 @@ def DRAN(shape = (102, 102, 3), classes = 2, initialiser=myInitialiers.myHeUnifo
     
     model = tf.keras.models.Model(inputs = x_input, outputs = x, name = "dran")
     return model
+
+def save_default_model():
+    model = DRAN()
+    model.compile(optimizer=keras.optimizers.Adam(),
+                            loss="sparse_categorical_crossentropy",
+                            metrics=[UpdatedMeanIoU(num_classes=2),])
+    model_config = model.to_json()
+    with open("data/models/default_DRAN.json", "w") as f:
+        f.write(model_config)
+    
+
+
+if __name__ == "__main__":
+    save_default_model()
