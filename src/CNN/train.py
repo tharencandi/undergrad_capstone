@@ -6,7 +6,7 @@ from keras import layers
 #import matplotlib.pyplot as plt
 import numpy as np
 import cv2 as cv
-import cnn_model
+from cnn_model import * 
 import os
 from augmentation import augment
 from mpl_toolkits.mplot3d import Axes3D  
@@ -18,7 +18,7 @@ IMG_SIZE = (102, 102)
 LBL_SIZE = (54, 54)
 EPOCHS = 70
 BATCH_SIZE = 32
-WEIGHT_INIT = cnn_model.myInitialiers.myHeUniform
+WEIGHT_INIT = myInitialiers.myHeUniform
 
 
 class functions(Enum):
@@ -45,11 +45,11 @@ def save_weights(model, epochs, batch_size, is_preactive, init):
     )
 
 def hyper_model_builder(hp):
-    model = cnn_model.DRAN()
+    model = DRAN()
     hp_learning_rate = hp.Choice('learning_rate', values=[1e-2, 1e-3, 1e-4])
     model.compile(optimizer=keras.optimizers.Adam(learning_rate=hp_learning_rate),
                                 loss="sparse_categorical_crossentropy",
-                                metrics=[cnn_model.UpdatedMeanIoU(num_classes=2),])
+                                metrics=[UpdatedMeanIoU(num_classes=2),])
     return model
 
 def hyperband(train, val):
@@ -86,11 +86,11 @@ def grid_search(epochs, batch_sizes, train_set, val_set, test_set, save=False):
             print("best_perfomance so far: ", best_perfomance)
             print("best_para so far: ", best_para)
             print("batch size: {}, epochs: {}".format(b, e))
-            model = cnn_model.DRAN()
+            model = DRAN()
 
             model.compile(optimizer=keras.optimizers.Adam(),
                                 loss="sparse_categorical_crossentropy",
-                                metrics=[cnn_model.UpdatedMeanIoU(num_classes=2),])
+                                metrics=[UpdatedMeanIoU(num_classes=2),])
 
             model_history = model.fit (
                 train_set, 
@@ -100,7 +100,7 @@ def grid_search(epochs, batch_sizes, train_set, val_set, test_set, save=False):
             )
             
             if save:
-                save_weights(model, e, b, cnn_model.PREACTIVE, WEIGHT_INIT)
+                save_weights(model, e, b, PREACTIVE, WEIGHT_INIT)
 
             result = model.evaluate(test_set)
             mean_iou = result[1]
@@ -118,11 +118,11 @@ def single_train(train, val, test):
     val = val.batch(BATCH_SIZE)
     test = test.batch(BATCH_SIZE)
 
-    model = cnn_model.DRAN()
+    model = DRAN()
     model.compile (
         optimizer=keras.optimizers.Adam(learning_rate=1e-4),
         loss="sparse_categorical_crossentropy",
-        metrics=[cnn_model.UpdatedMeanIoU(num_classes=2),]
+        metrics=[UpdatedMeanIoU(num_classes=2),]
     )
     stop_early = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=5)
     print("commencing training...")
@@ -134,7 +134,7 @@ def single_train(train, val, test):
     print(f"test set evaluation {result}")
 
     print("saving weights")
-    save_weights(model, EPOCHS, BATCH_SIZE, cnn_model.PREACTIVE, WEIGHT_INIT.name)
+    save_weights(model, EPOCHS, BATCH_SIZE, PREACTIVE, WEIGHT_INIT.name)
 
 
 def make_graph(log):
@@ -200,7 +200,7 @@ def load_dataset(percentage_split):
     print("validation images", len(v_imgs), v_imgs.shape)
     print("validation masks", len(v_masks), v_masks.shape)
 
-    imgs,masks,weights = cnn_model.add_sample_weights(imgs,masks,[BG_CLASS_WEIGHT,CELL_CLASS_WEIGHT])
+    imgs,masks,weights = add_sample_weights(imgs,masks,[BG_CLASS_WEIGHT,CELL_CLASS_WEIGHT])
 
     train_dataset = tf.data.Dataset.from_tensor_slices((imgs, masks, weights))
     train_dataset = train_dataset.shuffle(len(imgs))
@@ -243,11 +243,9 @@ def loss_plot(history):
     plt.legend(['train', 'val'], loc='upper left')
     plt.show()
 
-if __name__ == "__main__":
 
-
+def main():
     train, val, test = load_dataset(0.5)
-
 
     if FUNC == functions.SINGLE_TRAIN:
         single_train(train, val, test)
@@ -256,6 +254,10 @@ if __name__ == "__main__":
         res = grid_search([30,40,50,60,70], [8,16,32,40], train, val, test, True)
     elif FUNC == functions.HYPERBAND:
         hyperband(train, val)
+
+
+if __name__ == "__main__":
+    main()
 
 
 

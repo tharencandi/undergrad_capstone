@@ -4,9 +4,9 @@ import numpy as np
 import tensorflow as tf
 import random
 from skimage.util.shape import view_as_windows 
-# import openslide as osl
-
-
+import sys
+import os
+from os import path
 TRAIN_LOCATION = "data/training/"
 VAL_LOCATION = "data/validation/"
 
@@ -231,23 +231,49 @@ def gen_NBD_and_SN(data, location_NBD, location_SN):
 
 
 """
-    preserves image aspect ratio
+    dataset creation command line tool
+    TO DO: add prediction
+
 """
-def create_grid(svs_file,location, zoom):
-    slide = osl.OpenSlide(svs_file)
-    size = (int(slide.properties["aperio.OriginalHeight"]), int(slide.properties["aperio.OriginalWidth"]))
-    region_size = (size[0]//zoom, size[1]//zoom)
-    r = 0
-    c = 0
-    for i in range(zoom):
-        c = 0
-        for j in range(zoom):
+def main():
+    if len(sys.argv) > 3:
 
-            img = slide.read_region((i*region_size[1], j*region_size[0] ), 0, region_size )
-            cv_image = np.array(img) 
-            cv.imwrite(f"{location}/tile_{i}_{j}_keep.png", cv_image)
-            c+= 1
-        r += 1 
+        function = sys.argv[1] #train or test
+        dataset_type = sys.argv[2] 
+        folder = sys.argv[3].strip()
+        if (folder[-1] != '/'):
+            folder += "/"
+        if not path.exists(folder):
+            os.mkdir(folder)
 
-    slide.close()
-    return (r,c)
+        if dataset_type.lower() == "nbl":
+
+            imgs, lbls, comp_labels, v_imgs, v_lbls, v_comp_labels = load_dataset()
+            if function == "train":
+                gen_NBL((imgs, lbls), folder)
+            elif function == "test":
+                gen_NBL((v_imgs, v_lbls), folder)
+            else:
+                print("\nincorrect use.\npython3 dataset.py (train | test) (NBL | NBD_SN) relative_folder_location")
+        elif dataset_type.lower() == "nbd_sn":
+            imgs, lbls, comp_labels, v_imgs, v_lbls, v_comp_labels = load_dataset()
+           
+            if function == "train":
+                print("NBD_SN not accessible")
+                #dataset.gen_NBD_and_SN((imgs, lbls, comp_labels), folder)
+            elif function == "test":
+                print("NBD_SN not accessible")
+                #dataset.gen_NBD_and_SN((v_imgs, v_lbls, v_comp_labels), folder)
+            else:
+                print("\nincorrect use.\npython3 dataset.py (train | test) (NBL | NBD_SN) relative_folder_location")
+        else:
+            print("\ndataset not found. specify NBL or NBD_SN.")
+        
+
+    else:
+        print("\nincorrect use.\npython3 dataset.py (train | test) (NBL | NBD_SN) relative_folder_location")
+
+
+
+if __name__ == "__main__":
+   sys.exit(main())

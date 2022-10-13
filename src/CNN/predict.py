@@ -12,7 +12,7 @@ import json
 from yaml import safe_load
 #import src.tile_crop.tile_crop_main
 from tile_crop.tile_crop_main import single_image_to_folder_of_tiles as tile_image
-from client import upload
+from client import upload 
 from multiprocessing import Process
 #from bin_transcoder import encode_binary
 IMG_SIZE = (102, 102)
@@ -181,7 +181,7 @@ def construct_whole_mask(num_tiles, in_loc, out_loc, out_name):
     return f"{out_loc}/{out_name}"
 
 
-def predict_slide(svs_id, svs_file, tmp_dir, masks_dir):
+def predict_slide(svs_id, svs_file_name, svs_dir, tmp_dir, masks_dir):
     """
     produces svs_id.mask in masks_dir.
     used to predict WSI masks.
@@ -200,8 +200,7 @@ def predict_slide(svs_id, svs_file, tmp_dir, masks_dir):
     TILE_JSON = "meta.json"
     json_file_path = f"{tmp_dir}/{TILE_JSON}"
 
-    svs_file_name = svs_file[len(p_conf[file_management.SVS_DIR])+1:]
-    
+    svs_file_path = f"{svs_dir}/{svs_file_name}"
 
     #init
     if os.path.exists(json_file_path):
@@ -214,14 +213,14 @@ def predict_slide(svs_id, svs_file, tmp_dir, masks_dir):
         if (num_tiles[0] * num_tiles[1]) != len(tile_ls) or j_dict["svs_image"] != svs_id:
             print("json exists but tiles not found, retiling.")
             #num_tiles = tile_slide(svs_file, ZOOM, tmp_dir)
-            num_tiles =  tile_image(image_path = svs_file, save_dir=tmp_dir)[1]
+            num_tiles =  tile_image(image_path = svs_file_path, save_dir=tmp_dir)[1]
             j_dict = {"svs_image": svs_id, "num_tiles": num_tiles, "current_tile": (1,1)}
             #num_tiles = dataset.create_grid(svs_file, tmp_dir, ZOOM)
          
     else:
         print("tiling current svs.")
         #num_tiles  = tile_slide(svs_file, ZOOM, tmp_dir)
-        num_tiles =  tile_image(image_path = svs_file, save_dir=tmp_dir)[1]
+        num_tiles =  tile_image(image_path = svs_file_path, save_dir=tmp_dir)[1]
         j_dict = {"svs_image": svs_id, "num_tiles": num_tiles, "current_tile": (1,1)}
        
     current_tile = j_dict["current_tile"]
@@ -269,7 +268,7 @@ def predict_slide(svs_id, svs_file, tmp_dir, masks_dir):
 
     return mask_loc
     
-def predict_manifest():
+def predict_manifest(p_conf: dict):
     """
         attempts to predict all svs files from manifest_in in yaml config. 
         searches for the first svs in manifest that has not been predicted
@@ -281,6 +280,15 @@ def predict_manifest():
         Download script assumed to be using the same manifest_in, and therefore has the same 
         download/processing order. 
     """
+
+    svs_manager = file_management.svs_management(p_conf)
+
+    try:
+        file_management.check_manifest(p_conf[file_management.MANIFEST_IN])
+    except Exception as err:
+        print(str(err))
+        exit(os.EX_CONFIG)
+
     current_svs = svs_manager.get_new_svs()
     print(f"checking if svs with id {current_svs} is downloaded.")
     while current_svs != None:
@@ -289,11 +297,14 @@ def predict_manifest():
         
         print(f"processing svs with id {current_svs}.")
 
-        svs_file = svs_manager.find_file_from_id(current_svs)
+        svs_file_name = svs_manager.find_file_from_id(current_svs)
+        svs_dir = p_conf[file_management.SVS_DIR]
+   
         
         mask_file = predict_slide(
             current_svs,
-            f"{p_conf[file_management.SVS_DIR]}/{svs_file}", 
+            svs_file_name,
+            svs_dir,
             p_conf[file_management.TMP_DIR], 
             p_conf[file_management.MASK_DIR]
         )
@@ -302,7 +313,7 @@ def predict_manifest():
             print("error predicting mask. Re-processing image.")
             continue
 
-        svs_manager.append_manifest_out(current_svs, svs_file, f"{current_svs}.mask")
+        svs_manager.append_manifest_out(current_svs, svs_file_name, f"{current_svs}.mask")
 
         print(f"Processing complete. Deleting svs with id {current_svs}")
 
@@ -310,20 +321,20 @@ def predict_manifest():
 
         print("forking process to upload mask to DB server.")
 
-        p = Process(target=uploader_wrapper, args=(current_svs, mask_file))
+        p = Process(target=uploader_wrapper, args=(current_svs, mask_file, svs_manager))
 
         current_svs = svs_manager.get_new_svs()
 
 
-def uploader_wrapper(svs_uid, mask_file_path):
+def uploader_wrapper(svs_uid, mask_file_path, svs_manager):
+    uploader = upload.MaskUploader("username", "password")
     ret = uploader.upload_mask(upload.GBM, svs_uid, mask_file_path)
     if ret not in [upload.MASK_ALREADY_UPLOADED,upload.MASK_UPLOAD_SUCCESS]:
         svs_manager.upload_log(svs_uid, ret)
 
 
 
-ARGS_LEN = 1
-if __name__ == "__main__":
+def main():
     #get config
     if len(sys.argv) < ARGS_LEN + 1:
         err_msg = """
@@ -334,7 +345,6 @@ if __name__ == "__main__":
         exit(os.EX_USAGE)
 
     p_config_file = sys.argv[1].strip()
-    uploader = upload.MaskUploader("username", "password")
     
     if not os.path.exists(p_config_file or not os.path.isfile(p_config_file)):
         raise FileNotFoundError("predict config file does not exists.")
@@ -348,15 +358,15 @@ if __name__ == "__main__":
         print(str(err))
         exit(os.EX_CONFIG)
 
-    svs_manager = file_management.svs_management(p_conf)
 
-    try:
-        file_management.check_manifest(p_conf[file_management.MANIFEST_IN])
-    except Exception as err:
-        print(str(err))
-        exit(os.EX_CONFIG)
+    predict_manifest(p_conf)
 
-    predict_manifest()
+
+
+ARGS_LEN = 1
+if __name__ == "__main__":
+    sys.exit(main())
+    
 
 
 

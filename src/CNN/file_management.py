@@ -1,10 +1,5 @@
-
-from genericpath import isfile
 import os
-#PATH = "data/meta/"
 
-#MAN_IN_LOC = PATH + "manifest.in"
-#MAN_OUT_LOC = PATH + "manifest.out"
 class MANIFEST_FORMAT_EXCEPTION(Exception):
     DEFAULT_MSG = "data in manifest file is the incorrect format"
     def __init__(self, message):
