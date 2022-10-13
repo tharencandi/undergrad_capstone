@@ -3,7 +3,7 @@ api
 
 
 GET /all
-Get all scans
+Get all scans, returns as python list
 Return:
 	{
 		id: "asd.png"
@@ -11,40 +11,73 @@ Return:
 		creation_date: "01/04/2020"
 	}, ...
 
+done:
+	id, ext, creation date
+todo:
+	status
+	testing
+
 ----------------------------------------------
 
 GET /scan
-Get specificed scan and extension
+Get specificed scans and extensions for download in zip file
 Params:
-	id: string
-	extension: string {"svs", "png", "tiff"}
+	ids: string seperated by comma
+	extension: string seperated by comma {"svs", "png", "tiff"}
+Example:
+	ids: "asd,asd,qwe"
+	extension: "svs,png,tiff"
 Return:
-	file: asd.png
-	id.meta: asd.meta
+	file: "multiple_files.zip"
+
+done:
+	multiple files
+	zipped
+todo:
+	error checks/handling
+	delete "multiple_files.zip" from directory after request
+	change status of files 
+	testing
+
 
 ----------------------------------------------
 
 POST /scan
-upload a new scan
+upload a new scan to database
 Params:
-	extenstion: string {"svs", "png", "tiff"}
 	file: file
 Return:
-	id: "asd.png"
-	file_name: "asd"
-	meta: asd.meta
+	"DONE"
+
+done:
+	upload into correct directories
+todo:
+	multiple files
+	status
+	some error checks/handling
+	testing
 
 -----------------------------------------------
 
-DELETE /scan/<id>/<extension>
-delete scan with id <id>
+DELETE /scan/
+delete scan with id <ids>
 Params:
-	id: string
+	ids: string
 	extenstion: string {"svs", "png", "tiff"}
 Return:
-	id: "asd.png"
-	extension: "png"
+	"DONE"
 
+done:
+	deletes properly
+todo:
+	multiple deletes (will be similar format with download)
+	some error checks/handling
+	status
+	testing
+
+
+-----------------------------------------------
+below not done
 -----------------------------------------------
 
 UPDATE /scan/<id>
