@@ -45,8 +45,10 @@ def save_weights(model, epochs, batch_size, is_preactive, init):
     )
 
 def hyper_model_builder(hp):
-    model = DRAN()
+   
     hp_learning_rate = hp.Choice('learning_rate', values=[1e-2, 1e-3, 1e-4])
+    hp_weight_init = hp.Choice('inititial_weights', values=[myInitialiers.myHeNormal.value, myInitialiers.myHeUniform.value])
+    model = DRAN(initialiser=myInitialiers(hp_weight_init))
     model.compile(optimizer=keras.optimizers.Adam(learning_rate=hp_learning_rate),
                                 loss="sparse_categorical_crossentropy",
                                 metrics=[UpdatedMeanIoU(num_classes=2),])
