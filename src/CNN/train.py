@@ -1,3 +1,4 @@
+from distutils.log import Log
 from gc import callbacks
 import tensorflow as tf
 from tensorflow import keras
@@ -19,7 +20,7 @@ LBL_SIZE = (54, 54)
 EPOCHS = 70
 BATCH_SIZE = 32
 WEIGHT_INIT = myInitialiers.myHeUniform
-
+LEARNING_RATE = 1e-2
 
 class functions(Enum):
     SINGLE_TRAIN = 1
@@ -27,21 +28,38 @@ class functions(Enum):
     HYPERBAND = 3
 
 
-FUNC = functions.HYPERBAND
+FUNC = functions.GRID_SEARCH
 
-MODEL_SAVE_LOCATION = "data/models/"
+MODEL_SAVE_LOCATION = "data/models"
 MODEL_FILE_NAME = "test_model.model"
 TRAIN_LOCATION = "data/NBL"
 TEST_LOCATION = "data/NBL_TEST"
 CELL_CLASS_WEIGHT = 1
 BG_CLASS_WEIGHT = 1
-LOG_FILE = "data/models/log.txt"
+LOG_DIR = "data/models/log"
 
+
+
+if not os.path.exists(LOG_DIR):
+    try: 
+        os.mkdir(LOG_DIR)
+    except FileExistsError:
+        print(f"error creating {LOG_DIR} parent folder does not exist.")
+        exit(0)
+if not os.path.exists(TRAIN_LOCATION):
+    print("train path does not exist.")
+    exit(1)
+if not os.path.exists(TRAIN_LOCATION):
+    print("train path does not exist.")
+    exit(1)
+if not os.path.exists(MODEL_SAVE_LOCATION):
+	print(f"creating {MODEL_SAVE_LOCATION}")
+	os.mkdir(MODEL_SAVE_LOCATION)
 
 def save_weights(model, epochs, batch_size, is_preactive, init):
     model.save_weights (
         MODEL_SAVE_LOCATION + 
-        f"b{batch_size}_e{epochs}_pre{is_preactive}_w{init}.h5"
+        f"b/{batch_size}_e{epochs}_pre{is_preactive}_w{init}_le{LEARNING_RATE}.h5"
     )
 
 def hyper_model_builder(hp):
@@ -81,24 +99,35 @@ def hyperband(train, val):
 def grid_search(epochs, batch_sizes, train_set, val_set, test_set, save=False, evaluate_on_every_epoch=False):
     best_perfomance = 0
     best_para = (None, None)
-    log = []
+    log = "b,e,result\n"
     dic_model_history = {}
     for b in batch_sizes:
+        train = train_set.batch(b)
+        va  = val_set.batch(b)
+        test = test_set.batch(b)
+
+        
+
+        """  my_callbacks = [
+            tf.keras.callbacks.ModelCheckpoint(filepath=LOG_DIR+'/model.{epoch:02d}-{val_loss:.2f}.h5',  save_weights_only=True),
+            tf.keras.callbacks.TensorBoard(log_dir=LOG_DIR),
+        ]"""
+
         for e in epochs:
             print("log: ", log)
             print("best_perfomance so far: ", best_perfomance)
             print("best_para so far: ", best_para)
             print("batch size: {}, epochs: {}".format(b, e))
-            model = DRAN()
-
-            model.compile(optimizer=keras.optimizers.Adam(),
-                                loss="sparse_categorical_crossentropy",
-                                metrics=[UpdatedMeanIoU(num_classes=2),])
+           
+            model = DRAN(initialiser=WEIGHT_INIT)
+            model.compile(optimizer=keras.optimizers.Adam(learning_rate=LEARNING_RATE),
+                            loss="sparse_categorical_crossentropy",
+                            metrics=[UpdatedMeanIoU(num_classes=2),])
 
             model_history = model.fit (
-                train_set, 
-                batch_size=b, epochs=e, 
-                validation_data=val_set, 
+                train, 
+                epochs=e, 
+                validation_data=va, 
                 shuffle=True
             )
             
@@ -110,10 +139,11 @@ def grid_search(epochs, batch_sizes, train_set, val_set, test_set, save=False, e
                     val_updated_mean_io_u = val
             dic_model_history["b{}e{}".format(b, e)] = model_history
 
-            result = model.evaluate(test_set)
+            result = model.evaluate(test)
             mean_iou = result[1]
             print("batch size: {}, epochs: {}, mean iou: {}".format(b, e, mean_iou))
-            log.append((b,e,result,model_history.history))
+            log += "{b},{e},{result}\n"
+            #log.append((b,e,result,model_history.history))
 
             if evaluate_on_every_epoch:
                 best_same_batch = max(val_updated_mean_io_u)
@@ -135,9 +165,9 @@ def single_train(train, val, test):
     val = val.batch(BATCH_SIZE)
     test = test.batch(BATCH_SIZE)
 
-    model = DRAN()
+    model = DRAN(initialiser=WEIGHT_INIT)
     model.compile (
-        optimizer=keras.optimizers.Adam(learning_rate=1e-4),
+        optimizer=keras.optimizers.Adam(learning_rate=LEARNING_RATE),
         loss="sparse_categorical_crossentropy",
         metrics=[UpdatedMeanIoU(num_classes=2),]
     )
@@ -166,15 +196,7 @@ def make_graph(log):
     plt.show()
 
 
-if not os.path.exists(TRAIN_LOCATION):
-    print("train path does not exist.")
-    exit(1)
-if not os.path.exists(TRAIN_LOCATION):
-    print("train path does not exist.")
-    exit(1)
-if not os.path.exists(MODEL_SAVE_LOCATION):
-	print(f"creating {MODEL_SAVE_LOCATION}")
-	os.mkdir(MODEL_SAVE_LOCATION)
+
 
 
 def load_dataset(percentage_split):
@@ -222,7 +244,7 @@ def load_dataset(percentage_split):
     train_dataset = tf.data.Dataset.from_tensor_slices((imgs, masks, weights))
     train_dataset = train_dataset.shuffle(len(imgs))
     val_and_test_dataset = tf.data.Dataset.from_tensor_slices((v_imgs, v_masks))
-    val__and_test_dataset = val_and_test_dataset.shuffle(len(v_imgs))
+    val_and_test_dataset = val_and_test_dataset.shuffle(len(v_imgs))
 
     if percentage_split != 0:
         split = int(percentage_split * (len(v_imgs) / BATCH_SIZE))
@@ -236,36 +258,52 @@ def load_dataset(percentage_split):
 
     return train_dataset, val_dataset, test_dataset
 
-def accuracy_plot(history,title):
-    """
-    history: History object generated by .fit()
-    """
-    for k,v in history.history.items(): 
-        if k.startswith('updated_mean_io_u'):
-            updated_mean_io_u = v
-    for k,v in history.history.items(): 
-        if k.startswith('val_updated_mean_io_u'):
-            val_updated_mean_io_u = v
-    plt.plot(updated_mean_io_u)
-    plt.plot(val_updated_mean_io_u)
-    plt.title(title)
-    plt.ylabel('updated_mean_io_u')
-    plt.xlabel('epoch')
-    plt.legend(['train', 'val'], loc='upper left')
-    plt.show()
+def accuracy_plot(history,title, save=False, show=True):
+        """
+        history: History object generated by .fit()
+        """
+        for k,v in history.history.items(): 
+            if k.startswith('updated_mean_io_u'):
+                updated_mean_io_u = v
+        for k,v in history.history.items(): 
+            if k.startswith('val_updated_mean_io_u'):
+                val_updated_mean_io_u = v
+        plt.plot(updated_mean_io_u)
+        plt.plot(val_updated_mean_io_u)
+        plt.title(title)
+        plt.ylabel('updated_mean_io_u')
+        plt.xlabel('epoch')
+        plt.legend(['train', 'val'], loc='upper left')
+        if show:
+            plt.show()
+        if save:
+            plt.savefig(f"{LOG_DIR}/{title}")
 
-def loss_plot(history):
+
+def loss_plot(history, title, save=False, show=True):
     """
     history: History object generated by .fit()
     """
     plt.plot(history.history['loss'])
     plt.plot(history.history['val_loss'])
-    plt.title('model loss')
+    plt.title(title)
     plt.ylabel('loss')
     plt.xlabel('epoch')
     plt.legend(['train', 'val'], loc='upper left')
-    plt.show()
+    if show:
+        plt.show()
+    if save:
+        plt.savefig(f"{LOG_DIR}/{title}")
+def gen_plots_for_histories(hist_dict):
 
+    
+
+    for key in hist_dict:
+        base_title = f"{key}_pre{PREACTIVE}_w{WEIGHT_INIT.name}_lr{LEARNING_RATE}"
+        acc_title = base_title + "_ACC.png"
+        loss_title = base_title + "_LOSS.png"
+        accuracy_plot(hist_dict[key], acc_title, save=True, show=False)
+        loss_plot(hist_dict[key], loss_title, save=True, show=False)
 
 def main():
 
@@ -282,7 +320,12 @@ def main():
         single_train(train, val, test)
     elif FUNC == functions.GRID_SEARCH: 
         print("performing grid search...")
-        res = grid_search([30,40,50,60,70], [8,16,32,40], train, val, test, True)
+        best, log, hist_dict = grid_search([70], [8,16,32,40], train, val, test, save=False, evaluate_on_every_epoch=True)
+        gen_plots_for_histories(hist_dict=hist_dict)
+        base = f"{key}_pre{PREACTIVE}_w{WEIGHT_INIT.name}_lr{LEARNING_RATE}"
+        for key in hist_dict:
+            with open(f"{LOG_DIR}/{base}.log", "w") as log_file:
+                log_file.write(hist_dict[key])
     elif FUNC == functions.HYPERBAND:
         hyperband(train, val)
 
