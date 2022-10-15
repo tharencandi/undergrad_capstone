@@ -164,8 +164,8 @@ def get_tile_image_path_name(tile, directory):
   # tile_path = os.path.join(directory, "r%d-c%d" % (
   #                           t.r, t.c) + "." + DEST_TRAIN_EXT)
 
-  tile_path = os.path.join(directory, "r%d-c%d-tp%d" % (
-                            t.r, t.c, t.tissue_percentage) + "." + DEST_TRAIN_EXT)
+  tile_path = os.path.join(directory, "r%d-c%d" % (
+                            t.r, t.c) + "." + DEST_TRAIN_EXT)
   return tile_path
 
 
