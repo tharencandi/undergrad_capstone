@@ -593,3 +593,43 @@ def save_filtered_image_name(np_img, image_name, filter_num, filter_text):
   # slide.save_thumbnail(pil_img, slide.THUMBNAIL_SIZE, thumbnail_filepath)
   # print("%-20s | Time: %-14s  Name: %s" % ("Save Thumbnail", str(t1.elapsed()), thumbnail_filepath))
 
+def filter_rgb_to_hed(np_img, output_type="uint8"):
+  """
+  Filter RGB channels to HED (Hematoxylin - Eosin - Diaminobenzidine) channels.
+
+  Args:
+    np_img: RGB image as a NumPy array.
+    output_type: Type of array to return (float or uint8).
+
+  Returns:
+    NumPy array (float or uint8) with HED channels.
+  """
+  t = Time()
+  hed = sk_color.rgb2hed(np_img)
+  if output_type == "float":
+    hed = sk_exposure.rescale_intensity(hed, out_range=(0.0, 1.0))
+  else:
+    hed = (sk_exposure.rescale_intensity(hed, out_range=(0, 255))).astype("uint8")
+
+  util.np_info(hed, "RGB to HED", t.elapsed())
+  return hed
+
+
+def filter_rgb_to_hsv(np_img, display_np_info=True):
+  """
+  Filter RGB channels to HSV (Hue, Saturation, Value).
+
+  Args:
+    np_img: RGB image as a NumPy array.
+    display_np_info: If True, display NumPy array info and filter time.
+
+  Returns:
+    Image as NumPy array in HSV representation.
+  """
+
+  if display_np_info:
+    t = Time()
+  hsv = sk_color.rgb2hsv(np_img)
+  if display_np_info:
+    util.np_info(hsv, "RGB to HSV", t.elapsed())
+  return hsv
