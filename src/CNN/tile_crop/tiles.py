@@ -926,24 +926,35 @@ class TileSummary:
     """
     summary_and_tiles(self.slide_num, display=True, save_summary=False, save_data=False, save_top_tiles=False)
 
-def save_tile_summary_image_name(pil_img, image_name):
+
+def save_display_tile_threshold_name(tile, save=True, display=False, keep=True, directory = ""):
   """
-  Save a tile summary image and thumbnail to the file system.
+  Save and/or display a tile image.
 
   Args:
-    pil_img: Image as a PIL Image.
-    slide_num: The slide number.
+    tile: Tile object.
+    save: If True, save tile image.
+    display: If True, dispaly tile image.
   """
-  t = Time()
-  filepath = slide.get_tile_summary_image_path_name(image_name)
-  pil_img.save(filepath)
-  print("%-20s | Time: %-14s  Name: %s" % ("Save Tile Sum", str(t.elapsed()), filepath))
+  tile_pil_img = tile_to_pil_tile(tile)
 
-  # t = Time()
-  # thumbnail_filepath = slide.get_tile_summary_thumbnail_path(slide_num)
-  # slide.save_thumbnail(pil_img, slide.THUMBNAIL_SIZE, thumbnail_filepath)
-  # print("%-20s | Time: %-14s  Name: %s" % ("Save Tile Sum Thumb", str(t.elapsed()), thumbnail_filepath))
 
+
+  if save:
+    t = Time()
+    img_path = slide.get_tile_image_path_name(tile, directory)
+    if keep:
+        img_path = img_path.rstrip(".png") + "_keep.png"
+    else:
+        img_path = img_path.rstrip(".png") + "_delete.png"
+    dir = os.path.dirname(img_path)
+    if not os.path.exists(dir):
+      os.makedirs(dir)
+    tile_pil_img.save(img_path)
+    print("%-20s | Time: %-14s  Name: %s" % ("Save Tile", str(t.elapsed()), img_path))
+
+  if display:
+    tile_pil_img.show()
 class Tile:
   """
   Class for information about a tile.
