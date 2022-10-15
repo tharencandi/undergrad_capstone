@@ -17,9 +17,9 @@ import keras_tuner as kt
 
 IMG_SIZE = (102, 102)
 LBL_SIZE = (54, 54)
-EPOCHS = 70
-BATCH_SIZE = 32
-WEIGHT_INIT = myInitialiers.myHeUniform
+EPOCHS = 100
+BATCH_SIZE = 16
+WEIGHT_INIT = myInitialiers.myHeNormal
 LEARNING_RATE = 1e-2
 
 class functions(Enum):
@@ -28,7 +28,7 @@ class functions(Enum):
     HYPERBAND = 3
 
 
-FUNC = functions.GRID_SEARCH
+FUNC = functions.SINGLE_TRAIN
 
 MODEL_SAVE_LOCATION = "data/models"
 MODEL_FILE_NAME = "test_model.model"
@@ -59,7 +59,7 @@ if not os.path.exists(MODEL_SAVE_LOCATION):
 def save_weights(model, epochs, batch_size, is_preactive, init):
     model.save_weights (
         MODEL_SAVE_LOCATION + 
-        f"b/{batch_size}_e{epochs}_pre{is_preactive}_w{init}_le{LEARNING_RATE}.h5"
+        f"/b_{batch_size}_e{epochs}_pre{is_preactive}_w{init}_le{LEARNING_RATE}.h5"
     )
 
 def hyper_model_builder(hp):
@@ -142,7 +142,7 @@ def grid_search(epochs, batch_sizes, train_set, val_set, test_set, save=False, e
             result = model.evaluate(test)
             mean_iou = result[1]
             print("batch size: {}, epochs: {}, mean iou: {}".format(b, e, mean_iou))
-            log += "{b},{e},{result}\n"
+            log += f"{b},{e},{result}\n"
             #log.append((b,e,result,model_history.history))
 
             if evaluate_on_every_epoch:
@@ -171,17 +171,25 @@ def single_train(train, val, test):
         loss="sparse_categorical_crossentropy",
         metrics=[UpdatedMeanIoU(num_classes=2),]
     )
-    stop_early = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=5)
+
+    tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=LOG_DIR)
+    reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(monitor='val_loss', factor=0.1,
+                              patience=5, min_lr=0.00001)
+
+    stop_early = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=20, restore_best_weights=True, verbose=1)
     print("commencing training...")
     model_history = model.fit (
-        train, epochs=EPOCHS, validation_data=val, shuffle=True, callbacks=[stop_early]
-    )
-
+        train, epochs=EPOCHS, validation_data=val, shuffle=True, callbacks=[stop_early, reduce_lr, tensorboard_callback])
+    
+    
     result = model.evaluate(test)
     print(f"test set evaluation {result}")
 
     print("saving weights")
     save_weights(model, EPOCHS, BATCH_SIZE, PREACTIVE, WEIGHT_INIT.name)
+
+    with open(LOG_DIR + "/latest_log.txt", "w") as l:
+        l.write(str(model_history.history))
 
 
 def make_graph(log):
@@ -320,8 +328,8 @@ def main():
         print("performing grid search...")
         best, log, hist_dict = grid_search([70], [8,16,32,40], train, val, test, save=False, evaluate_on_every_epoch=True)
         gen_plots_for_histories(hist_dict=hist_dict)
-        base = f"{key}_pre{PREACTIVE}_w{WEIGHT_INIT.name}_lr{LEARNING_RATE}"
         for key in hist_dict:
+            base = f"{key}_pre{PREACTIVE}_w{WEIGHT_INIT.name}_lr{LEARNING_RATE}"
             with open(f"{LOG_DIR}/{base}.log", "w") as log_file:
                 log_file.write(hist_dict[key])
     elif FUNC == functions.HYPERBAND:

@@ -8,7 +8,7 @@ import cnn_model as cnn_model
 import file_management as file_management
 import dataset as dataset
 import math
-
+import json
 from yaml import safe_load
 #import src.tile_crop.tile_crop_main
 from tile_crop.tile_crop_main import single_image_to_folder_of_tiles as tile_image
@@ -17,7 +17,7 @@ from multiprocessing import Process
 #from bin_transcoder import encode_binary
 IMG_SIZE = (102, 102)
 MODEL = 'data/models/default_DRAN.json'
-WEIGHTS = 'data/models/b16_e50_pre_blackaug.h5'
+WEIGHTS = 'data/models/b_16_e100_preTrue_wmyHeNormal_le0.01.h5'
 TILE_MASK_NAME_F = "{}_{}.png"
 model_config = ""
 with open(MODEL, "r") as f:
