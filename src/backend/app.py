@@ -116,6 +116,15 @@ def upload():
     # create file
     file.save(file_path)
 
+    f = open("{}/{}.meta".format(dir_path,id), "w")
+
+    now = datetime.now()
+    f.write(now.strftime("%d/%m/%Y %H:%M:%S"))
+
+    f.close()
+
+
+
     return jsonify("DONE")
 
 # delete scan
