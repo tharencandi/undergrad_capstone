@@ -926,7 +926,23 @@ class TileSummary:
     """
     summary_and_tiles(self.slide_num, display=True, save_summary=False, save_data=False, save_top_tiles=False)
 
+def save_tile_summary_image_name(pil_img, image_name):
+  """
+  Save a tile summary image and thumbnail to the file system.
 
+  Args:
+    pil_img: Image as a PIL Image.
+    slide_num: The slide number.
+  """
+  t = Time()
+  filepath = slide.get_tile_summary_image_path_name(image_name)
+  pil_img.save(filepath)
+  print("%-20s | Time: %-14s  Name: %s" % ("Save Tile Sum", str(t.elapsed()), filepath))
+
+  # t = Time()
+  # thumbnail_filepath = slide.get_tile_summary_thumbnail_path(slide_num)
+  # slide.save_thumbnail(pil_img, slide.THUMBNAIL_SIZE, thumbnail_filepath)
+  # print("%-20s | Time: %-14s  Name: %s" % ("Save Tile Sum Thumb", str(t.elapsed()), thumbnail_filepath))
 
 class Tile:
   """
