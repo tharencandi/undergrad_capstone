@@ -155,3 +155,20 @@ plt.xlabel('Epochs')
 plt.ylabel('Loss')
 plt.legend()
 plt.show()
+
+acc = history1.history['iou_score']
+val_acc = history1.history['val_iou_score']
+
+plt.plot(epochs, acc, 'y', label='Training IOU')
+plt.plot(epochs, val_acc, 'r', label='Validation IOU')
+plt.title('Training and validation IOU')
+plt.xlabel('Epochs')
+plt.ylabel('IOU')
+plt.legend()
+plt.show()
+
+from tensorflow.keras.models import load_model
+
+#Set compile=False as we are not loading it for training, only for prediction.
+model1 = load_model('saved_models/mito_res34_backbone_100epochs_with_border.hdf5', compile=False)
+
