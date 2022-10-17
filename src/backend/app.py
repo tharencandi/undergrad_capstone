@@ -1,4 +1,6 @@
-from flask import Flask, request, jsonify, send_file
+from flask import Flask, request, jsonify, send_file, g
+import sqlite3
+from celery import Celery
 from os import listdir, mkdir, remove, rename
 from os.path import isfile, join, exists
 from datetime import datetime
@@ -8,16 +10,49 @@ import json
 import shutil
 # from conversion import svs_to_png, svs_to_tiff
 
-# placeholder for algo
-def generate_mask():
-    print("mask function")
-    return
+
 
 app = Flask(__name__)
+
+app.config['CELERY_BROKER_URL'] = 'redis://localhost:6379/0'
+app.config['CELERY_RESULT_BACKEND'] = 'redis://localhost:6379/0'
+
+celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'])
+celery.conf.update(app.config)
 
 # scan_path = "../../scans/"
 scan_path = "./scans/"
 valid_extensions = ["png", "svs", "tif"]
+
+DATABASE = '~/.glioblastoma_portal.db'
+
+def query_db(query, args=(), one=False):
+    cur = get_db().execute(query, args)
+    rv = cur.fetchall()
+    cur.close()
+    return (rv[0] if rv else None) if one else rv
+
+def get_db():
+    db = getattr(g, '_database', None)
+    if db is None:
+        db = g._database = sqlite3.connect(DATABASE)
+        db.row_factory = sqlite3.Row
+    return db
+
+@app.teardown_appcontext
+def close_connection(exception):
+    db = getattr(g, '_database', None)
+    if db is not None:
+        db.close()
+
+def init_db_if_not_exists():
+    with app.app_context():
+        db = get_db()
+        with app.open_resource('schema.sql', mode='r') as f:
+            db.cursor().executescript(f.read()) 
+        db.commit()
+ 
+init_db_if_not_exists()
 
 # home page
 @app.get('/')
@@ -272,12 +307,31 @@ def scan_rename():
     
 
 
-
+@celery.task(bind=True)
+def generate_mask(self, svs_fpath, mask_dest):
+    time.sleep(60)
+    return
 
 # run algo, generate mask
-@app.get('/scan/generate')
+@app.post('/scan/mask/generate')
 def generate():
-    generate_mask() #placeholder
+    target_svs = request.json["targets"]
+    
+    res = {
+        "tasks" : []
+    }
+
+    for target in target_svs:
+        task = generate_mask.delay(target, target + ".mask")
+        res["tasks"].append({
+            "target": target,
+            "task_id": None
+        })
+    
+    return jsonify(res)
+
+@app.get('/task/<task_id>/status')
+def taskstatus(task_id):
 
 
 
