@@ -74,3 +74,26 @@ n, h, w = train_masks.shape
 train_masks_reshaped = train_masks.reshape(-1,1)
 train_masks_reshaped_encoded = labelencoder.fit_transform(train_masks_reshaped)
 train_masks_encoded_original_shape = train_masks_reshaped_encoded.reshape(n, h, w)
+
+np.unique(train_masks_encoded_original_shape)
+
+train_masks_input = np.expand_dims(train_masks_encoded_original_shape, axis=3)
+
+#Create a subset of data for quick testing
+#Picking 20% for testing and remaining for training
+from sklearn.model_selection import train_test_split
+X_train, X_test, y_train, y_test = train_test_split(train_images, train_masks_input, test_size = 0.2, random_state = 0)
+
+print("Class values in the dataset are ... ", np.unique(y_train))  # 0 is the background/few unlabeled 
+
+from tensorflow.keras.utils import to_categorical
+train_masks_cat = to_categorical(y_train, num_classes=n_classes)
+y_train_cat = train_masks_cat.reshape((y_train.shape[0], y_train.shape[1], y_train.shape[2], n_classes))
+
+test_masks_cat = to_categorical(y_test, num_classes=n_classes)
+y_test_cat = test_masks_cat.reshape((y_test.shape[0], y_test.shape[1], y_test.shape[2], n_classes))
+
+print(y_train_cat.shape)
+print(y_test_cat.shape)
+
+
