@@ -1,0 +1,54 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap");
+
+@layer base {
+  html {
+    @apply font-general;
+    @apply text-body1;
+  }
+
+  .subtitle1 {
+    @apply text-subtitle1;
+  }
+
+  .subtitle2 {
+    @apply text-subtitle2;
+  }
+
+  p {
+    @apply text-body1;
+  }
+
+  .body1 {
+    @apply text-body1;
+  }
+
+  .body2 {
+    @apply text-body2;
+  }
+}
+
+@layer components {
+  .fileTable {
+    @apply w-full h-[80vh];
+  }
+
+  .fileTable .MuiDataGrid-columnHeaders {
+    @apply bg-secondary;
+  }
+
+  .fileTable .MuiDataGrid-columnHeaderTitle {
+    @apply text-subtitle2;
+  }
+
+  .fileTable .MuiDataGrid-cell {
+    @apply border-l-[1px] border-grey;
+  }
+
+  .filenameCell {
+    @apply flex w-full justify-between;
+  }
+}
