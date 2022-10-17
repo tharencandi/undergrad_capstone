@@ -185,3 +185,16 @@ test_img_input1 = preprocess_input1(test_img_input)
 test_pred1 = model1.predict(test_img_input1)
 test_prediction1 = np.argmax(test_pred1, axis=3)[0,:,:]
 
+
+plt.figure(figsize=(12, 8))
+plt.subplot(231)
+plt.title('Testing Image')
+plt.imshow(test_img[:,:,0], cmap='gray')
+plt.subplot(232)
+plt.title('Testing Label')
+plt.imshow(ground_truth[:,:,0], cmap='gray')
+plt.subplot(233)
+plt.title('Prediction on test image')
+plt.imshow(test_prediction1, cmap='gray')
+plt.show()
+
