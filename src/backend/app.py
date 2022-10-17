@@ -56,6 +56,7 @@ def all_scans():
 # download specified scan as extension as zipped file
 @app.get('/scan')
 def get_scan():
+    print("args: ", request.args)
     # TODO
     ids = request.args["ids"]
     ext = request.args["extension"]
