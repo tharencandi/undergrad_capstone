@@ -198,3 +198,4 @@ plt.title('Prediction on test image')
 plt.imshow(test_prediction1, cmap='gray')
 plt.show()
 
+
