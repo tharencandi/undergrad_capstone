@@ -128,3 +128,30 @@ model1 = sm.Unet(BACKBONE1, encoder_weights='imagenet', classes=n_classes, activ
 
 # compile keras model with defined optimozer, loss and metrics
 model1.compile(optim, total_loss, metrics=metrics)
+
+#model1.compile(optimizer='adam', loss='categorical_crossentropy', metrics=metrics)
+
+print(model1.summary())
+
+
+history1=model1.fit(X_train1, 
+          y_train_cat,
+          batch_size=8, 
+          epochs=5,
+          verbose=1,
+          validation_data=(X_test1, y_test_cat))
+
+
+model1.save('saved_models/mito_res34_backbone_100epochs_with_border.hdf5')
+
+#plot the training and validation accuracy and loss at each epoch
+loss = history1.history['loss']
+val_loss = history1.history['val_loss']
+epochs = range(1, len(loss) + 1)
+plt.plot(epochs, loss, 'y', label='Training loss')
+plt.plot(epochs, val_loss, 'r', label='Validation loss')
+plt.title('Training and validation loss')
+plt.xlabel('Epochs')
+plt.ylabel('Loss')
+plt.legend()
+plt.show()
