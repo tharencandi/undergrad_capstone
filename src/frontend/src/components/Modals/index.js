@@ -3,6 +3,7 @@ import CheckboxList from "./CheckList";
 import Button from "components/UI/Button";
 import React from "react";
 import { useSelector } from "react-redux";
+import useServerAction from "hooks/useServerAction";
 
 const Backdrop = ({ modalController }) => {
   return (
@@ -15,14 +16,10 @@ const Backdrop = ({ modalController }) => {
   );
 };
 
-const Overlay = ({
-  variant,
-  modalController,
-  downloadHandler,
-  generateHandler,
-}) => {
+const Overlay = ({ variant, modalController }) => {
   const [checked, setChecked] = React.useState([]);
   const selectedData = useSelector((state) => state.selectedData);
+  const requestServerAction = useServerAction();
 
   return (
     <div className="absolute inset-0 min-w-[400px] max-w-[750px] h-[500px] m-auto bg-white p-8 rounded-sm z-10 flex flex-col">
@@ -42,11 +39,7 @@ const Overlay = ({
         <Button
           variant="highlight"
           onClick={() => {
-            if (variant === "download") {
-              downloadHandler(selectedData, checked);
-            } else if (variant === "generate") {
-              generateHandler(selectedData, checked);
-            }
+            requestServerAction(selectedData, checked, variant);
           }}
         >
           {variant[0].toUpperCase() + variant.substring(1)}
@@ -57,21 +50,11 @@ const Overlay = ({
 };
 
 // The variant is the download or generate variant
-const Modal = ({
-  variant,
-  modalController,
-  downloadHandler,
-  generateHandler,
-}) => {
+const Modal = ({ variant, modalController }) => {
   return (
     <>
       {ReactDOM.createPortal(
-        <Overlay
-          variant={variant}
-          modalController={modalController}
-          downloadHandler={downloadHandler}
-          generateHandler={generateHandler}
-        ></Overlay>,
+        <Overlay variant={variant} modalController={modalController}></Overlay>,
         document.getElementById("overlay-root")
       )}
       {ReactDOM.createPortal(

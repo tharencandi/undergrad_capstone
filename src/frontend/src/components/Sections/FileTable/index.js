@@ -4,9 +4,8 @@ import { ReactComponent as ProcessingIcon } from "assets/icons/processing.svg";
 import { ReactComponent as WaitingIcon } from "assets/icons/waiting.svg";
 import { ReactComponent as EditIcon } from "assets/icons/editIcon.svg";
 
-import { useSelector, useDispatch } from "react-redux";
+import { useDispatch } from "react-redux";
 import { setSelectedData } from "store/selectedDataReducer";
-import { useState } from "react";
 
 import useGetData from "hooks/useGetData";
 
@@ -92,7 +91,6 @@ const FileTable = () => {
 
   const dispatch = useDispatch();
   const data = DUMMY_DATA;
-  const [selected, setSelection] = useState([]);
 
   const rows = data
     ? Object.keys(data).map((fileKey) => {
@@ -109,16 +107,8 @@ const FileTable = () => {
           return 3;
         };
 
-        const {
-          fileId,
-          fileName,
-          maskStatus,
-          pngStatus,
-          tifStatus,
-          uploadStatus,
-          downloadStatus,
-          created,
-        } = data[fileKey];
+        const { fileId, fileName, maskStatus, pngStatus, tifStatus, created } =
+          data[fileKey];
 
         return {
           id: fileId,
