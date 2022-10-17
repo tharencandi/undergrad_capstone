@@ -172,3 +172,16 @@ from tensorflow.keras.models import load_model
 #Set compile=False as we are not loading it for training, only for prediction.
 model1 = load_model('saved_models/mito_res34_backbone_100epochs_with_border.hdf5', compile=False)
 
+
+#Test some random images
+import random
+test_img_number = random.randint(0, len(X_test1))
+test_img = X_test1[test_img_number]
+ground_truth=y_test[test_img_number]
+test_img_input=np.expand_dims(test_img, 0)
+
+test_img_input1 = preprocess_input1(test_img_input)
+
+test_pred1 = model1.predict(test_img_input1)
+test_prediction1 = np.argmax(test_pred1, axis=3)[0,:,:]
+
