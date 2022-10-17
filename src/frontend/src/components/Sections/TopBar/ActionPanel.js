@@ -4,12 +4,13 @@ import UploadModalContent from "components/Modals/UploadModal";
 
 import { useState } from "react";
 import useUploadSVS from "hooks/useUploadSVS";
+import useDownload from "hooks/useDownload";
+import useGenerate from "hooks/useGenerate";
 
 const ActionPanel = () => {
   // Modal variants - "download", "generate", "none" (none means no modal open)
   const [modalVariant, setModalVariant] = useState("none");
   const [
-    uploadQueue,
     setUploadQueue,
     uploadProgress,
     currentUploadingFile,
@@ -20,6 +21,9 @@ const ActionPanel = () => {
   const uploadFileChangeHandler = (e) => {
     setUploadQueue(e.target.files);
   };
+
+  const requestDownload = useDownload();
+  const requestGenerate = useGenerate();
 
   return (
     <div className="grid grid-cols-2 lg:flex justify-evenly gap-4 xl:gap-6">
@@ -49,7 +53,12 @@ const ActionPanel = () => {
       </Button>
       <Button>Delete</Button>
       {modalVariant === "none" ? null : (
-        <Modal modalController={setModalVariant} variant={modalVariant}></Modal>
+        <Modal
+          modalController={setModalVariant}
+          variant={modalVariant}
+          downloadHandler={requestDownload}
+          generateHandler={requestGenerate}
+        ></Modal>
       )}
       {numberToUpload > 0 ? (
         <UploadModalContent

@@ -6,9 +6,7 @@ import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
 import Checkbox from "@mui/material/Checkbox";
 
-export default function CheckboxList() {
-  const [checked, setChecked] = React.useState([0]);
-
+export default function CheckboxList({ checked, setChecked }) {
   const handleToggle = (value) => () => {
     const currentIndex = checked.indexOf(value);
     const newChecked = [...checked];

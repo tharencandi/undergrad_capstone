@@ -3,7 +3,10 @@ import { ReactComponent as DownloadReadyIcon } from "assets/icons/downloadReady.
 import { ReactComponent as ProcessingIcon } from "assets/icons/processing.svg";
 import { ReactComponent as WaitingIcon } from "assets/icons/waiting.svg";
 import { ReactComponent as EditIcon } from "assets/icons/editIcon.svg";
-import { v4 as uuidv4 } from "uuid";
+
+import { useSelector, useDispatch } from "react-redux";
+import { setSelectedData } from "store/selectedDataReducer";
+import { useState } from "react";
 
 import useGetData from "hooks/useGetData";
 
@@ -62,83 +65,34 @@ const columns = [
   },
 ];
 
-const rows = [
-  {
-    id: 1,
-    filename: "example1.svs",
-    tif: 3,
-    png: 3,
-    mask: 3,
-    dateCreated: new Date(2022, 6, 8),
+const DUMMY_DATA = {
+  123: {
+    fileId: "123",
+    fileName: "example1",
+    created: "3rd December 2021",
+    tifStatus: "pending",
+    pngStatus: "completed",
+    maskStatus: "completed",
+    downloadStatus: "none",
   },
-  {
-    id: 2,
-    filename: "example2.svs",
-    tif: 3,
-    png: 3,
-    mask: 3,
-    dateCreated: new Date(2022, 6, 8),
+  456: {
+    fileId: "456",
+    fileName: "example2",
+    created: "2nd December 2021",
+    tifStatus: "inProgress",
+    pngStatus: "completed",
+    maskStatus: "completed",
+    downloadStatus: "none",
   },
-  {
-    id: 3,
-    filename: "example3.svs",
-    tif: 3,
-    png: 3,
-    mask: 3,
-    dateCreated: new Date(2022, 6, 8),
-  },
-  {
-    id: 4,
-    filename: "example4.svs",
-    tif: 0,
-    png: 3,
-    mask: 3,
-    dateCreated: new Date(2022, 7, 16),
-  },
-  {
-    id: 5,
-    filename: "example5.svs",
-    tif: 0,
-    png: 3,
-    mask: 3,
-    dateCreated: new Date(2022, 7, 16),
-  },
-  {
-    id: 6,
-    filename: "example6.svs",
-    tif: 0,
-    png: 3,
-    mask: 2,
-    dateCreated: new Date(2022, 7, 16),
-  },
-  {
-    id: 7,
-    filename: "example7.svs",
-    tif: 0,
-    png: 3,
-    mask: 1,
-    dateCreated: new Date(2022, 8, 24),
-  },
-  {
-    id: 8,
-    filename: "example8.svs",
-    tif: 0,
-    png: 3,
-    mask: 1,
-    dateCreated: new Date(2022, 8, 24),
-  },
-  {
-    id: 9,
-    filename: "example8.svs",
-    tif: 0,
-    png: 3,
-    mask: 1,
-    dateCreated: new Date(2022, 8, 24),
-  },
-];
+};
 
 const FileTable = () => {
-  const data = useGetData();
+  useGetData();
+  // const data = useSelector((state) => state.data);
+
+  const dispatch = useDispatch();
+  const data = DUMMY_DATA;
+  const [selected, setSelection] = useState([]);
 
   const rows = data
     ? Object.keys(data).map((fileKey) => {
@@ -186,6 +140,9 @@ const FileTable = () => {
         rowsPerPageOptions={[5]}
         checkboxSelection
         disableSelectionOnClick
+        onSelectionModelChange={(selection) => {
+          dispatch(setSelectedData(selection));
+        }}
       />
     </div>
   );

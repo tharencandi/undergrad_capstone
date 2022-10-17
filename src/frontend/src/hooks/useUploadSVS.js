@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import axios from "axios";
 
 const useUploadSVS = () => {
   const [uploadQueue, setUploadQueue] = useState([]);
@@ -11,9 +12,12 @@ const useUploadSVS = () => {
   useEffect(() => {
     console.log(uploadQueue);
     const uploadFile = async (file) => {
+      let formData = new FormData();
+      formData.append("file", file);
+
       setCurrentUploadingFile(file.name);
 
-      // Dummy API call which waits for 1 second to resolve
+      // // Dummy API call which waits for 1 second to resolve
       setUploadProgress(0);
       await new Promise((resolve) => setTimeout(resolve, 1000));
       setUploadProgress(20);
@@ -26,8 +30,21 @@ const useUploadSVS = () => {
       await new Promise((resolve) => setTimeout(resolve, 1000));
       setUploadProgress(100);
 
+      const res = await axios
+        .post("/scan", formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        })
+        .then((res) => {
+          console.log(res);
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+
       setCurrentUploadingFile(null);
-      return file.name;
+      return res;
     };
 
     // If there is already a file uploading, then do not start another upload
@@ -40,6 +57,7 @@ const useUploadSVS = () => {
 
       uploadFile(currentFile)
         .then((res) => {
+          console.log(res);
           setNumberUploaded((prevState) => {
             return prevState + 1;
           });
