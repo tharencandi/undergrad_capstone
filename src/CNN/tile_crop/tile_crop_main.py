@@ -34,7 +34,7 @@ def single_image_to_folder_of_tiles(image_path = "", cell_threshold = 0, save=Tr
     if item.endswith(".png"):
           os.remove(os.path.join(DEST_TRAIN_DIR, item))
         
-  return [tile_summary.image_name, (tile_summary.num_row_tiles, tile_summary.num_col_tiles) ]
+  return [tile_summary.image_name, (tile_summary.num_row_tiles, tile_summary.num_col_tiles), (tile_summary.orig_h,tile_summary.orig_w) ]
 
 
 
