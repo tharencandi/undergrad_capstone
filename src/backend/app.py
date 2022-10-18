@@ -31,7 +31,7 @@ def query_db(query, args=(), one=False):
     rv = cur.fetchall()
     cur.close()
     return (rv[0] if rv else None) if one else rv
-
+  
 def get_db():
     db = getattr(g, '_database', None)
     if db is None:
@@ -318,7 +318,11 @@ def generate():
     target_svs = request.json["targets"]
     
     res = {
-        "tasks" : []
+        "tasks" : [
+            {
+
+            }
+        ]
     }
 
     for target in target_svs:
