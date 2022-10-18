@@ -24,8 +24,9 @@ def _read_slide_to_array(slide_file_path, tile):
         IT IS THE CALLERS FUNCTION JOB TO APPROPRIATLEY DELETE THIS MEMORY MAPPED
         ARRAY AND CALL PYTHON GARBAGE COLLECTION FOR CLEANUP FOR GOOD CODE PERFORMANCE.
 
-        @warning
-        will return None if there is not enough file space. 
+        @exceptions
+        raises memory error if not enough storage for memmap.
+        
     """
     
     svs = open_slide(slide_file_path)
