@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, send_file, g
+from flask import Flask, request, jsonify, send_file, g, render_template
 import sqlite3
 from celery import Celery
 from os import listdir, mkdir, remove, rename
@@ -11,8 +11,9 @@ import shutil
 # from conversion import svs_to_png, svs_to_tiff
 
 
-
-app = Flask(__name__)
+app = Flask(__name__, static_url_path='',
+                  static_folder='frontend/build',
+                  template_folder='frontend/build')
 
 app.config['CELERY_BROKER_URL'] = 'redis://localhost:6379/0'
 app.config['CELERY_RESULT_BACKEND'] = 'redis://localhost:6379/0'
@@ -24,7 +25,8 @@ celery.conf.update(app.config)
 scan_path = "./scans/"
 valid_extensions = ["png", "svs", "tif"]
 
-DATABASE = '~/.glioblastoma_portal.db'
+WEB_PORTAL_DIR="/home/haeata/.glioblastoma_portal/"
+DATABASE = '/home/haeata/.glioblastoma_portal/file.db'
 
 def query_db(query, args=(), one=False):
     cur = get_db().execute(query, args)
@@ -51,13 +53,11 @@ def init_db_if_not_exists():
         with app.open_resource('schema.sql', mode='r') as f:
             db.cursor().executescript(f.read()) 
         db.commit()
- 
-init_db_if_not_exists()
 
 # home page
 @app.get('/')
 def index():
-    return jsonify("home page")
+    return render_template("index.html")
 
 # get all files
 # return list of tuples -> (file_id, [extensions], date created)
@@ -336,9 +336,13 @@ def generate():
 
 @app.get('/task/<task_id>/status')
 def taskstatus(task_id):
+    pass
 
 
 
 if __name__ == '__main__':
-	app.run(debug=True)
+    if not exists(WEB_PORTAL_DIR):
+        mkdir(WEB_PORTAL_DIR)
+    init_db_if_not_exists()
+    app.run(debug=True)
 
