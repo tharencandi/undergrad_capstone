@@ -6,6 +6,8 @@ import { ReactComponent as EditIcon } from "assets/icons/editIcon.svg";
 
 import { useDispatch } from "react-redux";
 import { setSelectedData } from "store/selectedDataReducer";
+import { useSelector } from "react-redux";
+import { useEffect, useState, useCallback } from "react";
 
 import useGetData from "hooks/useGetData";
 
@@ -64,33 +66,33 @@ const columns = [
   },
 ];
 
-const DUMMY_DATA = {
-  123: {
-    fileId: "123",
-    fileName: "example1",
-    created: "3rd December 2021",
-    tifStatus: "pending",
-    pngStatus: "completed",
-    maskStatus: "completed",
-    downloadStatus: "none",
-  },
-  456: {
-    fileId: "456",
-    fileName: "example2",
-    created: "2nd December 2021",
-    tifStatus: "inProgress",
-    pngStatus: "completed",
-    maskStatus: "completed",
-    downloadStatus: "none",
-  },
-};
-
 const FileTable = () => {
-  useGetData();
-  // const data = useSelector((state) => state.data);
+  const fetchData = useGetData();
+  const [response, setResponse] = useState(0);
+
+  const data = useSelector((state) => state.data);
 
   const dispatch = useDispatch();
-  const data = DUMMY_DATA;
+
+  const dataFetch = useCallback(async () => {
+    await fetchData();
+    setResponse((prevState) => {
+      return prevState + 1;
+    });
+  }, [fetchData]);
+
+  useEffect(() => {
+    let timerId = null;
+    if (response) {
+      timerId = setTimeout(dataFetch, 2000);
+    } else {
+      timerId = dataFetch();
+    }
+
+    return () => {
+      clearTimeout(timerId);
+    };
+  }, [response, dataFetch]);
 
   const rows = data
     ? Object.keys(data).map((fileKey) => {

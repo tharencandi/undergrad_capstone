@@ -13,15 +13,11 @@ const ActionPanel = () => {
   const requestServerAction = useServerAction();
   const selectedData = useSelector((state) => state.selectedData);
 
-  const [
-    setUploadQueue,
-    uploadProgress,
-    currentUploadingFile,
-    numberUploaded,
-    numberToUpload,
-  ] = useUploadSVS();
+  const [setUploadQueue, currentUploadingFile, numberUploaded, numberToUpload] =
+    useUploadSVS();
 
   const uploadFileChangeHandler = (e) => {
+    console.log(setUploadQueue);
     setUploadQueue(e.target.files);
   };
 
@@ -64,7 +60,6 @@ const ActionPanel = () => {
       {numberToUpload > 0 ? (
         <UploadModalContent
           numberToUpload={numberToUpload}
-          uploadProgress={uploadProgress}
           currentUploadingFile={currentUploadingFile}
           numberUploaded={numberUploaded}
         ></UploadModalContent>

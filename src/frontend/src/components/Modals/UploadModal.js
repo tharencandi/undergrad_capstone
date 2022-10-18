@@ -2,7 +2,6 @@ import ReactDOM from "react-dom";
 
 const UploadModalContent = ({
   numberToUpload,
-  uploadProgress,
   currentUploadingFile,
   numberUploaded,
 }) => {
@@ -11,9 +10,7 @@ const UploadModalContent = ({
       <p>
         Uploaded {numberUploaded} out of {numberToUpload}.
       </p>
-      <p>
-        Currently uploading: {uploadProgress}% of {currentUploadingFile}
-      </p>
+      <p>Currently uploading: {currentUploadingFile}</p>
     </div>,
     document.getElementById("upload-modal-root")
   );
