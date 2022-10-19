@@ -1,4 +1,8 @@
-from flask import Flask, request, jsonify, send_file, g, render_template
+import sys
+
+sys.path.append("/home/haeata/glioblastoma_processing/src/")
+print(sys.path)
+from flask import Flask, request, jsonify, send_file, g, render_template, abort
 import sqlite3
 from celery import Celery
 from os import listdir, mkdir, remove, rename
@@ -8,6 +12,7 @@ import zipfile
 import uuid
 import json
 import shutil
+from CNN import predict
 # from conversion import svs_to_png, svs_to_tiff
 
 
@@ -25,8 +30,10 @@ celery.conf.update(app.config)
 scan_path = "./scans/"
 valid_extensions = ["png", "svs", "tif"]
 
+MASKING_TEMP_DIR="/home/haeata/..glioblastoma_portal/"
 WEB_PORTAL_DIR="/home/haeata/.glioblastoma_portal/"
-DATABASE = '/home/haeata/.glioblastoma_portal/file.db'
+MASKING_TEMP_DIR=WEB_PORTAL_DIR + ".mask_tmp/"
+DATABASE = '/home/haeata/.glioblastoma_portal/file.db' 
 
 def query_db(query, args=(), one=False):
     cur = get_db().execute(query, args)
@@ -308,41 +315,101 @@ def scan_rename():
 
 
 @celery.task(bind=True)
-def generate_mask(self, svs_fpath, mask_dest):
+def generate_mask(self, uuid, svs_fpath, mask_fname):
+    out_path = predict.predict_slide(uuid, svs_fpath, svs_dir, MASKING_TEMP_DIR, masks_dir)
+    time.sleep(60)
+    return {"slide_uuid": uuid,  "fpath":  out_path,  "ftype": ".mask"}
+
+@celery.task(bind=True)
+def convert_to_tif(self, svs_fpath, tif_dest):
     time.sleep(60)
     return
+
+@celery.task(bind=True)
+def convert_to_png(self, svs_fpath, png_dest):
+    time.sleep(60)
+    return 
+
+GENERATOR_MAP = {
+    ".png" : convert_to_png,
+    ".tif": convert_to_tif,
+    ".mask": generate_mask
+}
+
+ACTION_RES_EXTENSTIONS = {
+    ".png" : ".png",
+    ".tif": ".tif",
+    ".mask": ".mask"
+}
+
+def celery_task_to_json(task):
+    return {
+        "task_id": task.id
+    }
+
+
+INSERT_TASK="INSERT INTO tasks(task_id, task_type, slide_uuid) VALUES(?, ?, ?)"
+INSERT_OBJECT="INSERT INTO objects(slide_uuid, fpath, file_type) VALUES(?, ?, ?)"
+SELECT_SPECIFIC_TASK="SELECT * FROM tasks where task_id =  (?)"
+SELECT_SPECIFIC_WHOLESLIDE="SELECT * FROM wholeslides WHERE uuid = (?)"
+
+def handle_async_success(action, slide_uuid, task):
+    status = task.status
+    fname = task.get()
+    query_db(INSERT_OBJECT, (slide_uuid, fname, action))
 
 # run algo, generate mask
 @app.post('/scan/mask/generate')
 def generate():
+    # retrieve list of svs object ids
     target_svs = request.json["targets"]
-    
-    res = {
-        "tasks" : [
-            {
+    actions = request.json["actions"]
 
-            }
-        ]
+    res = {
+        "objects": []
     }
 
     for target in target_svs:
-        task = generate_mask.delay(target, target + ".mask")
-        res["tasks"].append({
-            "target": target,
-            "task_id": None
-        })
-    
+        # skip jobs for obejcts that don't exist
+        if not len(query_db(query, (target))) > 0:
+            continue
+        object_jobs = {
+            "uuid": target
+        }
+        for action in actions:
+            try:
+                task = GENERATOR_MAP[action].delay(target, target + ACTION_RES_EXTENSTIONS[action])
+                query_db(INSERT_TASK, (task.id, action, target))
+                object_jobs[action] = celery_task_to_json(task)
+            except KeyError:
+                abort(400)
+
     return jsonify(res)
 
-@app.get('/task/<task_id>/status')
+@app.get('/taskstatus/<task_id>')
 def taskstatus(task_id):
-    pass
+    db_res = query_db(SELECT_SPECIFIC_TASK, (task_id))
+    if not len(db_res) > 0:
+        return 404
+    
+    reg_task = db_res[0]
+    task = GENERATOR_MAP[reg_task["task_type"]].AsyncResult(reg_task["task_id"])
+    res = {
+        "state": task.status,
+    }
+
+    if task.state == "SUCCESS":
+        handle_async_success(reg_task["task_type"], reg_task["slide_uuid"], task)
+    
 
 
 
 if __name__ == '__main__':
     if not exists(WEB_PORTAL_DIR):
         mkdir(WEB_PORTAL_DIR)
+    if not exists(MASKING_TEMP_DIR):
+        mkdir(MASKING_TEMP_DIR)
+
     init_db_if_not_exists()
     app.run(debug=True)
 
