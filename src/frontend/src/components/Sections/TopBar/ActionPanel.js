@@ -4,20 +4,17 @@ import UploadModalContent from "components/Modals/UploadModal";
 
 import { useState } from "react";
 import useUploadSVS from "hooks/useUploadSVS";
-import useServerAction from "hooks/useServerAction";
 import { useSelector } from "react-redux";
 
 const ActionPanel = () => {
   // Modal variants - "download", "generate", "none" (none means no modal open)
   const [modalVariant, setModalVariant] = useState("none");
-  const requestServerAction = useServerAction();
   const selectedData = useSelector((state) => state.selectedData);
 
   const [setUploadQueue, currentUploadingFile, numberUploaded, numberToUpload] =
     useUploadSVS();
 
   const uploadFileChangeHandler = (e) => {
-    console.log(setUploadQueue);
     setUploadQueue(e.target.files);
   };
 
@@ -37,6 +34,7 @@ const ActionPanel = () => {
         onClick={() => {
           setModalVariant("download");
         }}
+        disabled={selectedData.length === 0 ? true : false}
       >
         Download
       </Button>
@@ -44,13 +42,15 @@ const ActionPanel = () => {
         onClick={() => {
           setModalVariant("generate");
         }}
+        disabled={selectedData.length === 0 ? true : false}
       >
         Generate
       </Button>
       <Button
         onClick={() => {
-          requestServerAction(selectedData, null, "delete");
+          setModalVariant("delete");
         }}
+        disabled={selectedData.length === 0 ? true : false}
       >
         Delete
       </Button>

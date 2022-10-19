@@ -12,6 +12,42 @@ const DUMMY_DATA = {
     created: "2nd December 2021",
     downloadProgress: "none",
   },
+  456: {
+    fileId: "456",
+    fileName: "example2",
+    tifStatus: "completed",
+    pngStatus: "none",
+    maskStatus: "completed",
+    created: "2nd December 2021",
+    downloadProgress: "none",
+  },
+  12345: {
+    fileId: "12345",
+    fileName: "example3",
+    tifStatus: "inProgress",
+    pngStatus: "none",
+    maskStatus: "completed",
+    created: "2nd December 2021",
+    downloadProgress: "none",
+  },
+  1234: {
+    fileId: "1234",
+    fileName: "example4",
+    tifStatus: "inProgress",
+    pngStatus: "none",
+    maskStatus: "completed",
+    created: "2nd December 2021",
+    downloadProgress: "none",
+  },
+  2234: {
+    fileId: "2234",
+    fileName: "example5",
+    tifStatus: "inProgress",
+    pngStatus: "none",
+    maskStatus: "completed",
+    created: "2nd December 2021",
+    downloadProgress: "none",
+  },
 };
 const useGetData = () => {
   const dispatch = useDispatch();

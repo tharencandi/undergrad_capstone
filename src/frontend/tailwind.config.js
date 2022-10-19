@@ -9,6 +9,7 @@ module.exports = {
       black: "#000000",
       white: "#FFFFFF",
       grey: "#DDDDDD",
+      red: "#d12600",
     },
     fontSize: {
       subtitle1: ["1.25rem", { fontWeight: 600 }],

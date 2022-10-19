@@ -9,7 +9,6 @@ const useUploadSVS = () => {
 
   //When there have been new files queued, update the global store and trigger an upload
   useEffect(() => {
-    console.log(uploadQueue);
     const uploadFile = async (file) => {
       let formData = new FormData();
       formData.append("file", file);

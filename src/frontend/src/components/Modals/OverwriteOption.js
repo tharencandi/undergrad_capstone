@@ -20,14 +20,9 @@ export default function CheckboxList({ checked, setChecked, variant }) {
     setChecked(newChecked);
   };
 
-  const options =
-    variant === "generate"
-      ? [".tif", ".png", "mask"]
-      : [".svs", ".tif", ".png", "mask"];
-
   return (
     <List sx={{ width: "100%", bgcolor: "background.paper" }}>
-      {options.map((value) => {
+      {["Overwrite (cannot be undone)"].map((value) => {
         const labelId = `checkbox-list-label-${value}`;
 
         return (
