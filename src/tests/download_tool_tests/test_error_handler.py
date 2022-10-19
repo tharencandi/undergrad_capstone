@@ -32,6 +32,6 @@ def test_download_error_handler():
     with um.patch('builtins.open', mk, create=True):
         download_error_handler("file", "arg1", "arg2")
         mk.assert_called_with("file", "a")
-        mk.return_value.write.assert_called_once_with("arg1\targ2\t")
+        mk.return_value.write.assert_called_once_with("arg1\targ2\t\n")
 
 

@@ -7,12 +7,12 @@ import sys
 import signal
 from tqdm import tqdm
 from requests import HTTPError
-from download.DownloadError import DownloadIntegrityError
+from download.DownloadError import DownloadIntegrityError, DownloadError
 from integrity import *
 
 PARTIAL_FILE_POSTFIX = ".part"
 
-# def sig_handler(sig, frame):
+logger = logging.getLogger("download_tool")
 
 class gdc_client:
     def __init__(self):
@@ -21,7 +21,7 @@ class gdc_client:
     def download_file(self, uuid: str, md5sum: str, filename: str):
         param = json.dumps({"ids": uuid})
 
-        logging.info("Beginning download for uuid: %s, filename %s", uuid, filename)
+        logger.info("Beginning download for uuid: %s, filename %s", uuid, filename)
         res = requests.post(
             self.data_url, data=param, headers={"Content-Type": "application/json"}
         )
@@ -38,12 +38,12 @@ class gdc_client:
                 raise DownloadError(
                     reason="Data written to file did not match checksum"
                 )
-            logging.info("Download finished for uuid %s, filename %s", uuid, filename)
+            logger.info("Download finished for uuid %s, filename %s", uuid, filename)
         except HTTPError:
-            logging.exception("HTTP request failed")
+            logger.exception("HTTP request failed")
             raise DownloadError(reason="HTTPError")
         except IOError:
-            logging.exception("Unable to write response content to file.")
+            logger.exception("Unable to write response content to file.")
             raise DownloadError(reason="Unable to write response content to file.")
         
 
@@ -53,7 +53,7 @@ class gdc_client:
             "Content-Type": "application/json",
             "Accept-Encoding":  "gzip"
         }
-        logging.info("Beginning download for uuid: %s, filename %s", uuid, out_path)
+        logger.warn("Beginning download for uuid: %s, filename %s", uuid, out_path)
         try:
             # send request to begin download
             with requests.post(self.data_url, data=param, headers=headers, stream=True) as r:
@@ -71,14 +71,14 @@ class gdc_client:
 
             # data has been validated and downloaded, remove .part postfix 
             os.rename(out_path + PARTIAL_FILE_POSTFIX, out_path)
-            logging.info("Download finished for uuid %s, filename %s", uuid, out_path)
+            logger.warn("Download finished for uuid %s, filename %s", uuid, out_path)
         except HTTPError as e:
             status = e.response.status_code
             msg = f"HTTPError  with code {status}"
-            logging.exception(msg)
+            logger.exception(msg)
             raise DownloadError(msg)
         except IOError:
-            logging.exception("Unable to write response content to file.")
+            logger.exception("Unable to write response content to file.")
             raise DownloadError("Unable to write response content to file.")
 
 

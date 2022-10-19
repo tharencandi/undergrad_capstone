@@ -1,12 +1,12 @@
 ---
-OUTPUT_DIR: "/home/haeata/glioblastoma_processing/data"
-PROGRESS_LOG: "/home/haeata/glioblastoma_processing/progress.log"
-FAILURE_LOG: "/home/haeata/glioblastoma_processing/failure.log"
+OUTPUT_DIR: "/home/tharen/UNI/glioblastoma_processing/data"
+PROGRESS_LOG: "/home/tharen/UNI/glioblastoma_processing/progress.log"
+FAILURE_LOG: "/home/tharen/UNI/glioblastoma_processing/failure.log"
 # Increasing chunk size will speed things up but will increase ram usage
 CHUNK_SIZE: 16384
 # Concurrent downloads does nothing currently - not implemented
 CONCURRENT_DOWNLOADS: 4
-LOGFILE: "/home/haeata/glioblastoma_processing/downloader.log"
+LOGFILE: "/home/tharen/UNI/glioblastoma_processing/downloader.log"
 LOGLEVEL: "DEBUG"
 
 
