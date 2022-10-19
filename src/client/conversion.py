@@ -41,13 +41,13 @@ def _read_slide_to_array(slide_file_path, tile):
     
     arr = np.memmap(TMP_DIR + TMP_FILE ,shape=(height, width, 3),dtype = np.uint8, mode="w+")
     
-    for y in range(0, height-tile, tile):
-        for x in range(0, width-tile, tile):
+    for y in range(0, height, tile):
+        for x in range(0, width, tile):
             tile_height = min(tile, height-y)
             tile_width = min(tile, width-x)
             
             arr[y:y+tile_height,x:x + tile_width] = svs.read_region (
-                location=(x,y), 
+                location=(x,y),
                 level=0, 
                 size=(tile_width, tile_height)
             ).convert('RGB')
