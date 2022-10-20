@@ -13,3 +13,4 @@ imutils==0.5.4
 openslide-python==1.2.0
 pillow==9.0.1
 flask
+tifffile==2022.10.10

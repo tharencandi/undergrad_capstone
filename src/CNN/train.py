@@ -20,7 +20,7 @@ LBL_SIZE = (54, 54)
 EPOCHS = 100
 BATCH_SIZE = 16
 WEIGHT_INIT = myInitialiers.myHeNormal
-LEARNING_RATE = 1e-2
+LEARNING_RATE = 1e-4
 
 class functions(Enum):
     SINGLE_TRAIN = 1
@@ -171,15 +171,27 @@ def single_train(train, val, test):
         loss="sparse_categorical_crossentropy",
         metrics=[UpdatedMeanIoU(num_classes=2),]
     )
+    
 
+     # Model weights are saved at the end of every epoch, if it's the best seen
+    # so far.
+    model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
+        filepath=MODEL_SAVE_LOCATION + "/checkpoint",
+        save_weights_only=True,
+        monitor='val_updated_mean_io_u',
+        mode='max',
+        save_best_only=True
+    )
+
+ 
     tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=LOG_DIR)
     reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(monitor='val_loss', factor=0.1,
-                              patience=5, min_lr=0.00001)
+                              patience=8, min_lr=1e-6)
 
     stop_early = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=20, restore_best_weights=True, verbose=1)
     print("commencing training...")
     model_history = model.fit (
-        train, epochs=EPOCHS, validation_data=val, shuffle=True, callbacks=[stop_early, reduce_lr, tensorboard_callback])
+        train, epochs=EPOCHS, validation_data=val, shuffle=True, callbacks=[reduce_lr,stop_early, tensorboard_callback,model_checkpoint_callback])
     
     
     result = model.evaluate(test)
