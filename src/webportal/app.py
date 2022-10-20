@@ -260,89 +260,54 @@ def scan_rename():
         rename(dir_path, new_dir)
     
     return jsonify("DONE")
-
-#######################################################
-# un-comment import conversion
-
-# #convert to different format
-# @app.get('/scan/convert')
-# def convert():
-#     id = request.args["ids"]
-#     ext = request.args["ext"]
-
-#     # change status file
-#     dir_path = scan_path + id
-#     meta_path = dir_path + '/' + id + '.meta'
-
-#     with open(meta_path, 'r') as f:
-#         data = json.load(f)
-    
-#     key = ext + "Status"
-#     data[key] = "inProgress"
-#     with open(meta_path, 'w') as json_file:
-#         json.dump(data, json_file)
-
-#     input_file = dir_path + '/' + id + '.svs'
-
-
-#     # convert
-#     if ext == 'png':
-#         output_file = dir_path + '/' + id + '.png'
-#         svs_to_png(input_file, output_file)
-
-#     elif ext == 'tif':
-#         output_file = dir_path + '/' + id + '.tif'
-#         svs_to_tiff(input_file, output_file)
-
-#     with open(meta_path, 'r') as f:
-#         data = json.load(f)
-    
-#     data[key] = "Completed"
-#     with open(meta_path, 'w') as json_file:
-#         json.dump(data, json_file)
-# 
-#     return jsonify("DONE")
-    
-###########################################################
     
 
 
-@celery.task(bind=True)
-def generate_mask(self, svs_fpath, mask_dest):
+
+@celery.task()
+def make_png(self, svs_fpath, dest):
     time.sleep(60)
     return
+@celery.task()
+def make_tif(self, svs_fpath, dest):
+    time.sleep(60)
+    return
+@celery.task()
+def make_mask(self, svs_fpath, dest):
+    time.sleep(60)
+    return
+TASK_MAP = {
+    ".png": make_png,
+    ".tif": make_tif,
+    ".mask": make_mask
+}
 
+def make_fpath(svs, ext):
+    return ""
+
+def get_fpath(svs):
+    return  ""
+
+def get_meta(svs):
+    return ""
+
+def set_meta_field(svs, field, value):
+    return ""
 # run algo, generate mask
-@app.post('/scan/mask/generate')
+@app.post('/generate')
 def generate():
-    target_svs = request.json["targets"]
-    
-    res = {
-        "tasks" : [
-            {
-
-            }
-        ]
-    }
+    target_svs = request.json["ids"]
+    target_exts = request.json["exts"]
 
     for target in target_svs:
-        task = generate_mask.delay(target, target + ".mask")
-        res["tasks"].append({
-            "target": target,
-            "task_id": None
-        })
-    
+        for e in target_exts:
+            TASK_MAP[e].delay(get_fpath(target, e), make_fpath(target, e))
     return jsonify(res)
-
-@app.get('/task/<task_id>/status')
-def taskstatus(task_id):
-    pass
 
 
 
 if __name__ == '__main__':
     if not exists(WEB_PORTAL_DIR):
         mkdir(WEB_PORTAL_DIR)
-    init_db_if_not_exists()
     app.run(debug=True)
 
