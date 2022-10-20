@@ -15,6 +15,7 @@ FILE_INPUT_ERROR = 4
 TILE = 1024
 TMP_DIR =  f"{os.getcwd()}/" #if path end with slash. This is the programmers responsibility. 
 TMP_FILE = "temp_arr.np"
+
 def _read_slide_to_array(slide_file_path, tile):
     """
         Read slide to a memory mapped array in chunks (tile, tile) pixels large.
