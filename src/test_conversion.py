@@ -1,12 +1,19 @@
 import pytest
 
-from client.conversion import *
+
+from conversion import *
+from openslide import open_slide
+
 
 GOOD = 0
 EXTENSION_FORMAT_ERR = 1
 DISK_MEMORY_ERR = 2
 EXCEPTION_RAISED = 3
-FILE_INPUT_ERROR = 4 
+FILE_INPUT_ERROR = 4
+
+
+TILE = 1024
+
 
 """
     Test incorrect input file name for svs_to_tiff error handling
@@ -65,15 +72,29 @@ def test_none_output_file_name_svs_to_png():
     assert ret == EXTENSION_FORMAT_ERR
 
 """
-    Test ability to correctly convert a small sized svs to tiff
+    Test ability to correctly convert a svs to tiff
 """
-def test_small_svs_to_tiff():
+def test_svs_to_tiff():
     ret = svs_to_tiff("tp.svs", "tp.tiff")
     assert ret == GOOD
 
 """
-    Test ability to correctly convert a small sized svs to png
+    Test ability to correctly convert a svs to png
 """
-def test_small_svs_to_png():
+def test_svs_to_png():
     ret = svs_to_png("tp.svs", "tp.png")
     assert ret == GOOD
+
+# """
+#     Test ability to correctly read slide for svs image
+# """
+# def test_read_svs_image():
+#     input_file_name = "tp.svs"
+
+#     slide = open_slide(input_file_name)
+#     dims = slide.dimensions
+#     region_slide = slide.read_region((0,0), 0, dims)
+
+#     arr = _read_slide_to_array(input_file_name, TILE)
+
+#     assert arr == region_slide
