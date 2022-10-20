@@ -11,7 +11,7 @@ import sys, os
 cdir = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.dirname(cdir))
 
-# from conversion import svs_to_png, svs_to_tiff
+from image_tools.conversion import svs_to_png, svs_to_tiff
 
 
 app = Flask(__name__, static_url_path='',
@@ -24,11 +24,11 @@ app.config['CELERY_RESULT_BACKEND'] = 'redis://localhost:6379/0'
 celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'])
 celery.conf.update(app.config)
 
-# scan_path = "../../scans/"
-scan_path = "./scans/"
+WEB_PORTAL_DIR="~/.glioblastoma_portal/"
+DATA_DIR = WEB_PORTAL_DIR+"scans/"
 valid_extensions = ["png", "svs", "tif"]
 
-WEB_PORTAL_DIR="/home/haeata/.glioblastoma_portal/"
+
 # DATABASE = '/home/haeata/.glioblastoma_portal/file.db'
 
 # def query_db(query, args=(), one=False):
@@ -66,7 +66,7 @@ def index():
 # return list of tuples -> (file_id, [extensions], date created)
 @app.get('/all')
 def all_scans():
-    scans = [f for f in listdir(scan_path) if not isfile(join(scan_path, f))]
+    scans = [f for f in listdir(DATA_DIR) if not isfile(join(DATA_DIR, f))]
     
     scan_list = []
     # return jsonify("a1")
@@ -74,7 +74,7 @@ def all_scans():
         scan_id = id
         extensions = []
         date = ""
-        dir_path = "{}{}/".format(scan_path,id)
+        dir_path = "{}{}/".format(DATA_DIR,id)
 
         # get extensions
         files = [f for f in listdir(dir_path) if isfile(join(dir_path, f))]
@@ -85,8 +85,8 @@ def all_scans():
                 extensions.append(ext)
 
         # get date
-        meta = scan_path + id + "/" + ".meta"
-        meta = "{}{}/{}.meta".format(scan_path, id, id)
+        meta = DATA_DIR + id + "/" + ".meta"
+        meta = "{}{}/{}.meta".format(DATA_DIR, id, id)
         meta_data = open(meta, "r")
         # date = meta_data.readline()
         data = json.load(meta_data)
@@ -114,7 +114,7 @@ def get_scan():
     for i in range(0, len(ids)):
 
         # check if directory exists, create if not
-        dir_path = scan_path + ids[i]
+        dir_path = DATA_DIR + ids[i]
         file_path = "{}/{}.{}".format(dir_path,ids[i],ext[i])
 
         if not exists(file_path):
@@ -177,7 +177,7 @@ def upload():
         return jsonify("INVALID FILE FORMAT: {}".format(ext))
 
     # check if directory exists
-    dir_path = scan_path + id
+    dir_path = DATA_DIR + id
     path = dir_path
 
     counter = 1
@@ -222,7 +222,7 @@ def delete():
     # print(ids)
     for id in ids:
 
-        dir_path = scan_path + id
+        dir_path = DATA_DIR + id
         # file_path = "{}/{}.{}".format(dir_path,ids,ext)
 
         try:
@@ -237,7 +237,7 @@ def scan_rename():
     new_name = request.args["new_name"]
 
     for id in ids:
-        dir_path = scan_path + id
+        dir_path = DATA_DIR + id
 
         # meta_file = dir_path + id + ".meta"
         meta_path = dir_path + '/' + id + '.meta'
@@ -259,56 +259,84 @@ def scan_rename():
 
             rename(dir_path+'/'+f, dir_path+'/'+file)
         
-        new_dir = scan_path + new_name
+        new_dir = DATA_DIR + new_name
         rename(dir_path, new_dir)
     
     return jsonify("DONE")
     
-
-
-
-@celery.task()
-def make_png(self, svs_fpath, dest):
-    time.sleep(60)
-    return
-@celery.task()
-def make_tif(self, svs_fpath, dest):
-    time.sleep(60)
-    return
-@celery.task()
-def make_mask(self, svs_fpath, dest):
-    time.sleep(60)
-    return
-TASK_MAP = {
-    ".png": make_png,
-    ".tif": make_tif,
-    ".mask": make_mask
-}
+PNG_EXT=".png"
+TIF_EXT=".tif"
+MASK_EXT=".mask"
+META_EXT=".meta"
+SVS_EXT=".svs"
 
 def make_fpath(uuid, ext):
-    return ""
+    return os.path.join(DATA_DIR, uuid, uuid + ext)
 
-def get_fpath(uuid, ext):
-    return  ""
+def get_svs_dir(uuid):
+    return os.path.join(DATA_DIR, uuid, "")
 
 def set_meta_field(uuid, field, value):
-    return ""
+    fpath = make_fpath(uuid, META_EXT)
+    meta = None
+    with open(fpath) as f:
+        meta = json.loads(f)
+        meta[field] = value
+    
+    if meta:
+        with open(fpath) as o:
+            json.dump(meta, o)
+
+@celery.task()
+def make_png(self, uuid, svs_fpath, dest):
+    set_meta_field(uuid, "pngStatus", "inProgress")
+    res = svs_to_png(svs_fpath, dest)
+    if res != image_tools.GOOD:
+        set_meta_field(uuid, "pngStatus", "failed")
+    set_meta_field(uuid, "pngStatus", "completed")
+    return
+@celery.task()
+def make_tif(self, uuid, svs_fpath, dest):
+    set_meta_field(uuid, "tifStatus", "inProgress")
+    res = svs_to_tiff(svs_fpath, dest)
+    if res != image_tools.GOOD:
+        set_meta_field(uuid, "tifStatus", "failed")
+    set_meta_field(uuid, "tifStatus", "completed")
+    return
+ 
+@celery.task()
+def make_mask(self, uuid, svs_fpath, dest):
+    time.sleep(60)
+    return
+
+TASK_MAP = {
+    PNG_EXT: make_png,
+    TIF_EXT: make_tif,
+    MASK_EXT: make_mask
+}
+
+
 # run algo, generate mask
 @app.post('/generate')
 def generate():
     target_svs = request.json["ids"]
     target_exts = request.json["exts"]
-
+    
+    res = {
+        "ids": []
+    }
     for target in target_svs:
-        for e in target_exts:
-            TASK_MAP[e].delay(get_fpath(target, e), make_fpath(target, e))
-    return jsonify(res)
+        if exists(get_svs_dir(target)):
+            res["ids"].append(target)
+            for e in target_exts:
+                TASK_MAP[e].delay(target, make_fpath(target, SVS_EXT), make_fpath(target, e))
+    return jsonify(res), 200
 
 
 
 if __name__ == '__main__':
     print(sys.path)
-    if not exists(WEB_PORTAL_DIR):
-        mkdir(WEB_PORTAL_DIR)
+    if not os.path.exists(DATA_DIR):
+        os.makedirs(DATA_DIR)
     app.run(debug=True)
 
