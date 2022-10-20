@@ -32,14 +32,6 @@ const ActionPanel = () => {
       </div>
       <Button
         onClick={() => {
-          setModalVariant("download");
-        }}
-        disabled={selectedData.length === 0 ? true : false}
-      >
-        Download
-      </Button>
-      <Button
-        onClick={() => {
           setModalVariant("generate");
         }}
         disabled={selectedData.length === 0 ? true : false}

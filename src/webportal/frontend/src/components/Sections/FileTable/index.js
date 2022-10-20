@@ -1,8 +1,9 @@
 import { DataGrid } from "@mui/x-data-grid";
-import { ReactComponent as DownloadReadyIcon } from "assets/icons/downloadReady.svg";
+
 import { ReactComponent as ProcessingIcon } from "assets/icons/processing.svg";
 import { ReactComponent as WaitingIcon } from "assets/icons/waiting.svg";
 import { ReactComponent as EditIcon } from "assets/icons/editIcon.svg";
+import DownloadButton from "./DownloadButton";
 
 import { useDispatch } from "react-redux";
 import { setSelectedData } from "store/selectedDataReducer";
@@ -24,7 +25,7 @@ function getChildFileStatus(cell) {
   if (cell.value === 0) {
     return "";
   } else if (cell.value === 2) {
-    return <DownloadReadyIcon />;
+    return <DownloadButton cellId={cell.id} field={cell.field} />;
   } else if (cell.value === 3) {
     return <ProcessingIcon></ProcessingIcon>;
   } else if (cell.value === 1) {
@@ -41,13 +42,13 @@ const columns = [
     renderCell: filenameCell,
   },
   {
-    field: "tif",
+    field: ".tif",
     headerName: ".tif",
     width: 128,
     renderCell: getChildFileStatus,
   },
   {
-    field: "png",
+    field: ".png",
     headerName: ".png",
     width: 128,
     renderCell: getChildFileStatus,
@@ -115,9 +116,9 @@ const FileTable = () => {
         return {
           id: fileId,
           filename: fileName,
-          tif: fileStatusGenerator(tifStatus),
+          ".tif": fileStatusGenerator(tifStatus),
           mask: fileStatusGenerator(maskStatus),
-          png: fileStatusGenerator(pngStatus),
+          ".png": fileStatusGenerator(pngStatus),
           dateCreated: created,
         };
       })
