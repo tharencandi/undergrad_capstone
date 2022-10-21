@@ -177,12 +177,12 @@ def upload():
     print(filename)
     ext = filename.split(".")[-1]
     print(ext)
-
+    file_id = str(uuid.uuid4())
     if ext not in valid_extensions:
         return jsonify("INVALID FILE FORMAT: {}".format(ext))
 
     # check if directory exists
-    dir_path = DATA_DIR + id
+    dir_path = DATA_DIR + file_id
     path = dir_path
 
     counter = 1
@@ -193,11 +193,11 @@ def upload():
 
     print("w {}".format(dir_path))
     id = dir_path.split('/')[-1]
-    file_path = "{}/{}.{}".format(dir_path,id,ext)
+    file_path = "{}/{}.{}".format(dir_path,file_id,ext)
     
     mkdir(dir_path)
 
-    file_id = uuid.uuid4()
+    
     now = datetime.now()
     
     meta_data = {
@@ -210,7 +210,7 @@ def upload():
         "downloadStatus": "none"
     }
 
-    with open("{}/{}.meta".format(dir_path,id), 'w') as json_file:
+    with open("{}/{}.meta".format(dir_path,file_id), 'w') as json_file:
         json.dump(meta_data, json_file)
 
     print("file: {}".format(file_path))
