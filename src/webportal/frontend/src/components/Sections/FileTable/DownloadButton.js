@@ -1,5 +1,6 @@
 import { ReactComponent as DownloadReadyIcon } from "assets/icons/downloadReady.svg";
 import useServerAction from "hooks/useServerAction";
+import { Tooltip } from "@mui/material";
 
 const DownloadButton = ({ cellId, field }) => {
   const requestServerAction = useServerAction();
@@ -9,9 +10,11 @@ const DownloadButton = ({ cellId, field }) => {
   };
 
   return (
-    <button onClick={downloadHandler} className="hover:scale-[1.1]">
-      <DownloadReadyIcon />
-    </button>
+    <Tooltip title="Click to download" arrow placement="right">
+      <button onClick={downloadHandler} className="hover:scale-[1.1]">
+        <DownloadReadyIcon />
+      </button>
+    </Tooltip>
   );
 };
 

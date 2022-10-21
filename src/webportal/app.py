@@ -21,12 +21,11 @@ app.config['CELERY_RESULT_BACKEND'] = 'redis://localhost:6379/0'
 celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'])
 celery.conf.update(app.config)
 
-# scan_path = "../../scans/"
 scan_path = "./scans/"
 valid_extensions = ["png", "svs", "tif"]
 
-WEB_PORTAL_DIR="/home/haeata/.glioblastoma_portal/"
-DATABASE = '/home/haeata/.glioblastoma_portal/file.db'
+WEB_PORTAL_DIR="temp"
+DATABASE = 'temp/file.db'
 
 def query_db(query, args=(), one=False):
     cur = get_db().execute(query, args)
