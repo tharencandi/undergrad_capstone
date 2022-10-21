@@ -60,28 +60,38 @@ valid_extensions = ["png", "svs", "tif"]
 
 # get specific file path,
 def get_file(name, ext):
-    dir_path = scan_path + name
+    dir_path = DATA_DIR + name
     file_path = "{}/{}.{}".format(dir_path,name ,ext)
 
     return file_path
 
 # get meta file, returns path to meta file
 def get_meta(id):
-    meta_path = scan_path+ id + '/' + id + ".meta"
+    meta_path = DATA_DIR+ id + '/' + id + ".meta"
     return meta_path
 
 # save file object into file system
 def save_file(file_obj, id, ext):
 
-    dir_path = scan_path + id
+    dir_path = DATA_DIR + id
     file_path = "{}/{}.{}".format(dir_path,id,ext)
     file_obj.save(file_path)
 
+# set web portal directory
 @app.post('/dir')
 def change_dir():
     dir = request.args['dir']
-    scan_path = dir
+
+    if dir[-1] != '/':
+        dir = dir + '/'
+
+    WEB_PORTAL_DIR = dir
     return jsonify("DONE")
+
+# get web portal directory
+@app.get('/dir')
+def get_dir():
+    return jsonify(DATA_DIR)
 
 # home page
 @app.get('/')
@@ -129,17 +139,51 @@ def get_scan():
     ext = request.args["extension"]
 
     # check if directory exists, create if not
-    dir_path = scan_path + ids
+    dir_path = join(DATA_DIR, ids)
     file_path = "{}/{}.{}".format(dir_path,ids,ext)
     file_path = get_file(ids, ext)
 
     if not exists(file_path):
         return jsonify("File not Found: "+ file_path)
     
-    else:
-        # change status
-        meta_path = dir_path + '/' + ids + '.meta'
-        meta_path = get_meta(ids)
+    # change status
+    meta_path = dir_path + '/' + ids + '.meta'
+    meta_path = get_meta(ids)
+    # for id in ids:
+    for i in range(0, len(ids)):
+
+        # check if directory exists, create if not
+        dir_path = DATA_DIR + ids[i]
+        file_path = "{}/{}.{}".format(dir_path,ids[i],ext[i])
+
+        if not exists(file_path):
+            return jsonify("File not Found: "+ file_path)
+        
+        else:
+            filenames.append(file_path)
+            files.append((dir_path, i))
+
+            # change status
+            meta_path = dir_path + '/' + ids[i] + '.meta'
+
+            with open(meta_path, 'r') as f:
+                data = json.load(f)
+            
+            key = ext[i] + "Status"
+            data[key] = "inProgress"
+
+            with open(meta_path, 'w') as json_file:
+                json.dump(data, json_file)
+
+    with zipfile.ZipFile("multiple_files.zip", mode="w") as archive:
+        for filename in filenames:
+            archive.write(filename)
+    
+    # change status back
+    for file in files:
+        dir_path = file[0]
+        i = file[1]
+        meta_path = dir_path + '/' + ids[i] + '.meta'
 
         with open(meta_path, 'r') as f:
             data = json.load(f)
@@ -222,8 +266,8 @@ def delete():
     # ids = request.args.getlist("ids")
     id = request.args["ids"]
 
-        dir_path = DATA_DIR + id
-        # file_path = "{}/{}.{}".format(dir_path,ids,ext)
+    dir_path = DATA_DIR + id
+    # file_path = "{}/{}.{}".format(dir_path,ids,ext)
 
     try:
         shutil.rmtree(dir_path)
@@ -245,8 +289,8 @@ def scan_rename():
     with open(meta_path, 'r') as f:
             data = json.load(f)
         
-        new_dir = DATA_DIR + new_name
-        rename(dir_path, new_dir)
+    new_dir = DATA_DIR + new_name
+    rename(dir_path, new_dir)
     
     return jsonify("DONE")
     
