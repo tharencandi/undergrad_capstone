@@ -54,15 +54,14 @@ const useGetData = () => {
 
   const fetchData = async () => {
     console.log("Refreshing data....");
-    dispatch(setData(DUMMY_DATA));
-    // await axios
-    //   .get("/all")
-    //   .then((res) => {
-    //     dispatch(setData(res.data));
-    //   })
-    //   .catch((err) => {
-    //     console.error(err);
-    //   });
+    await axios
+      .get("/all")
+      .then((res) => {
+        dispatch(setData(res.data));
+      })
+      .catch((err) => {
+        console.error(err);
+      });
   };
 
   return fetchData;

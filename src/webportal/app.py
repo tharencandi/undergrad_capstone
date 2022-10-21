@@ -102,11 +102,7 @@ def index():
 # return list of tuples -> (file_id, [extensions], date created)
 @app.get('/all')
 def all_scans():
-<<<<<<< HEAD
-    scans = [f for f in listdir(WEB_PORTAL_DIR) if not isfile(join(WEB_PORTAL_DIR, f))]
-=======
     scans = [f for f in listdir(DATA_DIR) if not isfile(join(DATA_DIR, f))]
->>>>>>> origin/alex_frontend
     
     scan_list = []
     # return jsonify("a1")
@@ -114,11 +110,7 @@ def all_scans():
         scan_id = id
         extensions = []
         date = ""
-<<<<<<< HEAD
-        dir_path = "{}{}/".format(WEB_PORTAL_DIR,id)
-=======
         dir_path = "{}{}/".format(DATA_DIR,id)
->>>>>>> origin/alex_frontend
 
         # get extensions
         files = [f for f in listdir(dir_path) if isfile(join(dir_path, f))]
@@ -129,12 +121,8 @@ def all_scans():
                 extensions.append(ext)
 
         # get date
-<<<<<<< HEAD
-        meta = get_meta(id)
-=======
         meta = DATA_DIR + id + "/" + ".meta"
         meta = "{}{}/{}.meta".format(DATA_DIR, id, id)
->>>>>>> origin/alex_frontend
         meta_data = open(meta, "r")
         data = json.load(meta_data)
 
@@ -159,11 +147,6 @@ def get_scan():
     if not exists(file_path):
         return jsonify("File not Found: "+ file_path)
     
-<<<<<<< HEAD
-    else:
-        # change status
-        meta_path = get_meta(ids)
-=======
     # for id in ids:
     for i in range(0, len(ids)):
 
@@ -199,7 +182,6 @@ def get_scan():
         dir_path = file[0]
         i = file[1]
         meta_path = dir_path + '/' + ids[i] + '.meta'
->>>>>>> origin/alex_frontend
 
         with open(meta_path, 'r') as f:
             data = json.load(f)
@@ -232,15 +214,6 @@ def upload():
     if filename == '':
         return jsonify("NULL")
 
-<<<<<<< HEAD
-    # assumes file is svs
-    # remove '.svs' from end to get id
-    id = filename[:len(filename) - 4]
-    ext = 'svs'
-
-    # check if directory exists
-    dir_path = WEB_PORTAL_DIR + id
-=======
     print(filename)
     id = filename.split(".")[0]
     print(id)
@@ -253,7 +226,6 @@ def upload():
 
     # check if directory exists
     dir_path = DATA_DIR + file_id
->>>>>>> origin/alex_frontend
     path = dir_path
 
     counter = 1
@@ -266,11 +238,7 @@ def upload():
     
     mkdir(dir_path)
 
-<<<<<<< HEAD
-    file_uuid = uuid.uuid4()
-=======
     
->>>>>>> origin/alex_frontend
     now = datetime.now()
     
     meta_data = {
@@ -296,12 +264,8 @@ def delete():
     # ids = request.args.getlist("ids")
     id = request.args["ids"]
 
-<<<<<<< HEAD
-    dir_path = WEB_PORTAL_DIR + id
-=======
-        dir_path = DATA_DIR + id
-        # file_path = "{}/{}.{}".format(dir_path,ids,ext)
->>>>>>> origin/alex_frontend
+    dir_path = DATA_DIR + id
+    # file_path = "{}/{}.{}".format(dir_path,ids,ext)
 
     try:
         shutil.rmtree(dir_path)
@@ -314,12 +278,8 @@ def scan_rename():
     id = request.args["ids"]
     new_name = request.args["new_name"]
 
-<<<<<<< HEAD
-    dir_path = WEB_PORTAL_DIR + id
-=======
     for id in ids:
         dir_path = DATA_DIR + id
->>>>>>> origin/alex_frontend
 
     # meta_file = dir_path + id + ".meta"
     meta_path = dir_path + '/' + id + '.meta'
@@ -327,47 +287,10 @@ def scan_rename():
     with open(meta_path, 'r') as f:
             data = json.load(f)
         
-<<<<<<< HEAD
-    data["fileName"] = new_name
-
-    with open(meta_path, 'w') as json_file:
-        json.dump(data, json_file)
-
-    for f in listdir(dir_path):
-
-        file_name = f.split('.')
-
-        file_name[0] = new_name
-        file = file_name[0] + '.' + file_name[1]
-
-        rename(dir_path+'/'+f, dir_path+'/'+file)
-    
-    new_dir = WEB_PORTAL_DIR + new_name
+    new_dir = DATA_DIR + new_name
     rename(dir_path, new_dir)
     
     return jsonify("DONE")
-
-#######################################################
-# un-comment import conversion
-
-# #convert to different format
-# @app.get('/scan/convert')
-# def convert():
-#     id = request.args["ids"]
-#     ext = request.args["ext"]
-
-#     # change status file
-#     dir_path = WEB_PORTAL_DIR + id
-#     meta_path = dir_path + '/' + id + '.meta'
-
-#     with open(meta_path, 'r') as f:
-#         data = json.load(f)
-=======
-        new_dir = DATA_DIR + new_name
-        rename(dir_path, new_dir)
-    
-    return jsonify("DONE")
->>>>>>> origin/alex_frontend
     
 PNG_EXT=".png"
 TIF_EXT=".tif"
@@ -388,10 +311,6 @@ def set_meta_field(uuid, field, value):
         meta = json.loads(f)
         meta[field] = value
     
-<<<<<<< HEAD
-@celery.task(bind=True)
-def generate_mask(self, svs_fpath, mask_dest):
-=======
     if meta:
         with open(fpath) as o:
             json.dump(meta, o)
@@ -415,7 +334,6 @@ def make_tif(self, uuid, svs_fpath, dest):
  
 @celery.task()
 def make_mask(self, uuid, svs_fpath, dest):
->>>>>>> origin/alex_frontend
     time.sleep(60)
     return
 
