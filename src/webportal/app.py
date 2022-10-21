@@ -171,8 +171,12 @@ def upload():
     if filename == '':
         return jsonify("NULL")
 
+    print(filename)
     id = filename.split(".")[0]
-    ext = filename.split(".")[1]
+    print(id)
+    print(filename)
+    ext = filename.split(".")[-1]
+    print(ext)
 
     if ext not in valid_extensions:
         return jsonify("INVALID FILE FORMAT: {}".format(ext))
