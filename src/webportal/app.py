@@ -58,6 +58,31 @@ valid_extensions = ["png", "svs", "tif"]
 #             db.cursor().executescript(f.read()) 
 #         db.commit()
 
+# get specific file path,
+def get_file(name, ext):
+    dir_path = scan_path + name
+    file_path = "{}/{}.{}".format(dir_path,name ,ext)
+
+    return file_path
+
+# get meta file, returns path to meta file
+def get_meta(id):
+    meta_path = scan_path+ id + '/' + id + ".meta"
+    return meta_path
+
+# save file object into file system
+def save_file(file_obj, id, ext):
+
+    dir_path = scan_path + id
+    file_path = "{}/{}.{}".format(dir_path,id,ext)
+    file_obj.save(file_path)
+
+@app.post('/dir')
+def change_dir():
+    dir = request.args['dir']
+    scan_path = dir
+    return jsonify("DONE")
+
 # home page
 @app.get('/')
 def index():
@@ -86,16 +111,12 @@ def all_scans():
                 extensions.append(ext)
 
         # get date
-        meta = DATA_DIR + id + "/" + ".meta"
-        meta = "{}{}/{}.meta".format(DATA_DIR, id, id)
+        meta = get_meta(id)
         meta_data = open(meta, "r")
-        # date = meta_data.readline()
         data = json.load(meta_data)
 
         meta_data.close()
-        # scan_list.append((scan_id, extensions, date))
         scan_list.append(data)
-    # return jsonify("a")
     
     return jsonify(scan_list)
 
@@ -103,62 +124,42 @@ def all_scans():
 @app.get('/scan')
 def get_scan():
     #
-    ids = request.args.getlist("ids")
-    ext = request.args.getlist("extension")
 
-    filenames = []
-    files = []
-    # ids = ids.split(',')
-    # ext = ext.split(',')
+    ids = request.args["ids"]
+    ext = request.args["extension"]
+
+    # check if directory exists, create if not
+    dir_path = scan_path + ids
+    file_path = "{}/{}.{}".format(dir_path,ids,ext)
+    file_path = get_file(ids, ext)
+
+    if not exists(file_path):
+        return jsonify("File not Found: "+ file_path)
     
-    # for id in ids:
-    for i in range(0, len(ids)):
-
-        # check if directory exists, create if not
-        dir_path = DATA_DIR + ids[i]
-        file_path = "{}/{}.{}".format(dir_path,ids[i],ext[i])
-
-        if not exists(file_path):
-            return jsonify("File not Found: "+ file_path)
-        
-        else:
-            filenames.append(file_path)
-            files.append((dir_path, i))
-
-            # change status
-            meta_path = dir_path + '/' + ids[i] + '.meta'
-
-            with open(meta_path, 'r') as f:
-                data = json.load(f)
-            
-            key = ext[i] + "Status"
-            data[key] = "inProgress"
-
-            with open(meta_path, 'w') as json_file:
-                json.dump(data, json_file)
-
-    with zipfile.ZipFile("multiple_files.zip", mode="w") as archive:
-        for filename in filenames:
-            archive.write(filename)
-    
-    # change status back
-    for file in files:
-        dir_path = file[0]
-        i = file[1]
-        meta_path = dir_path + '/' + ids[i] + '.meta'
+    else:
+        # change status
+        meta_path = dir_path + '/' + ids + '.meta'
+        meta_path = get_meta(ids)
 
         with open(meta_path, 'r') as f:
             data = json.load(f)
         
-        key = ext[i] + "Status"
-        data[key] = "Completed"
+        key = ext + "Status"
+        data[key] = "inProgress"
 
         with open(meta_path, 'w') as json_file:
             json.dump(data, json_file)
-    
 
+    with open(meta_path, 'r') as f:
+            data = json.load(f)
+        
+    key = ext + "Status"
+    data[key] = "Completed"
+
+    with open(meta_path, 'w') as json_file:
+        json.dump(data, json_file)
     
-    return send_file("multiple_files.zip")
+    return send_file(file_path)
 
 
 # upload a new scan
@@ -187,11 +188,9 @@ def upload():
 
     counter = 1
     while exists(dir_path):
-        print(dir_path)
         dir_path = path + "(" + str(counter) + ")"
         counter += 1
 
-    print("w {}".format(dir_path))
     id = dir_path.split('/')[-1]
     file_path = "{}/{}.{}".format(dir_path,file_id,ext)
     
@@ -213,56 +212,38 @@ def upload():
     with open("{}/{}.meta".format(dir_path,file_id), 'w') as json_file:
         json.dump(meta_data, json_file)
 
-    print("file: {}".format(file_path))
-    file.save(file_path)
-
-    return jsonify("DONE")
+    save_file(file, id, ext)
+    return jsonify(str(file_uuid))
 
 # delete scan
 @app.delete('/scan')
 def delete():
 
-    ids = request.args.getlist("ids")
-    # ext = request.args["extension"]
-    # print(ids)
-    for id in ids:
+    # ids = request.args.getlist("ids")
+    id = request.args["ids"]
 
         dir_path = DATA_DIR + id
         # file_path = "{}/{}.{}".format(dir_path,ids,ext)
 
-        try:
-            shutil.rmtree(dir_path)
-            return jsonify("DONE")
-        except Exception as e:
-            return jsonify(e)
+    try:
+        shutil.rmtree(dir_path)
+        return jsonify("DONE")
+    except Exception as e:
+        return jsonify(e)
 
 @app.put('/scan')
 def scan_rename():
-    ids = request.args.getlist("ids")
+    id = request.args["ids"]
     new_name = request.args["new_name"]
 
     for id in ids:
         dir_path = DATA_DIR + id
 
-        # meta_file = dir_path + id + ".meta"
-        meta_path = dir_path + '/' + id + '.meta'
+    # meta_file = dir_path + id + ".meta"
+    meta_path = dir_path + '/' + id + '.meta'
 
-        with open(meta_path, 'r') as f:
-                data = json.load(f)
-            
-        data["fileName"] = new_name
-
-        with open(meta_path, 'w') as json_file:
-            json.dump(data, json_file)
-
-        for f in listdir(dir_path):
-
-            file_name = f.split('.')
-
-            file_name[0] = new_name
-            file = file_name[0] + '.' + file_name[1]
-
-            rename(dir_path+'/'+f, dir_path+'/'+file)
+    with open(meta_path, 'r') as f:
+            data = json.load(f)
         
         new_dir = DATA_DIR + new_name
         rename(dir_path, new_dir)
