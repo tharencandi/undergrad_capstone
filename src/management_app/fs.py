@@ -1,8 +1,7 @@
 import os
 from case import GBM, LGG
+from app import DATA_DIR
 from flask import current_app
-
-PATH_TO_DATA="/home/haeata/glib_data/Cell/"
 
 CASE_DATA_DIR={
     GBM: "TCGA_GBM",
@@ -10,7 +9,7 @@ CASE_DATA_DIR={
 }
 
 def uuid_dir_exists(case, uuid):
-    path = os.path.join(PATH_TO_DATA, CASE_DATA_DIR[case], uuid)
+    path = os.path.join(current_app.config[DATA_DIR], CASE_DATA_DIR[case], uuid)
     if not os.path.isdir(path):
         return False
     
@@ -18,7 +17,7 @@ def uuid_dir_exists(case, uuid):
 
 def write_uuid_f(case, uuid, flask_f_object, fname):
     
-    uuid_dir = os.path.join(PATH_TO_DATA, CASE_DATA_DIR[case], uuid)
+    uuid_dir = os.path.join(current_app.config[DATA_DIR], CASE_DATA_DIR[case], uuid)
     current_app.logger.info(f"uuid_dir: {uuid_dir}")
     if not os.path.isdir(uuid_dir):
         os.mkdir(uuid_dir)
@@ -29,7 +28,7 @@ def write_uuid_f(case, uuid, flask_f_object, fname):
     
 
 def uuid_object_exists(case, uuid, fname):
-    path = os.path.join(PATH_TO_DATA, CASE_DATA_DIR[case], uuid, fname)
+    path = os.path.join(current_app.config[DATA_DIR], CASE_DATA_DIR[case], uuid, fname)
     if os.path.exists(path):
         return True
     return False

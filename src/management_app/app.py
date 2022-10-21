@@ -12,7 +12,7 @@ logging.basicConfig(filename='management_server.log', level=logging.INFO, format
 app = Flask(__name__)
 
 MASK_EXT = ".mask"
-
+DATA_DIR="DATA_DIR"
 app.errorhandler(HTTPException)
 def api_error(e):
     return jsonify(message=str(e)), e.code
@@ -54,4 +54,6 @@ def receive_annotation(case, uuid):
 
 if __name__=="__main__":
     # app.run(host="0.0.0.0")
+    data_dir = sys.argv[1]
+    app.config[DATA_DIR] = data_dir
     app.run(host="localhost", debug=True)
