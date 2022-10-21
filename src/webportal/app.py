@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify, send_file, g, render_template
 from celery import Celery
 from os import listdir, mkdir, remove, rename
-from os.path import isfile, join, exists
+from os.path import isfile, join, exists, expanduser
 from datetime import datetime
 import zipfile
 import uuid
@@ -24,8 +24,9 @@ app.config['CELERY_RESULT_BACKEND'] = 'redis://localhost:6379/0'
 celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'])
 celery.conf.update(app.config)
 
-WEB_PORTAL_DIR="~/.glioblastoma_portal/"
-DATA_DIR = WEB_PORTAL_DIR+"scans/"
+home = expanduser("~")
+WEB_PORTAL_DIR=join(home, ".glioblastoma_portal", "")
+DATA_DIR = join(WEB_PORTAL_DIR, "scans/")
 valid_extensions = ["png", "svs", "tif"]
 
 
