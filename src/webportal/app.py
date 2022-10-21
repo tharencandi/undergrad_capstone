@@ -28,6 +28,7 @@ valid_extensions = ["png", "svs", "tif"]
 WEB_PORTAL_DIR="/home/haeata/.glioblastoma_portal/"
 DATABASE = '/home/haeata/.glioblastoma_portal/file.db'
 
+# for testing
 # WEB_PORTAL_DIR = "/home/"
 # DATABASE = '/home/'
 
@@ -82,6 +83,10 @@ def change_dir():
     dir = request.args['dir']
     scan_path = dir
     return jsonify("DONE")
+
+@app.get('/dir')
+def get_dir():
+    return(jsonify(scan_path))
 
 # home page
 @app.get('/')
@@ -338,5 +343,5 @@ if __name__ == '__main__':
     if not exists(WEB_PORTAL_DIR):
         mkdir(WEB_PORTAL_DIR)
     init_db_if_not_exists()
-    app.run(debug=True, port = 8080)
+    app.run(debug=True)
 
