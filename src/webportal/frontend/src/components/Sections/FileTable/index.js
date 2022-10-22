@@ -80,7 +80,7 @@ const FileTable = () => {
   function filenameCell(cell) {
     return (
       <div className="filenameCell">
-        {cell.value}
+        {`${cell.value}.svs`}
         <Tooltip title="Edit Name" arrow>
           <button
             onClick={() => {

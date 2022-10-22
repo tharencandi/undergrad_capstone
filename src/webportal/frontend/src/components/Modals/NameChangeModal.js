@@ -5,6 +5,7 @@ import { Input } from "@mui/material";
 import { useSelector } from "react-redux";
 import useServerAction from "hooks/useServerAction";
 import useGetData from "hooks//useGetData";
+import axios from "axios";
 
 const Backdrop = ({ modalController }) => {
   return (
@@ -42,12 +43,17 @@ const Overlay = ({ cell, modalController }) => {
 
   const submitHandler = async () => {
     setLoading(true);
-    console.log(
-      "Sent request to server changing filename",
-      cell.value,
-      "to",
-      newName
-    );
+    axios
+      .put("/scan", {
+        ids: cell.value,
+        new_name: newName,
+      })
+      .then((res) => {
+        console.log(res);
+      })
+      .catch((err) => {
+        console.error(err);
+      });
 
     // Wait for the server to confirm
     await new Promise((resolve) => setTimeout(resolve, 500));
