@@ -135,7 +135,7 @@ def all_scans():
         # print("a")
         # print(scan)
         # print(scan["fileName"])
-        id = scan["fileName"]
+        id = scan["fileId"]
         json_obj[id] = scan
     # return jsonify(scan_list)
     # print(jsonify(json_obj))
