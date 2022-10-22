@@ -129,7 +129,19 @@ def all_scans():
         meta_data.close()
         scan_list.append(data)
     
-    return jsonify(scan_list)
+    json_obj = {}
+    
+    for scan in scan_list:
+        # print("a")
+        # print(scan)
+        # print(scan["fileName"])
+        id = scan["fileName"]
+        json_obj[id] = scan
+    # return jsonify(scan_list)
+    # print(jsonify(json_obj))
+
+    return jsonify(json_obj)
+    # return json_obj
 
 # download specified scan as extension as zipped file
 @app.get('/scan')
@@ -206,7 +218,8 @@ def upload():
     
     meta_data = {
         'fileId': str(file_uuid),
-        "fileName": filename,
+        # "fileName": filename,
+        "fileName": id,
         "created": now.strftime("%d/%m/%Y %H:%M:%S"),
         "tifStatus": "none",
         "pngStatus": "none",
