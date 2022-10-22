@@ -11,7 +11,7 @@ import sys, os
 cdir = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.dirname(cdir))
 
-from image_tools.conversion import svs_to_png, svs_to_tiff
+# from image_tools.conversion import svs_to_png, svs_to_tiff
 
 
 app = Flask(__name__, static_url_path='',
