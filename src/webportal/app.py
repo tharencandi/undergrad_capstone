@@ -148,8 +148,8 @@ def all_scans():
 def get_scan():
     #
 
-    ids = request.args["ids"]
-    ext = request.args["extension"]
+    ids = request.args["ids[]"]
+    ext = request.args["extension[]"]
 
     # check if directory exists, create if not
     dir_path = join(WEB_PORTAL_DIR, ids)
