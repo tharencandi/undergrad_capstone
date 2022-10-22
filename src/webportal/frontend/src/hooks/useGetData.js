@@ -1,6 +1,7 @@
 import axios from "axios";
 import { useDispatch } from "react-redux";
 import { setData } from "store/dataReducer";
+import React from "react";
 
 const DUMMY_DATA = {
   123: {
@@ -52,7 +53,7 @@ const DUMMY_DATA = {
 const useGetData = () => {
   const dispatch = useDispatch();
 
-  const fetchData = async () => {
+  const fetchData = React.useCallback(async () => {
     console.log("Refreshing data....");
     await axios
       .get("/all")
@@ -62,7 +63,8 @@ const useGetData = () => {
       .catch((err) => {
         console.error(err);
       });
-  };
+    // dispatch(setData(DUMMY_DATA));
+  }, []);
 
   return fetchData;
 };

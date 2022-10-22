@@ -2,6 +2,14 @@ import axios from "axios";
 
 const useServerAction = () => {
   const requestServerAction = async (ids, extension, action, overwrite) => {
+    // Clean extensions
+    extension = extension.map((ext) => {
+      if (ext[0] === ".") {
+        return ext.slice(1);
+      }
+      return ext;
+    });
+
     let url = "";
     if (action === "delete") {
       await axios

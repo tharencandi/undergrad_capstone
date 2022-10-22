@@ -142,7 +142,7 @@ const Overlay = ({ variant, modalController }) => {
         return;
       }
     })();
-  }, [fetchData, allData, checked, selectedData, variant]);
+  }, [fetchData, checked, selectedData, variant]);
 
   return (
     <div className="absolute inset-0 min-w-[400px] max-w-[750px] h-[500px] m-auto bg-white p-8 rounded-sm z-10 flex flex-col">

@@ -111,7 +111,7 @@ const FileTable = () => {
     {
       field: "filename",
       headerName: "Filename",
-      width: 256,
+      width: 512,
       renderCell: filenameCell,
     },
     {
