@@ -176,7 +176,7 @@ def get_scan():
             data = json.load(f)
         
     key = ext + "Status"
-    data[key] = "Completed"
+    data[key] = "completed"
 
     with open(meta_path, 'w') as json_file:
         json.dump(data, json_file)
