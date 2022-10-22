@@ -266,10 +266,9 @@ def delete():
 
             else:
                 file = dir_path + '/' + id + '.' + ext
-                print("aaa")
-                print(file)
+                
                 if not exists(file):
-                    pass
+                    continue
                 remove(file)
     
     return jsonify("DONE")
