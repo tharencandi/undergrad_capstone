@@ -66,7 +66,7 @@ def svs_to_png(input_file_name, output_file_name):
     if input_file_name == None or output_file_name == None:
         return EXTENSION_FORMAT_ERR
 
-    if ".svs" not in input_file_name or ".png" not in output_file_name:
+    if ".svs" not in input_file_name and ".png" not in output_file_name:
         return EXTENSION_FORMAT_ERR
     
     try: 
@@ -101,7 +101,9 @@ def svs_to_tiff(input_file_name, output_file_name):
     if input_file_name == None or output_file_name == None:
         return EXTENSION_FORMAT_ERR
         
-    if ".svs" not in input_file_name or ".tif" not in output_file_name or ".tiff" not in output_file_name:
+    if ".svs" not in input_file_name and (".tif" not in output_file_name and ".tiff" not in output_file_name):
+        print(input_file_name)
+        print(output_file_name)
         return EXTENSION_FORMAT_ERR
     
     try: 
