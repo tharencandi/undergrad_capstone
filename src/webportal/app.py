@@ -257,7 +257,7 @@ def upload():
         json.dump(meta_data, json_file)
 
     save_file(file, id, ext)
-    return jsonify(str(file_uuid))
+    return jsonify(str(file_id))
 
 # delete scan
 @app.delete('/scan')

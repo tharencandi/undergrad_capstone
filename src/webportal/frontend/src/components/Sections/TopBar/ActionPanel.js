@@ -23,7 +23,7 @@ const ActionPanel = () => {
       <div className="relative overflow-hidden inline-block md:mr-6 xl:mr-12 cursor-pointer">
         <Button variant="highlight">Upload SVS</Button>
         <input
-          accept="image/*"
+          accept=".svs"
           multiple
           type="file"
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
