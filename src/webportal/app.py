@@ -27,6 +27,7 @@ celery.conf.update(app.config)
 home = expanduser("~")
 WEB_PORTAL_DIR=join(home, ".glioblastoma_portal", "")
 DATA_DIR = join(WEB_PORTAL_DIR, "scans/")
+WEB_PORTAL_DIR = DATA_DIR
 valid_extensions = ["png", "svs", "tif"]
 
 
@@ -139,51 +140,16 @@ def get_scan():
     ext = request.args["extension"]
 
     # check if directory exists, create if not
-    dir_path = join(DATA_DIR, ids)
+    dir_path = join(WEB_PORTAL_DIR, ids)
     file_path = "{}/{}.{}".format(dir_path,ids,ext)
     file_path = get_file(ids, ext)
 
     if not exists(file_path):
         return jsonify("File not Found: "+ file_path)
     
-    # change status
-    meta_path = dir_path + '/' + ids + '.meta'
-    meta_path = get_meta(ids)
-    # for id in ids:
-    for i in range(0, len(ids)):
-
-        # check if directory exists, create if not
-        dir_path = DATA_DIR + ids[i]
-        file_path = "{}/{}.{}".format(dir_path,ids[i],ext[i])
-
-        if not exists(file_path):
-            return jsonify("File not Found: "+ file_path)
-        
-        else:
-            filenames.append(file_path)
-            files.append((dir_path, i))
-
-            # change status
-            meta_path = dir_path + '/' + ids[i] + '.meta'
-
-            with open(meta_path, 'r') as f:
-                data = json.load(f)
-            
-            key = ext[i] + "Status"
-            data[key] = "inProgress"
-
-            with open(meta_path, 'w') as json_file:
-                json.dump(data, json_file)
-
-    with zipfile.ZipFile("multiple_files.zip", mode="w") as archive:
-        for filename in filenames:
-            archive.write(filename)
-    
-    # change status back
-    for file in files:
-        dir_path = file[0]
-        i = file[1]
-        meta_path = dir_path + '/' + ids[i] + '.meta'
+    else:
+        # change status
+        meta_path = get_meta(ids)
 
         with open(meta_path, 'r') as f:
             data = json.load(f)
@@ -216,18 +182,13 @@ def upload():
     if filename == '':
         return jsonify("NULL")
 
-    print(filename)
-    id = filename.split(".")[0]
-    print(id)
-    print(filename)
-    ext = filename.split(".")[-1]
-    print(ext)
-    file_id = str(uuid.uuid4())
-    if ext not in valid_extensions:
-        return jsonify("INVALID FILE FORMAT: {}".format(ext))
+    # assumes file is svs
+    # remove '.svs' from end to get id
+    id = filename[:len(filename) - 4]
+    ext = 'svs'
 
     # check if directory exists
-    dir_path = DATA_DIR + file_id
+    dir_path = WEB_PORTAL_DIR + id
     path = dir_path
 
     counter = 1
@@ -236,15 +197,15 @@ def upload():
         counter += 1
 
     id = dir_path.split('/')[-1]
-    file_path = "{}/{}.{}".format(dir_path,file_id,ext)
+    file_path = "{}/{}.{}".format(dir_path,id,ext)
     
     mkdir(dir_path)
 
-    
+    file_uuid = uuid.uuid4()
     now = datetime.now()
     
     meta_data = {
-        'fileId': str(file_id),
+        'fileId': str(file_uuid),
         "fileName": filename,
         "created": now.strftime("%d/%m/%Y %H:%M:%S"),
         "tifStatus": "none",
@@ -253,22 +214,19 @@ def upload():
         "downloadStatus": "none"
     }
 
-    with open("{}/{}.meta".format(dir_path,file_id), 'w') as json_file:
+    with open("{}/{}.meta".format(dir_path,id), 'w') as json_file:
         json.dump(meta_data, json_file)
 
     save_file(file, id, ext)
-    return jsonify(str(file_id))
+    return jsonify(str(file_uuid))
 
 # delete scan
 @app.delete('/scan')
 def delete():
 
-    # ids = request.args.getlist("ids")
     id = request.args["ids"]
 
     dir_path = DATA_DIR + id
-    # file_path = "{}/{}.{}".format(dir_path,ids,ext)
-
     try:
         shutil.rmtree(dir_path)
         return jsonify("DONE")
@@ -280,8 +238,7 @@ def scan_rename():
     id = request.args["ids"]
     new_name = request.args["new_name"]
 
-    for id in ids:
-        dir_path = DATA_DIR + id
+    dir_path = WEB_PORTAL_DIR + id
 
     # meta_file = dir_path + id + ".meta"
     meta_path = dir_path + '/' + id + '.meta'
@@ -289,7 +246,20 @@ def scan_rename():
     with open(meta_path, 'r') as f:
             data = json.load(f)
         
-    new_dir = DATA_DIR + new_name
+    data["fileName"] = new_name
+
+    with open(meta_path, 'w') as json_file:
+        json.dump(data, json_file)
+
+    for f in listdir(dir_path):
+
+        file_name = f.split('.')
+        ext = file_name[-1]
+        file = new_name + '.' + ext
+
+        rename(dir_path+'/'+f, dir_path+'/'+file)
+    
+    new_dir = WEB_PORTAL_DIR + new_name
     rename(dir_path, new_dir)
     
     return jsonify("DONE")
@@ -368,5 +338,5 @@ if __name__ == '__main__':
     print(sys.path)
     if not os.path.exists(DATA_DIR):
         os.makedirs(DATA_DIR)
-    app.run(debug=True)
+    app.run(debug=True, port = 8080)
 
