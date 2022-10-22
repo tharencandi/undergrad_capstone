@@ -236,15 +236,45 @@ def upload():
 # delete scan
 @app.delete('/scan')
 def delete():
+    print("11")
+    print(request.args)
+    # ids = request.args["ids[]"]
+    # exts = request.args["extension[]"]
+    ids = request.args.getlist('ids[]')
+    exts = request.args.getlist("extension[]")
+    # ids = request.json["ids[]"]
+    # ids = request.json["extension[]"]
+    
+    print("bbb")
+    print(ids)
 
-    id = request.args["ids"]
+    for id in ids:
 
-    dir_path = DATA_DIR + id
-    try:
-        shutil.rmtree(dir_path)
-        return jsonify("DONE")
-    except Exception as e:
-        return jsonify(e)
+        for ext in exts:
+
+            dir_path = DATA_DIR + id
+
+            if ext == "svs":
+                print(dir_path)
+                try:
+                    shutil.rmtree(dir_path)
+                    # return jsonify("DONE")
+                    break
+                except Exception as e:
+                    
+                    return jsonify(e)
+
+            else:
+                file = dir_path + '/' + id + '.' + ext
+                print("aaa")
+                print(file)
+                if not exists(file):
+                    pass
+                remove(file)
+    
+    return jsonify("DONE")
+
+
 
 @app.put('/scan')
 def scan_rename():
