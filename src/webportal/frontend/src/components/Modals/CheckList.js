@@ -6,7 +6,7 @@ import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
 import Checkbox from "@mui/material/Checkbox";
 
-export default function CheckboxList({ checked, setChecked }) {
+export default function CheckboxList({ checked, setChecked, variant }) {
   const handleToggle = (value) => () => {
     const currentIndex = checked.indexOf(value);
     const newChecked = [...checked];
@@ -20,9 +20,14 @@ export default function CheckboxList({ checked, setChecked }) {
     setChecked(newChecked);
   };
 
+  const options =
+    variant === "generate"
+      ? [".tif", ".png", "mask"]
+      : [".svs", ".tif", ".png", "mask"];
+
   return (
     <List sx={{ width: "100%", bgcolor: "background.paper" }}>
-      {[".svs", ".tif", ".png", "mask"].map((value) => {
+      {options.map((value) => {
         const labelId = `checkbox-list-label-${value}`;
 
         return (

@@ -11,8 +11,9 @@ from enum import Enum
     TO MAKE:
     MDRAN
 """
+TRAINING = True #if true model applied noise to input images
 PREACTIVE = True
-L2_FACTOR = 1e-5
+L2f = 1e-5
 
 class myInitialiers(Enum):
     myHeNormal = 1
@@ -49,22 +50,22 @@ def identity_block(x, filters,  initialiser=myInitialiers.myHeUniform):
     if PREACTIVE:
         x = layers.BatchNormalization(axis=3)(x)
         x = layers.Activation('relu')(x)
-        x = layers.Conv2D( filter_1, (1,1),strides=(1,1), padding = 'valid', kernel_initializer=initializer)(x)
+        x = layers.Conv2D( filter_1, (1,1),strides=(1,1), padding = 'valid', kernel_initializer=initializer, kernel_regularizer=L2(l2=L2f))(x)
     else:
-        x = layers.Conv2D(filter_1, (1,1),strides=(1,1), padding = 'valid', kernel_initializer=initializer)(x)
+        x = layers.Conv2D(filter_1, (1,1),strides=(1,1), padding = 'valid', kernel_initializer=initializer, kernel_regularizer=L2(l2=L2f))(x)
         x = layers.BatchNormalization(axis=3)(x)
         x = layers.Activation('relu')(x)
     # block 2 - bottleneck (but size kept same with padding)
     if PREACTIVE:
         x = layers.BatchNormalization()(x)
         x = layers.Activation('relu')(x)
-        x = layers.Conv2D(filter_1, (3, 3), strides=(1, 1), padding='same', kernel_initializer=initializer)(x)
+        x = layers.Conv2D(filter_1, (3, 3), strides=(1, 1), padding='same', kernel_initializer=initializer, kernel_regularizer=L2(l2=L2f))(x)
     else:
-        x = layers.Conv2D(filter_1, (3, 3), strides=(1, 1), padding='same', kernel_initializer=initializer)(x)
+        x = layers.Conv2D(filter_1, (3, 3), strides=(1, 1), padding='same', kernel_initializer=initializer, kernel_regularizer=L2(l2=L2f))(x)
         x = layers.BatchNormalization()(x)
         x = layers.Activation('relu')(x)
     # block 3
-    x = layers.Conv2D(filter_2, (1,1),strides=(1,1), padding = 'valid', kernel_initializer=initializer)(x)
+    x = layers.Conv2D(filter_2, (1,1),strides=(1,1), padding = 'valid', kernel_initializer=initializer, kernel_regularizer=L2(l2=L2f))(x)
     x = layers.BatchNormalization(axis=3)(x)
     # Add Residue
     x = layers.Add()([x, x_skip])
@@ -86,26 +87,26 @@ def decoder(x, decoder_num, initialiser=myInitialiers.myHeUniform):
         initializer = tf.keras.initializers.HeUniform()
 
     if decoder_num == 1:
-        x = layers.Conv2D(256, (5,5), strides = 1, padding = 'valid', kernel_initializer=initializer)(x)
-        x = layers.Conv2D(256, (3,3), groups=64, strides = 1, padding = 'valid', kernel_initializer=initializer)(x)
-        x = layers.Conv2D(128, (1,1), strides = 1, padding = 'valid', kernel_initializer=initializer)(x)
+        x = layers.Conv2D(256, (5,5), strides = 1, padding = 'valid', kernel_initializer=initializer, kernel_regularizer=L2(l2=L2f))(x)
+        x = layers.Conv2D(256, (3,3), groups=64, strides = 1, padding = 'valid', kernel_initializer=initializer, kernel_regularizer=L2(l2=L2f))(x)
+        x = layers.Conv2D(128, (1,1), strides = 1, padding = 'valid', kernel_initializer=initializer, kernel_regularizer=L2(l2=L2f))(x)
     elif decoder_num == 2:
-        x = layers.Conv2D(512, (5,5), strides = 1, padding = 'valid', kernel_initializer=initializer)(x)
-        x = layers.Conv2D(512, (3,3), groups=128, strides = 1, padding = 'valid', kernel_initializer=initializer)(x)
-        x = layers.Conv2D(256, (1,1), strides = 1, padding = 'valid', kernel_initializer=initializer)(x)
+        x = layers.Conv2D(512, (5,5), strides = 1, padding = 'valid', kernel_initializer=initializer, kernel_regularizer=L2(l2=L2f))(x)
+        x = layers.Conv2D(512, (3,3), groups=128, strides = 1, padding = 'valid', kernel_initializer=initializer, kernel_regularizer=L2(l2=L2f))(x)
+        x = layers.Conv2D(256, (1,1), strides = 1, padding = 'valid', kernel_initializer=initializer, kernel_regularizer=L2(l2=L2f))(x)
     elif decoder_num == 3:
-        x = layers.Conv2D(1024, (5,5), strides = 1, padding = 'valid', kernel_initializer=initializer)(x)
-        x = layers.Conv2D(1024, (3,3), groups=256, strides = 1, padding = 'valid', kernel_initializer=initializer)(x)
-        x = layers.Conv2D(512, (1,1), strides = 1, padding = 'valid', kernel_initializer=initializer)(x)
+        x = layers.Conv2D(1024, (5,5), strides = 1, padding = 'valid', kernel_initializer=initializer, kernel_regularizer=L2(l2=L2f))(x)
+        x = layers.Conv2D(1024, (3,3), groups=256, strides = 1, padding = 'valid', kernel_initializer=initializer, kernel_regularizer=L2(l2=L2f))(x)
+        x = layers.Conv2D(512, (1,1), strides = 1, padding = 'valid', kernel_initializer=initializer, kernel_regularizer=L2(l2=L2f))(x)
     
     #for the MDRAN
     elif decoder_num == 4:
         #"We note that decoder4 uses padding convolution"
-        x = layers.Conv2D(128, (5,5), padding='same', strides=1, kernel_initializer=initializer)(x)
+        x = layers.Conv2D(128, (5,5), padding='same', strides=1, kernel_initializer=initializer, kernel_regularizer=L2(l2=L2f))(x)
         print(x.shape)
-        x = layers.Conv2D(256, (3,3),padding='same',strides=1,groups=64, kernel_initializer=initializer)(x)
+        x = layers.Conv2D(256, (3,3),padding='same',strides=1,groups=64, kernel_initializer=initializer, kernel_regularizer=L2(l2=L2f))(x)
         print(x.shape)
-        x = layers.Conv2D(256, (1,1), strides=1, padding = 'same', kernel_initializer=initializer)(x)
+        x = layers.Conv2D(256, (1,1), strides=1, padding = 'same', kernel_initializer=initializer, kernel_regularizer=L2(l2=L2f))(x)
         print(x.shape)
     return x
  
@@ -126,24 +127,24 @@ def convolutional_block(x,s, filters, initialiser=myInitialiers.myHeUniform):
     if PREACTIVE:
         x = layers.BatchNormalization()(x)
         x = layers.Activation('relu')(x)
-        x = layers.Conv2D(filter_1, (1,1), strides=(s, s), padding = 'valid', kernel_initializer=initializer)(x)
+        x = layers.Conv2D(filter_1, (1,1), strides=(s, s), padding = 'valid', kernel_initializer=initializer, kernel_regularizer=L2(l2=L2f))(x)
     else:
-        x = layers.Conv2D(filter_1, (1,1), strides=(s, s), padding = 'valid', kernel_initializer=initializer)(x)
+        x = layers.Conv2D(filter_1, (1,1), strides=(s, s), padding = 'valid', kernel_initializer=initializer, kernel_regularizer=L2(l2=L2f))(x)
         x = layers.BatchNormalization()(x)
         x = layers.Activation('relu')(x)
     # block 2
     if PREACTIVE:
         x = layers.BatchNormalization()(x)
         x = layers.Activation('relu')(x)
-        x = layers.Conv2D(filter_1, (3,3), strides=(1,1), padding = 'same', kernel_initializer=initializer)(x)
+        x = layers.Conv2D(filter_1, (3,3), strides=(1,1), padding = 'same', kernel_initializer=initializer, kernel_regularizer=L2(l2=L2f))(x)
     else:
-        x = layers.Conv2D(filter_1, (3,3), strides=(1,1), padding = 'same', kernel_initializer=initializer)(x)
+        x = layers.Conv2D(filter_1, (3,3), strides=(1,1), padding = 'same', kernel_initializer=initializer, kernel_regularizer=L2(l2=L2f))(x)
         x = layers.BatchNormalization()(x)
         x = layers.Activation('relu')(x)
     # block 3
-    x = layers.Conv2D(filter_2, (1,1), strides = (1,1), padding="valid", kernel_initializer=initializer)(x)
+    x = layers.Conv2D(filter_2, (1,1), strides = (1,1), padding="valid", kernel_initializer=initializer, kernel_regularizer=L2(l2=L2f))(x)
     x = layers.BatchNormalization()(x)
-    x_skip = layers.Conv2D(filter_2, (1,1), strides=(s,s), padding = "valid", kernel_initializer=initializer)(x_skip)
+    x_skip = layers.Conv2D(filter_2, (1,1), strides=(s,s), padding = "valid", kernel_initializer=initializer, kernel_regularizer=L2(l2=L2f))(x_skip)
     x_skip = layers.BatchNormalization()(x_skip)
     # Add Residue
     x = layers.Add()([x, x_skip])
@@ -170,9 +171,18 @@ def add_sample_weights(image, label, weights_ls):
 
 # resnet34: https://www.analyticsvidhya.com/blog/2021/08/how-to-code-your-resnet-from-scratch-in-tensorflow/#h2_9 
 def DRAN(shape = (102, 102, 3), classes = 2, initialiser=myInitialiers.myHeUniform) -> Model:
+    
+  
+    
+    
     # Step 1 (Setup Input Layer)
     x_input = tf.keras.layers.Input(shape)
-    #x = layers.ZeroPadding2D((3, 3))(x_input)
+    
+    #add random noise 
+    if TRAINING:
+        x_input = tf.keras.layers.GaussianNoise(stddev= 0.1, input_shape=(102,102,3))(x_input)
+
+
     x= x_input
     #modified pre-activated res-net used for contracting layers
 
@@ -186,7 +196,7 @@ def DRAN(shape = (102, 102, 3), classes = 2, initialiser=myInitialiers.myHeUnifo
     # batch -> relu -> conv 
     x = tf.keras.layers.BatchNormalization()(x)
     x = tf.keras.layers.Activation('relu')(x)
-    x = tf.keras.layers.Conv2D(64, kernel_size=7, strides=1, padding='valid', kernel_initializer=initializer)(x)
+    x = tf.keras.layers.Conv2D(64, kernel_size=7, strides=1, padding='valid', kernel_initializer=initializer, kernel_regularizer=L2(l2=L2f))(x)
     
    
     # Define size of sub-blocks and initial filter size (es-net 50s)
@@ -248,7 +258,7 @@ def DRAN(shape = (102, 102, 3), classes = 2, initialiser=myInitialiers.myHeUnifo
 
 
     #final output - 1x1, 2, softmax
-    x = layers.Conv2D(2, (1,1), activation="softmax", kernel_initializer=initializer)(x)
+    x = layers.Conv2D(2, (1,1), activation="softmax", kernel_initializer=initializer, kernel_regularizer=L2(l2=L2f))(x)
     
     model = tf.keras.models.Model(inputs = x_input, outputs = x, name = "dran")
     return model

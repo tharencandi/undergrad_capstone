@@ -29,6 +29,10 @@
   .body2 {
     @apply text-body2;
   }
+
+  .warning {
+    @apply text-red;
+  }
 }
 
 @layer components {

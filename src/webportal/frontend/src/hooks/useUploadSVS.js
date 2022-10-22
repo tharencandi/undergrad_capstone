@@ -3,32 +3,20 @@ import axios from "axios";
 
 const useUploadSVS = () => {
   const [uploadQueue, setUploadQueue] = useState([]);
-  const [uploadProgress, setUploadProgress] = useState(0);
   const [currentUploadingFile, setCurrentUploadingFile] = useState(null);
   const [numberUploaded, setNumberUploaded] = useState(0);
   const [numberToUpload, setNumberToUpload] = useState(0);
 
   //When there have been new files queued, update the global store and trigger an upload
   useEffect(() => {
-    console.log(uploadQueue);
     const uploadFile = async (file) => {
       let formData = new FormData();
       formData.append("file", file);
 
       setCurrentUploadingFile(file.name);
 
-      // // Dummy API call which waits for 1 second to resolve
-      setUploadProgress(0);
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      setUploadProgress(20);
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      setUploadProgress(40);
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      setUploadProgress(60);
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      setUploadProgress(80);
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      setUploadProgress(100);
+      // // Dummy API call which waits for
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
       const res = await axios
         .post("/scan", formData, {
@@ -79,12 +67,10 @@ const useUploadSVS = () => {
 
   // Concatenate the original queue with new files to upload
   return [
-    uploadQueue,
     (newFiles) => {
       setNumberToUpload((prevState) => prevState + newFiles.length);
       setUploadQueue((prevState) => [...prevState, ...newFiles]);
     },
-    uploadProgress,
     currentUploadingFile,
     numberUploaded,
     numberToUpload,

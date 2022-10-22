@@ -1,96 +1,52 @@
-import { DataGrid } from "@mui/x-data-grid";
-import { ReactComponent as DownloadReadyIcon } from "assets/icons/downloadReady.svg";
 import { ReactComponent as ProcessingIcon } from "assets/icons/processing.svg";
 import { ReactComponent as WaitingIcon } from "assets/icons/waiting.svg";
 import { ReactComponent as EditIcon } from "assets/icons/editIcon.svg";
 
+import loadingGif from "assets/icons/loading-load.gif";
+
+import { DataGrid } from "@mui/x-data-grid";
+import { Tooltip } from "@mui/material";
+
+import DownloadButton from "./DownloadButton";
+
 import { useDispatch } from "react-redux";
 import { setSelectedData } from "store/selectedDataReducer";
+import { useSelector } from "react-redux";
+import { useEffect, useState, useCallback } from "react";
 
 import useGetData from "hooks/useGetData";
 
-function filenameCell(cell) {
-  return (
-    <div className="filenameCell">
-      {cell.value}
-      <EditIcon />
-    </div>
-  );
-}
-
-function getChildFileStatus(cell) {
-  if (cell.value === 0) {
-    return "";
-  } else if (cell.value === 2) {
-    return <DownloadReadyIcon />;
-  } else if (cell.value === 3) {
-    return <ProcessingIcon></ProcessingIcon>;
-  } else if (cell.value === 1) {
-    return <WaitingIcon></WaitingIcon>;
-  }
-}
-
-const columns = [
-  {
-    field: "filename",
-    headerName: "Filename",
-    width: 256,
-    editable: true,
-    renderCell: filenameCell,
-  },
-  {
-    field: "tif",
-    headerName: ".tif",
-    width: 128,
-    renderCell: getChildFileStatus,
-  },
-  {
-    field: "png",
-    headerName: ".png",
-    width: 128,
-    renderCell: getChildFileStatus,
-  },
-  {
-    field: "mask",
-    headerName: "Mask",
-    width: 128,
-    renderCell: getChildFileStatus,
-  },
-  {
-    field: "dateCreated",
-    headerName: "Date created",
-    description: "This column has a value getter and is not sortable.",
-    width: 512,
-  },
-];
-
-const DUMMY_DATA = {
-  123: {
-    fileId: "123",
-    fileName: "example1",
-    created: "3rd December 2021",
-    tifStatus: "pending",
-    pngStatus: "completed",
-    maskStatus: "completed",
-    downloadStatus: "none",
-  },
-  456: {
-    fileId: "456",
-    fileName: "example2",
-    created: "2nd December 2021",
-    tifStatus: "inProgress",
-    pngStatus: "completed",
-    maskStatus: "completed",
-    downloadStatus: "none",
-  },
-};
+import NameChangeModal from "../../Modals/NameChangeModal";
 
 const FileTable = () => {
-  useGetData();
-  // const data = useSelector((state) => state.data);
+  const fetchData = useGetData();
+  const [response, setResponse] = useState(0);
+
+  const [editMode, setEditMode] = useState(null);
+
+  const data = useSelector((state) => state.data);
 
   const dispatch = useDispatch();
-  const data = DUMMY_DATA;
+
+  const dataFetch = useCallback(async () => {
+    await fetchData();
+    setResponse((prevState) => {
+      return prevState + 1;
+    });
+  }, [fetchData]);
+
+  useEffect(() => {
+    let timerId = null;
+    if (response) {
+      timerId = setTimeout(dataFetch, 2000);
+    } else {
+      timerId = dataFetch();
+    }
+
+    return () => {
+      clearTimeout(timerId);
+    };
+  }, [response, dataFetch]);
 
   const rows = data
     ? Object.keys(data).map((fileKey) => {
@@ -113,16 +69,88 @@ const FileTable = () => {
         return {
           id: fileId,
           filename: fileName,
-          tif: fileStatusGenerator(tifStatus),
+          ".tif": fileStatusGenerator(tifStatus),
           mask: fileStatusGenerator(maskStatus),
-          png: fileStatusGenerator(pngStatus),
+          ".png": fileStatusGenerator(pngStatus),
           dateCreated: created,
         };
       })
     : [];
 
+  function filenameCell(cell) {
+    return (
+      <div className="filenameCell">
+        {cell.value}
+        <Tooltip title="Edit Name" arrow>
+          <button
+            onClick={() => {
+              setEditMode(cell);
+            }}
+            className="hover:scale-[1.1]"
+          >
+            <EditIcon></EditIcon>
+          </button>
+        </Tooltip>
+      </div>
+    );
+  }
+
+  function getChildFileStatus(cell) {
+    if (cell.value === 0) {
+      return "";
+    } else if (cell.value === 2) {
+      return <DownloadButton cellId={cell.id} field={cell.field} />;
+    } else if (cell.value === 3) {
+      return <img src={loadingGif} alt={"loading"} width="75" height="37" />;
+    } else if (cell.value === 1) {
+      return <WaitingIcon></WaitingIcon>;
+    }
+  }
+
+  const columns = [
+    {
+      field: "filename",
+      headerName: "Filename",
+      width: 256,
+      renderCell: filenameCell,
+    },
+    {
+      field: ".tif",
+      headerName: ".tif",
+      width: 128,
+      renderCell: getChildFileStatus,
+      align: "center",
+    },
+    {
+      field: ".png",
+      headerName: ".png",
+      width: 128,
+      renderCell: getChildFileStatus,
+      align: "center",
+    },
+    {
+      field: "mask",
+      headerName: "Mask",
+      width: 128,
+      renderCell: getChildFileStatus,
+      align: "center",
+    },
+    {
+      field: "dateCreated",
+      headerName: "Date created",
+      description: "This column has a value getter and is not sortable.",
+      width: 512,
+    },
+  ];
+
   return (
     <div className="fileTable">
+      {editMode && (
+        <NameChangeModal
+          modalController={setEditMode}
+          cell={editMode}
+        ></NameChangeModal>
+      )}
       <DataGrid
         rows={rows}
         columns={columns}
