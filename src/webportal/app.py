@@ -21,8 +21,9 @@ app.config['CELERY_RESULT_BACKEND'] = 'redis://localhost:6379/0'
 celery = Celery(app.name, broker=app.config['CELERY_BROKER_URL'])
 celery.conf.update(app.config)
 
+# default directory, should be changed with post /dir
+WEB_PORTAL_DIR = "./scans/"
 
-scan_path = "./scans/"
 valid_extensions = ["png", "svs", "tif"]
 
 WEB_PORTAL_DIR="/home/haeata/.glioblastoma_portal/"
@@ -61,32 +62,38 @@ def init_db_if_not_exists():
 
 # get specific file path,
 def get_file(name, ext):
-    dir_path = scan_path + name
+    dir_path = WEB_PORTAL_DIR + name
     file_path = "{}/{}.{}".format(dir_path,name ,ext)
 
     return file_path
 
 # get meta file, returns path to meta file
 def get_meta(id):
-    meta_path = scan_path+ id + '/' + id + ".meta"
+    meta_path = WEB_PORTAL_DIR+ id + '/' + id + ".meta"
     return meta_path
 
 # save file object into file system
 def save_file(file_obj, id, ext):
 
-    dir_path = scan_path + id
+    dir_path = WEB_PORTAL_DIR + id
     file_path = "{}/{}.{}".format(dir_path,id,ext)
     file_obj.save(file_path)
 
+# set web portal directory
 @app.post('/dir')
 def change_dir():
     dir = request.args['dir']
-    scan_path = dir
+
+    if dir[-1] != '/':
+        dir = dir + '/'
+
+    WEB_PORTAL_DIR = dir
     return jsonify("DONE")
 
+# get web portal directory
 @app.get('/dir')
 def get_dir():
-    return(jsonify(scan_path))
+    return jsonify(WEB_PORTAL_DIR)
 
 # home page
 @app.get('/')
@@ -97,7 +104,7 @@ def index():
 # return list of tuples -> (file_id, [extensions], date created)
 @app.get('/all')
 def all_scans():
-    scans = [f for f in listdir(scan_path) if not isfile(join(scan_path, f))]
+    scans = [f for f in listdir(WEB_PORTAL_DIR) if not isfile(join(WEB_PORTAL_DIR, f))]
     
     scan_list = []
     # return jsonify("a1")
@@ -105,7 +112,7 @@ def all_scans():
         scan_id = id
         extensions = []
         date = ""
-        dir_path = "{}{}/".format(scan_path,id)
+        dir_path = "{}{}/".format(WEB_PORTAL_DIR,id)
 
         # get extensions
         files = [f for f in listdir(dir_path) if isfile(join(dir_path, f))]
@@ -134,7 +141,7 @@ def get_scan():
     ext = request.args["extension"]
 
     # check if directory exists, create if not
-    dir_path = scan_path + ids
+    dir_path = join(WEB_PORTAL_DIR, ids)
     file_path = "{}/{}.{}".format(dir_path,ids,ext)
     file_path = get_file(ids, ext)
 
@@ -143,7 +150,6 @@ def get_scan():
     
     else:
         # change status
-        meta_path = dir_path + '/' + ids + '.meta'
         meta_path = get_meta(ids)
 
         with open(meta_path, 'r') as f:
@@ -183,7 +189,7 @@ def upload():
     ext = 'svs'
 
     # check if directory exists
-    dir_path = scan_path + id
+    dir_path = WEB_PORTAL_DIR + id
     path = dir_path
 
     counter = 1
@@ -222,7 +228,7 @@ def delete():
     # ids = request.args.getlist("ids")
     id = request.args["ids"]
 
-    dir_path = scan_path + id
+    dir_path = WEB_PORTAL_DIR + id
 
     try:
         shutil.rmtree(dir_path)
@@ -235,7 +241,7 @@ def scan_rename():
     id = request.args["ids"]
     new_name = request.args["new_name"]
 
-    dir_path = scan_path + id
+    dir_path = WEB_PORTAL_DIR + id
 
     # meta_file = dir_path + id + ".meta"
     meta_path = dir_path + '/' + id + '.meta'
@@ -257,7 +263,7 @@ def scan_rename():
 
         rename(dir_path+'/'+f, dir_path+'/'+file)
     
-    new_dir = scan_path + new_name
+    new_dir = WEB_PORTAL_DIR + new_name
     rename(dir_path, new_dir)
     
     return jsonify("DONE")
@@ -272,7 +278,7 @@ def scan_rename():
 #     ext = request.args["ext"]
 
 #     # change status file
-#     dir_path = scan_path + id
+#     dir_path = WEB_PORTAL_DIR + id
 #     meta_path = dir_path + '/' + id + '.meta'
 
 #     with open(meta_path, 'r') as f:
