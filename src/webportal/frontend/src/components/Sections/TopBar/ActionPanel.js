@@ -51,6 +51,15 @@ const ActionPanel = () => {
       >
         Delete
       </Button>
+      <Button
+        onClick={() => {
+          setModalVariant("cancel");
+        }}
+        danger
+        // TODO Run a function which detects any pending or in progress operations, and enables the button if detected
+      >
+        Cancel
+      </Button>
       {modalVariant === "none" ? null : (
         <Modal modalController={setModalVariant} variant={modalVariant}></Modal>
       )}
