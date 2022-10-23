@@ -44,8 +44,21 @@ const useServerAction = () => {
       url = "/scan";
       params = { ids, extension };
     } else if (action === "generate") {
-      url = "/scan/generate";
+      url = "/generate";
       params = { ids, extension, overwrite };
+      await axios
+      .post(url,
+        params
+      )
+      .then((res) => {
+        console.log(res);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+
+      console.log(`Sent ${action} request with: `, ids, extension);
+      return
     }
 
     await axios
