@@ -30,6 +30,7 @@ const Overlay = ({ variant, modalController }) => {
   const fetchData = useGetData();
   const [warningMessage, setWarningMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   // On each render, check that the selected data has all the extensions ready for download
   useEffect(() => {
@@ -184,6 +185,7 @@ const Overlay = ({ variant, modalController }) => {
             setChecked={setOverwrite}
           ></OverwriteOption>
         )}
+        {error && <p className="warning">{error}</p>}
       </div>
       <div className="flex items-end justify-between">
         <Button
@@ -205,10 +207,19 @@ const Overlay = ({ variant, modalController }) => {
               checked,
               variant,
               overwrite.length > 0 ? true : false
-            );
-            await fetchData();
+            )
+              .then(() => {
+                setError(null);
+                return fetchData();
+              })
+              .then(() => {
+                modalController("none");
+              })
+              .catch((err) => {
+                setError(err.message);
+              });
+
             setLoading(false);
-            modalController("none");
           }}
         >
           {buttonText}

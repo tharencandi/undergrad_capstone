@@ -22,6 +22,7 @@ const Overlay = ({ cell, modalController }) => {
   const [newName, setNewName] = useState(cell.value);
   const [loading, setLoading] = useState(false);
   const [validName, setValidName] = useState(true);
+  const [error, setError] = useState(null);
 
   const names = useSelector((state) => {
     console.log(state.data);
@@ -49,14 +50,12 @@ const Overlay = ({ cell, modalController }) => {
       .get("/name", params)
       .then((res) => {
         console.log(res);
+        setError(null);
+        modalController(null);
       })
       .catch((err) => {
-        console.error(err);
+        setError(err.message);
       });
-
-    // Wait for the server to confirm
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    modalController(null);
     setLoading(false);
   };
 
@@ -76,6 +75,7 @@ const Overlay = ({ cell, modalController }) => {
             name
           </p>
         )}
+        {error && <p className="warning text-body2">{error}</p>}
       </div>
 
       <div className="flex items-end justify-between">

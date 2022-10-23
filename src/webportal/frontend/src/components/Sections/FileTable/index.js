@@ -1,7 +1,6 @@
-import { ReactComponent as ProcessingIcon } from "assets/icons/processing.svg";
+import { ReactComponent as ErrorIcon } from "assets/icons/statusError.svg";
 import { ReactComponent as WaitingIcon } from "assets/icons/waiting.svg";
 import { ReactComponent as EditIcon } from "assets/icons/editIcon.svg";
-
 import loadingGif from "assets/icons/loading-load.gif";
 
 import { DataGrid } from "@mui/x-data-grid";
@@ -68,7 +67,10 @@ const FileTable = () => {
           if (status === "completed") {
             return 2;
           }
-          return 3;
+          if (status === "inProgress") {
+            return 3;
+          }
+          return status;
         };
 
         const { fileId, fileName, maskStatus, pngStatus, tifStatus, created } =
@@ -112,6 +114,12 @@ const FileTable = () => {
       return <img src={loadingGif} alt={"loading"} width="75" height="37" />;
     } else if (cell.value === 1) {
       return <WaitingIcon></WaitingIcon>;
+    } else {
+      return (
+        <Tooltip title={cell.value} arrow>
+          <ErrorIcon></ErrorIcon>
+        </Tooltip>
+      );
     }
   }
 
