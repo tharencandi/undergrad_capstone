@@ -43,11 +43,10 @@ const Overlay = ({ cell, modalController }) => {
 
   const submitHandler = async () => {
     setLoading(true);
+    const params = { params: { ids: cell.value, new_name: newName } };
+
     axios
-      .put("/scan", {
-        ids: cell.value,
-        new_name: newName,
-      })
+      .get("/name", params)
       .then((res) => {
         console.log(res);
       })

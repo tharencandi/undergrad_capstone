@@ -275,8 +275,9 @@ def delete():
 
 
 
-@app.put('/scan')
+@app.get('/name')
 def scan_rename():
+    print(request.args)
     id = request.args["ids"]
     new_name = request.args["new_name"]
 

@@ -50,7 +50,7 @@ const useServerAction = () => {
 
     await axios
       .get(url, {
-        params,
+        params: params,
       })
       .then((res) => {
         console.log(res);
