@@ -11,8 +11,13 @@ const ActionPanel = () => {
   const [modalVariant, setModalVariant] = useState("none");
   const selectedData = useSelector((state) => state.selectedData);
 
-  const [setUploadQueue, currentUploadingFile, numberUploaded, numberToUpload] =
-    useUploadSVS();
+  const [
+    setUploadQueue,
+    currentUploadingFile,
+    numberUploaded,
+    numberToUpload,
+    uploadError,
+  ] = useUploadSVS();
 
   const uploadFileChangeHandler = (e) => {
     setUploadQueue(e.target.files);
@@ -49,11 +54,12 @@ const ActionPanel = () => {
       {modalVariant === "none" ? null : (
         <Modal modalController={setModalVariant} variant={modalVariant}></Modal>
       )}
-      {numberToUpload > 0 ? (
+      {numberToUpload > 0 || uploadError ? (
         <UploadModalContent
           numberToUpload={numberToUpload}
           currentUploadingFile={currentUploadingFile}
           numberUploaded={numberUploaded}
+          error={uploadError}
         ></UploadModalContent>
       ) : null}
     </div>

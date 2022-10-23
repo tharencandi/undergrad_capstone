@@ -31,9 +31,13 @@ const FileTable = () => {
   const dispatch = useDispatch();
 
   const dataFetch = useCallback(async () => {
-    await fetchData().catch((err) => {
-      setError(err);
-    });
+    await fetchData()
+      .then(() => {
+        setError(null);
+      })
+      .catch((err) => {
+        setError(err);
+      });
     setResponse((prevState) => {
       return prevState + 1;
     });

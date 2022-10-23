@@ -50,21 +50,28 @@ const useServerAction = () => {
         method: "GET",
         responseType: "blob",
         params, // important
-      }).then((response) => {
-        // create file link in browser's memory
-        const href = URL.createObjectURL(response.data);
+      })
+        .then((response) => {
+          // Simulate error - comment out later
+          // throw new Error("Failed to download file: Error code 1234");
 
-        // create "a" HTML element with href to file & click
-        const link = document.createElement("a");
-        link.href = href;
-        link.setAttribute("download", `${ids}.${extension}`); //or any other extension
-        document.body.appendChild(link);
-        link.click();
+          // create file link in browser's memory
+          const href = URL.createObjectURL(response.data);
 
-        // clean up "a" element & remove ObjectURL
-        document.body.removeChild(link);
-        URL.revokeObjectURL(href);
-      });
+          // create "a" HTML element with href to file & click
+          const link = document.createElement("a");
+          link.href = href;
+          link.setAttribute("download", `${ids}.${extension}`); //or any other extension
+          document.body.appendChild(link);
+          link.click();
+
+          // clean up "a" element & remove ObjectURL
+          document.body.removeChild(link);
+          URL.revokeObjectURL(href);
+        })
+        .catch((err) => {
+          throw new Error(err.message);
+        });
       return;
     } else if (action === "generate") {
       url = "/generate";
