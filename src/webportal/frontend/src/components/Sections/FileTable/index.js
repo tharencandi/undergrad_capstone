@@ -24,12 +24,16 @@ const FileTable = () => {
 
   const [editMode, setEditMode] = useState(null);
 
+  const [error, setError] = useState(null);
+
   const data = useSelector((state) => state.data);
 
   const dispatch = useDispatch();
 
   const dataFetch = useCallback(async () => {
-    await fetchData();
+    await fetchData().catch((err) => {
+      setError(err);
+    });
     setResponse((prevState) => {
       return prevState + 1;
     });
@@ -145,23 +149,30 @@ const FileTable = () => {
 
   return (
     <div className="fileTable">
-      {editMode && (
+      {!error && editMode && (
         <NameChangeModal
           modalController={setEditMode}
           cell={editMode}
         ></NameChangeModal>
       )}
-      <DataGrid
-        rows={rows}
-        columns={columns}
-        pageSize={100}
-        rowsPerPageOptions={[5]}
-        checkboxSelection
-        disableSelectionOnClick
-        onSelectionModelChange={(selection) => {
-          dispatch(setSelectedData(selection));
-        }}
-      />
+      {!error && (
+        <DataGrid
+          rows={rows}
+          columns={columns}
+          pageSize={100}
+          rowsPerPageOptions={[5]}
+          checkboxSelection
+          disableSelectionOnClick
+          onSelectionModelChange={(selection) => {
+            dispatch(setSelectedData(selection));
+          }}
+        />
+      )}
+      {error && (
+        <p className="warning text-center pt-12">
+          An error occured while retrieving data: {error.message}
+        </p>
+      )}
     </div>
   );
 };

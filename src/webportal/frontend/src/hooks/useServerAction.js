@@ -1,4 +1,5 @@
 import axios from "axios";
+import { act } from "react-dom/test-utils";
 import { useSelector } from "react-redux";
 
 const useServerAction = () => {
@@ -28,10 +29,10 @@ const useServerAction = () => {
           },
         })
         .then((res) => {
-          console.log(res);
+          return res;
         })
         .catch((err) => {
-          console.log(err);
+          throw new Error(err.message);
         });
 
       console.log(`Sent delete request with: `, ids, extension);
@@ -43,36 +44,56 @@ const useServerAction = () => {
     if (action === "download") {
       url = "/scan";
       params = { ids, extension };
+
+      await axios({
+        url,
+        method: "GET",
+        responseType: "blob",
+        params, // important
+      }).then((response) => {
+        // create file link in browser's memory
+        const href = URL.createObjectURL(response.data);
+
+        // create "a" HTML element with href to file & click
+        const link = document.createElement("a");
+        link.href = href;
+        link.setAttribute("download", `${ids}.${extension}`); //or any other extension
+        document.body.appendChild(link);
+        link.click();
+
+        // clean up "a" element & remove ObjectURL
+        document.body.removeChild(link);
+        URL.revokeObjectURL(href);
+      });
+      return;
     } else if (action === "generate") {
       url = "/generate";
       params = { ids, extension, overwrite };
       await axios
-      .post(url,
-        params
-      )
-      .then((res) => {
-        console.log(res);
-      })
-      .catch((err) => {
-        console.log(err);
-      });
+        .post(url, params)
+        .then((res) => {
+          console.log(res);
+        })
+        .catch((err) => {
+          console.log(err);
+        });
 
       console.log(`Sent ${action} request with: `, ids, extension);
-      return
+
+      await axios
+        .get(url, {
+          params: params,
+        })
+        .then((res) => {
+          console.log(res);
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+      return;
     }
 
-    await axios
-      .get(url, {
-        params: params,
-      })
-      .then((res) => {
-        console.log(res);
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-
-    console.log(`Sent ${action} request with: `, ids, extension);
+    console.log("Unknown server request type: ", action);
   };
 
   return requestServerAction;
