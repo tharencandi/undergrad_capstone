@@ -6,6 +6,7 @@ const useUploadSVS = () => {
   const [currentUploadingFile, setCurrentUploadingFile] = useState(null);
   const [numberUploaded, setNumberUploaded] = useState(0);
   const [numberToUpload, setNumberToUpload] = useState(0);
+  const [error, setError] = useState(null);
 
   //When there have been new files queued, update the global store and trigger an upload
   useEffect(() => {
@@ -15,9 +16,6 @@ const useUploadSVS = () => {
 
       setCurrentUploadingFile(file.name);
 
-      // // Dummy API call which waits for
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
       const res = await axios
         .post("/scan", formData, {
           headers: {
@@ -25,10 +23,13 @@ const useUploadSVS = () => {
           },
         })
         .then((res) => {
-          console.log(res);
+          setError(null);
         })
         .catch((err) => {
-          console.log(err);
+          setError(
+            `Attempted upload for "${file.name}" failed: ${err.message}`
+          );
+          throw new Error(err.message);
         });
 
       setCurrentUploadingFile(null);
@@ -56,6 +57,10 @@ const useUploadSVS = () => {
         .catch((err) => {
           // Upload cancelled or failed
           console.log(err);
+          setNumberUploaded(0);
+          setNumberToUpload(0);
+          setCurrentUploadingFile(null);
+          setUploadQueue([]);
         });
     } else {
       // Nothing queued to upload, then reset the number uploaded
@@ -74,6 +79,7 @@ const useUploadSVS = () => {
     currentUploadingFile,
     numberUploaded,
     numberToUpload,
+    error,
   ];
 };
 

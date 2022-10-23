@@ -29,6 +29,7 @@ const Overlay = ({ variant, modalController }) => {
   const requestServerAction = useServerAction();
   const fetchData = useGetData();
   const [warningMessage, setWarningMessage] = useState("");
+  const [loading, setLoading] = useState(false);
 
   // On each render, check that the selected data has all the extensions ready for download
   useEffect(() => {
@@ -142,7 +143,21 @@ const Overlay = ({ variant, modalController }) => {
         return;
       }
     })();
-  }, [fetchData, allData, checked, selectedData, variant]);
+  }, [fetchData, checked, selectedData, variant]);
+
+  let buttonText = "";
+
+  if (variant === "delete") {
+    if (loading) {
+      buttonText = "Deleting...";
+    } else {
+      buttonText = "Delete";
+    }
+  }
+
+  if (variant === "generate") {
+    buttonText = "Generate";
+  }
 
   return (
     <div className="absolute inset-0 min-w-[400px] max-w-[750px] h-[500px] m-auto bg-white p-8 rounded-sm z-10 flex flex-col">
@@ -182,17 +197,21 @@ const Overlay = ({ variant, modalController }) => {
         <Button
           variant="highlight"
           danger={variant === "delete" ? true : false}
-          disabled={checked.length > 0 ? false : true}
-          onClick={() => {
-            requestServerAction(
+          disabled={checked.length > 0 && !loading ? false : true}
+          onClick={async () => {
+            setLoading(true);
+            await requestServerAction(
               selectedData,
               checked,
               variant,
               overwrite.length > 0 ? true : false
             );
+            await fetchData();
+            setLoading(false);
+            modalController("none");
           }}
         >
-          {variant[0].toUpperCase() + variant.substring(1)}
+          {buttonText}
         </Button>
       </div>
     </div>

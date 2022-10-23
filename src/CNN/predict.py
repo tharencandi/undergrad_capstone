@@ -9,7 +9,9 @@ import file_management as file_management
 import dataset as dataset
 import math
 import json
+from gc import collect
 from yaml import safe_load
+import tifffile as tif
 #import src.tile_crop.tile_crop_main
 from tile_crop.tile_crop_main import single_image_to_folder_of_tiles as tile_image
 from client import upload 
@@ -17,8 +19,9 @@ from multiprocessing import Process
 #from bin_transcoder import encode_binary
 IMG_SIZE = (102, 102)
 MODEL = 'data/models/default_DRAN.json'
-WEIGHTS = 'data/models/b_16_e100_preTrue_wmyHeNormal_le0.01.h5'
+WEIGHTS = 'data/models/checkpoint'
 TILE_MASK_NAME_F = "{}_{}.png"
+DEBUG = True
 model_config = ""
 with open(MODEL, "r") as f:
     model_config = f.read().strip()
@@ -128,59 +131,68 @@ def predict_image(img):
     return img_mask
 
 
-def construct_whole_mask(num_tiles, in_loc, out_loc, out_name):
+def construct_whole_mask(num_tiles, in_loc, out_loc, out_name, img_size):
     """
-    constructs an entire image mask (.mask format) from tile masks (.mask formats)
-    used for WSI mask creation.
-
-    returns file path of mask
-    """
+    creates whole mask in a memory mapped numpy array.
+    saves resulting mask as a compressed big tiff file. 
     
-    masks = []
-    img_size = [0,0]
-    tile_dim = None
-    #read masks and get whole mask size
-    for i in range(1, num_tiles[0]+1):
-        for j in range(1, num_tiles[1] + 1):
-            f_name = TILE_MASK_NAME_F.format(i,j)
-            print("decoding mask for tile",(i,j))
-            #tile_mask = dataset.decode_label(f"{in_loc}/{f_name}")[0]
-            tile_mask = cv.imread(f"{in_loc}/{f_name}",cv.IMREAD_GRAYSCALE)
-            if i == 1:
-                img_size[1] += tile_mask.shape[1]
-            if j == 1:
-                img_size[0] += tile_mask.shape[0]
-            if i == 1 and j == 1:
-                tile_dim = tile_mask.shape
-            masks.append(tile_mask)
- 
-   
-    whole_mask = np.zeros((img_size[0], img_size[1]))
-    count = 0
+    """
+    TMP_MASK_P = out_loc + "/temp_mask.np"
 
-    print("stitching whole mask of dimensions", img_size)
-    for i in range(1, num_tiles[0]+1):
-        for j in range(1, num_tiles[1]+1):
-            tile_mask = masks[count]
+    width, height = img_size
 
-            start_0 = (i-1)*tile_dim[0]
-            start_1 = (j-1)*tile_dim[1]
-            end_0 = (i-1)*tile_dim[0] + tile_dim[0]
-            end_1 = (j-1)*tile_dim[1] + tile_dim[1]
+    whole_mask= np.memmap (
+        TMP_MASK_P, 
+        shape=(height, width),
+        dtype = np.uint8, 
+        mode="w+"
+    )
+    try:
+        count = 0
 
-            if whole_mask.shape[0] < end_0:
-                end_0 = whole_mask.shape[0]
-            if whole_mask.shape[1]  < end_1:
-                end_1 = whole_mask.shape[1]
+        #pre-read first tile to get the "ordinary" tile shape. 
+        i,j = 1,1
+        print("stitching whole mask of dimensions", img_size)
+        x = 0
+        y = 0
+        while 1:
+            j = 1
+            x = 0
+            while 1:     
+                f_name = TILE_MASK_NAME_F.format(i,j)
+                tile_mask = cv.imread(f"{in_loc}/{f_name}",cv.IMREAD_GRAYSCALE)
+                t_height,t_width  = tile_mask.shape
+  
+                whole_mask[y:y+t_height,x:x+t_width] = tile_mask
+        
+                x+= t_width        
+                j+=1
+                if j > num_tiles[1]:
+                    break  
+                             
+            y += t_height          
+            i+=1
+            if i > num_tiles[0]:
+                break
+            
 
-            whole_mask [start_0:end_0,start_1:end_1] = tile_mask
+        tif.imwrite(
+                f"{out_loc}/{out_name}",
+                whole_mask,
+                tile=(1024, 1024),
+                compression='zlib',
+                compressionargs={'level': 8},
+        )
 
-            count += 1
-    #encode_binary(whole_mask,f"{out_loc}/{out_name}") 
-    if not cv.imwrite(f"{out_loc}/{out_name}", whole_mask):
-        return None     
-    # if dataset.encode_label(whole_mask, out_loc, out_name) != 0:
-    #     return None
+        del whole_mask
+        if os.path.isfile(TMP_MASK_P):
+            os.remove(TMP_MASK_P)
+        collect()
+    except Exception as e :
+        if os.path.isfile(TMP_MASK_P):
+            os.remove(TMP_MASK_P)
+        print(e)
+        return None
     
     return f"{out_loc}/{out_name}"
 
@@ -205,27 +217,36 @@ def predict_slide(svs_id, svs_file_name, svs_dir, tmp_dir, masks_dir):
     json_file_path = f"{tmp_dir}/{TILE_JSON}"
 
     svs_file_path = f"{svs_dir}/{svs_file_name}"
+    j_dict = {}
 
     #init
     if os.path.exists(json_file_path):
+        integrity = True
         with open(json_file_path, "r") as json_fd:
             j_dict = json.load(json_fd)
-        num_tiles = j_dict["num_tiles"]
+        try:
+            num_tiles = j_dict["num_tiles"]
+            width, height = j_dict["dimensions"]
+        except KeyError:
+            integrity = False
         
         #integrity check
         tile_ls = [file for file in os.listdir(tmp_dir) if (".png" in file)]
-        if (num_tiles[0] * num_tiles[1]) != len(tile_ls) or j_dict["svs_image"] != svs_id:
+        if (not integrity) or (num_tiles[0] * num_tiles[1]) != len(tile_ls) or j_dict["svs_image"] != svs_id:
             print("json exists but tiles not found, retiling.")
-            #num_tiles = tile_slide(svs_file, ZOOM, tmp_dir)
-            num_tiles =  tile_image(image_path = svs_file_path, save_dir=tmp_dir)[1]
-            j_dict = {"svs_image": svs_id, "num_tiles": num_tiles, "current_tile": (1,1)}
-            #num_tiles = dataset.create_grid(svs_file, tmp_dir, ZOOM)
+            print(f"{num_tiles[0] * num_tiles[1]} != {len(tile_ls)} or {j_dict['svs_image']} != {svs_id}")
+            _,num_tiles,dim =  tile_image(image_path = svs_file_path, save_dir=tmp_dir)
+            width, height = dim[1], dim[0]
+            
+            j_dict = {"svs_image": svs_id, "num_tiles": num_tiles, "current_tile": (1,1), "dimensions": (width, height)}
+            
          
     else:
         print("tiling current svs.")
         #num_tiles  = tile_slide(svs_file, ZOOM, tmp_dir)
-        num_tiles =  tile_image(image_path = svs_file_path, save_dir=tmp_dir)[1]
-        j_dict = {"svs_image": svs_id, "num_tiles": num_tiles, "current_tile": (1,1)}
+        _,num_tiles,dim =  tile_image(image_path = svs_file_path, save_dir=tmp_dir)
+        width, height = dim[1], dim[0]
+        j_dict = {"svs_image": svs_id, "num_tiles": num_tiles, "current_tile": (1,1), "dimensions": (width, height)}
        
     current_tile = j_dict["current_tile"]
 
@@ -248,7 +269,10 @@ def predict_slide(svs_id, svs_file_name, svs_dir, tmp_dir, masks_dir):
             else:
                 name = TILE_NAME_PREDICT.format(i,j)
                 tile = cv.imread(f"{tmp_dir}/{name}")
-                mask = predict_image(tile)
+                if DEBUG:
+                    mask = np.zeros((tile.shape[0], tile.shape[1]))
+                else:
+                    mask = predict_image(tile)
 
             #save mask of tile.
             f_name = TILE_MASK_NAME_F.format(i,j)
@@ -264,7 +288,8 @@ def predict_slide(svs_id, svs_file_name, svs_dir, tmp_dir, masks_dir):
         num_tiles = num_tiles, 
         in_loc = f"{tmp_dir}/masks", 
         out_loc = masks_dir, 
-        out_name = f"{svs_id}.png"
+        out_name = f"{svs_id}.png",
+        img_size = (width, height)
     )
     
     # clean up
@@ -331,10 +356,13 @@ def predict_manifest(p_conf: dict):
 
 
 def uploader_wrapper(svs_uid, mask_file_path, svs_manager):
-    uploader = upload.MaskUploader("username", "password")
+    print("in uploader")
+    uploader = upload.MaskUploader("pas", "pas")
     ret = uploader.upload_mask(upload.GBM, svs_uid, mask_file_path)
+    print(f"upload ret for svs {svs_uid} - - {ret}")
     if ret not in [upload.MASK_ALREADY_UPLOADED,upload.MASK_UPLOAD_SUCCESS]:
         svs_manager.upload_log(svs_uid, ret)
+    
 
 
 

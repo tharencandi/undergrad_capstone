@@ -30,9 +30,9 @@ import skimage.morphology as sk_morphology
 import skimage.segmentation as sk_segmentation
 
 
-import slide
-import util
-from util import Time
+import tile_crop.slide as slide
+import tile_crop.util as util
+from tile_crop.util import Time
 
 
 def filter_rgb_to_grayscale(np_img, output_type="uint8"):

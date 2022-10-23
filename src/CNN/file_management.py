@@ -83,12 +83,10 @@ class svs_management:
         id_list = []
         with open(file, 'r') as man_fd:
             man = man_fd.readlines()
-            print(man)
             for line in man:
                 line = line.split("\t")
                 id_list.append(line[0].strip())
 
-        print(id_list)
         return id_list
 
     def get_new_svs(self):
@@ -118,7 +116,6 @@ class svs_management:
     def is_downloaded(self, svs_id):
         dir_ls = os.listdir(self.conf[SVS_DIR])
         svs_file = self.find_file_from_id(svs_id)
-        print(dir_ls, svs_file)
         return svs_file in dir_ls
         
 
