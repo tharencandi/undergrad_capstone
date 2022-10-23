@@ -106,25 +106,6 @@ def make_id(fname):
 # get meta file, returns path to meta file
 def get_meta(uuid):
 
-    # dir_path = join(DATA_DIR, uuid) + '/'
-
-    # files = [f for f in listdir(dir_path) if isfile(join(DATA_DIR, f))]
-    # meta_file = ''
-    
-    # for f in listdir(dir_path):
-    #     # print(f)
-    #     if f.endswith("meta"):
-    #         meta_file = f
-    #         break;
-
-    
-    # if meta_file == '':
-    #     print("no meta")
-    #     return ''
-
-    # meta_path = DATA_DIR+ uuid + '/' + meta_file
-
-
     meta_path = join(META_DIR, uuid + '.meta')
     if exists(meta_path):
 
@@ -164,8 +145,6 @@ def create_meta(uuid, file_name, dir_path):
 
     with open("{}/{}.meta".format(META_DIR, uuid), 'w') as json_file:
         json.dump(meta_data, json_file)
-    
-    # 
 
 
 # set web portal directory
@@ -395,7 +374,14 @@ def get_scan():
     file_path = get_file(ids, ext)
 
     if not exists(file_path):
-        return jsonify("File not Found: "+ file_path)
+        if ext == 'tif':
+            ext = 'tiff'
+            file_path = "{}/{}.{}".format(dir_path,ids,ext)
+            file_path = get_file(ids, ext)
+            if not exists(file_path):
+                return jsonify("File not Found: "+ file_path)
+        else:
+            return jsonify("File not Found: "+ file_path)
     
     else:
         # change status
