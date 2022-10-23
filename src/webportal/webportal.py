@@ -449,6 +449,10 @@ def upload():
 
     return jsonify(str(file_uuid))
 
+@application.get("/cancel")
+def cancel():
+    return jsonify("cancel request")
+
 # delete scan
 @application.delete('/scan')
 def delete():
