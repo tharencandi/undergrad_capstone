@@ -21,6 +21,7 @@ const ActionPanel = () => {
     numberUploaded,
     numberToUpload,
     uploadError,
+    setUploadError,
   ] = useUploadSVS();
 
   let workInProgress = false;
@@ -44,7 +45,7 @@ const ActionPanel = () => {
     ) {
       workInProgress = true;
     }
-    if (numberToUpload !== 0) {
+    if (numberToUpload !== 0 || uploadError) {
       workInProgress = true;
     }
   }
@@ -83,7 +84,20 @@ const ActionPanel = () => {
       </Button>
       <Tooltip title="Cancel all work in progress and reset errors" arrow>
         <div>
-          <Button onClick={() => {}} danger hidden={!workInProgress}>
+          <Button
+            onClick={() => {
+              setUploadQueue([]);
+              setUploadError(null);
+              axios
+                .get("/cancel")
+                .then(() => {})
+                .catch((err) => {
+                  console.log(err);
+                });
+            }}
+            danger
+            hidden={!workInProgress}
+          >
             Cancel
           </Button>
         </div>
