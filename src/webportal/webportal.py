@@ -222,8 +222,6 @@ def all_scans():
         if meta_exists:
             # 
             # check for updates
-            print("ww")
-            print(meta_path)
             with open(meta_path, 'r') as f:
                 data = json.load(f)
                 
