@@ -4,13 +4,16 @@ from werkzeug.exceptions import HTTPException
 from werkzeug.utils import secure_filename
 import logging
 
-from case import GBM, LGG
-from fs import *
+from management_app.case import GBM, LGG
+from management_app.fs import *
+
+GBM="GBM"
+LGG="LGG"
 
 logging.basicConfig(filename='management_server.log', level=logging.INFO, format=f'[%(asctime)s] %(levelname)s in %(module)s: %(message)s')
 
 app = Flask(__name__)
-
+app.config[DATA_DIR] = PATH_TO_DATA
 MASK_EXT = ".mask"
 
 app.errorhandler(HTTPException)
