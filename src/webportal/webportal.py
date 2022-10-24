@@ -36,7 +36,7 @@ DATA_DIR = join(WEB_PORTAL_DIR, "scans/")
 dir = dirname(realpath(__file__))
 META_DIR = join(dir, '/meta_files')
 META_DIR = dir + '/meta_files'
-valid_extensions = ["png", "svs", "tif"]
+valid_extensions = ["png", "svs", "tif", "tiff", "mask.tiff"]
 
 # ~/test/
 
@@ -79,23 +79,21 @@ valid_extensions = ["png", "svs", "tif"]
 def get_file(uuid, ext):
     dir_path = DATA_DIR + uuid
 
-    # files = [f for f in listdir(dir_path) if isfile(join(DATA_DIR, f))]
-
-    # print(files)
     name = ''
     for f in listdir(dir_path):
         if f.endswith(ext):
+
+            print(f.endswith('.mask.tif'))
+            if ext == ('tif' or 'tiff') and (f.endswith('.mask.tif')or f.endswith('.mask.tiff')):
+                print("cont")
+                continue
             name = f
             break
 
     if name == '':
-        print("errorrrr")
         return ""
 
-    # file_path = "{}/{}.{}".format(dir_path,name ,ext)
     file_path = "{}/{}".format(dir_path,name)
-    print(file_path)
-
 
     return file_path
 
@@ -139,8 +137,7 @@ def create_meta(uuid, file_name, dir_path):
 ,
         "tifStatus": "none",
         "pngStatus": "none",
-        "maskStatus": "none",
-        "downloadStatus": "none"
+        "maskStatus": "none"
     }
 
     with open("{}/{}.meta".format(META_DIR, uuid), 'w') as json_file:
@@ -191,7 +188,7 @@ def all_scans():
 
         # check if meta file exists
         meta_path = get_meta(dir)
-        print(dir)
+        # print(dir)
 
         if meta_path != '':
             # meta exists
@@ -207,11 +204,13 @@ def all_scans():
 
                 # remove .svs from end
                 svs_path = svs_path[:len(svs_path)-4]
-            
-            elif scan_dir.endswith("tif") or scan_dir.endswith("tiff"):
-                exts.append("tif")
-            elif scan_dir.endswith("mask"):
+            elif scan_dir.endswith("mask.tif") or scan_dir.endswith("mask.tiff"):
                 exts.append("mask")
+            elif (scan_dir.endswith("tif") or scan_dir.endswith("tiff")) \
+                and not (scan_dir.endswith("mask.tif") or scan_dir.endswith("mask.tiff")):
+                exts.append("tif")
+                
+ 
             elif scan_dir.endswith("png"):
                 exts.append("png")  
         
@@ -252,16 +251,14 @@ def all_scans():
                 json.dump(data, json_file)
 
     # delete meta files for deleted files
-    meta_files = [f for f in listdir(META_DIR) if not isfile(join(META_DIR, f))]
-
+    meta_files = [f for f in listdir(META_DIR) if isfile(join(META_DIR, f))]
     for meta_file in meta_files:
-        uuid = meta_file[:len(uuid)-4]
+        uuid = meta_file[:len(meta_file)-5]
         uuid_exist = False
         for dir in listdir(DATA_DIR):
             if dir == uuid:
                 uuid_exist = True
                 break
-        
         if not uuid_exist:
             remove(join(META_DIR, meta_file))
         
@@ -311,10 +308,42 @@ def get_scan():
     ids = request.args["ids[]"]
     ext = request.args["extension[]"]
 
+
     # check if directory exists, create if not
     dir_path = join(DATA_DIR, ids)
     # file_path = "{}/{}.{}".format(dir_path,ids,ext)
-    file_path = get_file(ids, ext)
+    if ext == 'mask':
+        mask_ext = 'mask.tif'
+        mask_ext2 = 'mask.tiff'
+        file_path = get_file(ids, mask_ext)
+        file_path2 = get_file(ids, mask_ext2)
+        if exists(file_path):
+            return send_file(file_path)
+        elif exists(file_path2):
+            return send_file(file_path2)
+        else:
+                return Response(
+                    "Requested file to download not found. Please contact the system administrator.",
+                    status=500,
+                )
+
+    # elif ext == 'tif':
+    #     # mask_ext = 'mask.tif'
+    #     # mask_ext2 = 'mask.tiff'
+    #     file_path = get_file(ids, ext)
+    #     file_path2 = get_file(ids, 'tiff')
+    #     if exists(file_path):
+    #         return send_file(file_path)
+    #     elif exists(file_path2):
+    #         return send_file(file_path2)
+    #     else:
+    #             return Response(
+    #                 "Requested file to download not found. Please contact the system administrator.",
+    #                 status=500,
+    #             )
+
+    else:
+        file_path = get_file(ids, ext)
 
     print(file_path)
 
@@ -325,9 +354,10 @@ def get_scan():
             file_path = get_file(ids, ext)
             if not exists(file_path):
                 return Response(
-        "Requested file to download not found. Please contact the system administrator.",
-        status=500,
-    )
+                    "Requested file to download not found. Please contact the system administrator.",
+                    status=500,
+                )
+            meta_path = get_meta(ids)
 
         else:
             return Response(
@@ -430,39 +460,19 @@ def cancel():
 # delete scan
 @application.delete('/scan')
 def delete():
-    print("11")
-    print(request.args)
-    # ids = request.args["ids[]"]
-    # exts = request.args["extension[]"]
-    ids = request.args.getlist('ids[]')
-    exts = request.args.getlist("extension[]")
-    # ids = request.json["ids[]"]
-    # ids = request.json["extension[]"]
-    
-    print("bbb")
-    print(ids)
 
-    # id = request.args["ids"]
-
-    # dir_path = DATA_DIR + id
-
-    # try:
-    #     shutil.rmtree(dir_path)
-    #     return jsonify("DONE")
-    # except Exception as e:
-    #     return jsonify(e)
-
-    # ids = request.args["ids[]"]
-    # exts = request.args["extension[]"]
     ids = request.args.getlist('ids[]')
     exts = request.args.getlist("extension[]")
     # ids = request.json["ids[]"]
     # ids = request.json["extension[]"]
     
     meta_file = ''
-
     for id in ids:
+
         for ext in exts:
+            # ext2 = 'tiff'
+            ext2 = "none"
+
 
             dir_path = DATA_DIR + id
 
@@ -477,16 +487,27 @@ def delete():
                     return jsonify(e)
 
             else:
-                for f in listdir(dir_path):
-                    if f.endswith(ext):
 
+                for f in listdir(dir_path):
+
+                    if ext == "mask.tif" or ext == "mask":
+
+                        ext = "mask.tif"
+                        ext2 = "mask.tiff"
+                    elif ext == "tif":
+                        ext2 = "tiff"
+
+                    if f.endswith(ext) or f.endswith(ext2):
+                        print(ext)
                         remove(join(dir_path, f))
-                        meta_file = get_meta(id)
+
                         meta_path = get_meta(id)
 
                         with open(meta_path, 'r') as f:
                             data = json.load(f)
 
+                        if ext == "mask.tif" or ext2 == "mask.tiff":
+                            ext = "mask"
                         key = ext + "Status"
                         data[key] = "none"
                         print(key)
@@ -495,11 +516,6 @@ def delete():
                             json.dump(data, json_file)
 
                         break
-
-                # file = dir_path + '/' + id + '.' + ext                
-                # if not exists(file):
-                #     continue
-                # remove(file)
     
     return jsonify("DONE")
 
