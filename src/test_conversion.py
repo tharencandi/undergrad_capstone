@@ -85,16 +85,33 @@ def test_svs_to_png():
     ret = svs_to_png("tp.svs", "tp.png")
     assert ret == GOOD
 
-# """
-#     Test ability to correctly read slide for svs image
-# """
-# def test_read_svs_image():
-#     input_file_name = "tp.svs"
+"""
+    Test ability to correctly read slide for svs image.
+    Open SVS image and convert to RGB numpy array.
+    Then check if read_slide_to_array function correctly
+    performs task intended.
+"""
+def test_read_svs_image_correctly():
 
-#     slide = open_slide(input_file_name)
-#     dims = slide.dimensions
-#     region_slide = slide.read_region((0,0), 0, dims)
+    input_file_name = "tp.svs"
 
-#     arr = _read_slide_to_array(input_file_name, TILE)
+    # read in SVS image and get dimensions
+    slide = open_slide(input_file_name)
+    dims = slide.dimensions
 
-#     assert arr == region_slide
+    # read in region and convert to RGB
+    region_slide = slide.read_region((0,0), 0, dims)
+    region_slide_RGB = region_slide.convert('RGB')
+
+    # convert image to np array
+    region_np = np.array(region_slide_RGB)
+
+    # read array slide using read_slide_to_array function
+    arr = read_slide_to_array(input_file_name, TILE)
+
+    # check if both arrays are equal at each index
+    count = 0
+    if (region_np != arr).any():
+        count+=1
+    
+    assert count == 0
