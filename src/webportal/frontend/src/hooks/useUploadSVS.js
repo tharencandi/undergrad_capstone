@@ -16,6 +16,9 @@ const useUploadSVS = () => {
 
       setCurrentUploadingFile(file.name);
 
+      // Delay
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
       const res = await axios
         .post("/scan", formData, {
           headers: {
@@ -47,6 +50,7 @@ const useUploadSVS = () => {
       uploadFile(currentFile)
         .then((res) => {
           console.log(res);
+
           setNumberUploaded((prevState) => {
             return prevState + 1;
           });
