@@ -14,8 +14,8 @@ cdir = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.dirname(cdir))
 
 
-# from image_tools.conversion import svs_to_png, svs_to_tiff
-# from image_tools.conversion import GOOD
+from image_tools.conversion import svs_to_png, svs_to_tiff
+from image_tools.conversion import GOOD
 
 
 application = Flask(__name__, static_url_path='',
@@ -100,10 +100,10 @@ def get_file(uuid, ext):
 
     return file_path
 
-def make_id(fname):
-    base = fname.split(".")[:-1]
-    base = "".join(base)
-    return base
+# def make_id(fname):
+#     base = fname.split(".")[:-1]
+#     base = "".join(base)
+#     return base
 
 # get meta file, returns path to meta file
 def get_meta(uuid):
@@ -516,7 +516,7 @@ def get_svs_dir(uuid):
     return os.path.join(DATA_DIR, uuid, "")
 
 def set_meta_field(uuid, field, value):
-    fpath = make_fpath(uuid, META_EXT)
+    fpath =get_meta(uuid)
     # print(fpath)
     meta = None
     with open(fpath, "r") as f:
@@ -576,7 +576,7 @@ def generate():
             for e in target_exts:
                 TASK_MAP[e].delay(target, make_fpath(target, SVS_EXT), make_fpath(target, e))
         else:
-            #scan everything lol
+            pass
 
     return jsonify(res), 200
 
