@@ -16,7 +16,7 @@ TILE = 1024
 TMP_DIR =  f"{os.getcwd()}/" #if path end with slash. This is the programmers responsibility. 
 TMP_FILE = "temp_arr.np"
 
-def _read_slide_to_array(slide_file_path, tile):
+def read_slide_to_array(slide_file_path, tile):
     """
         Read slide to a memory mapped array in chunks (tile, tile) pixels large.
         return memory mapped array.
@@ -70,9 +70,9 @@ def svs_to_png(input_file_name, output_file_name):
         return EXTENSION_FORMAT_ERR
     
     try: 
-        image_array = _read_slide_to_array(input_file_name, TILE)
+        image_array = read_slide_to_array(input_file_name, TILE)
         #swap RGB to BGR - this is a bad solution (slower than has to be).
-        #can be improved by dealing with this in _read_slide_to_array. note that tiff func req rgb.
+        #can be improved by dealing with this in read_slide_to_array. note that tiff func req rgb.
         cv.imwrite(output_file_name, image_array[:, :, ::-1])
         os.remove(TMP_DIR + TMP_FILE)
         del image_array
@@ -105,7 +105,7 @@ def svs_to_tiff(input_file_name, output_file_name):
         return EXTENSION_FORMAT_ERR
     
     try: 
-        image_array = _read_slide_to_array(input_file_name, TILE)
+        image_array = read_slide_to_array(input_file_name, TILE)
      
         tif.imwrite(
             output_file_name,
