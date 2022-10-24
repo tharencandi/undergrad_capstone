@@ -9,6 +9,7 @@ from Crypto.Hash import SHA256
 import json
 import shutil
 import sys, os
+
 cdir = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.dirname(cdir))
 
@@ -345,6 +346,7 @@ TASK_MAP = {
 }
 
 
+
 # run algo, generate mask
 @application.post('/generate')
 def generate():
@@ -356,16 +358,13 @@ def generate():
         "ids": []
     }
     for target in target_svs:
-        # target = make_id(target)
-        print(target)
-        print(get_svs_dir(target))
         if exists(get_svs_dir(target)):
-            print("made it")
             res["ids"].append(target)
             for e in target_exts:
-                print(make_fpath(target, SVS_EXT))
-                print(make_fpath(target, e))
                 TASK_MAP[e].delay(target, make_fpath(target, SVS_EXT), make_fpath(target, e))
+        else:
+            #scan everything lol
+
     return jsonify(res), 200
 
 
