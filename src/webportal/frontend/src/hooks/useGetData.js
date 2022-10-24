@@ -59,9 +59,10 @@ const useGetData = () => {
       .get("/all")
       .then((res) => {
         dispatch(setData(res.data));
+        return res;
       })
       .catch((err) => {
-        console.error(err);
+        throw new Error(err.message);
       });
     // dispatch(setData(DUMMY_DATA));
   }, []);

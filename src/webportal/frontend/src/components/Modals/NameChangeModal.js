@@ -5,6 +5,7 @@ import { Input } from "@mui/material";
 import { useSelector } from "react-redux";
 import useServerAction from "hooks/useServerAction";
 import useGetData from "hooks//useGetData";
+import axios from "axios";
 
 const Backdrop = ({ modalController }) => {
   return (
@@ -21,6 +22,7 @@ const Overlay = ({ cell, modalController }) => {
   const [newName, setNewName] = useState(cell.value);
   const [loading, setLoading] = useState(false);
   const [validName, setValidName] = useState(true);
+  const [error, setError] = useState(null);
 
   const names = useSelector((state) => {
     console.log(state.data);
@@ -42,16 +44,18 @@ const Overlay = ({ cell, modalController }) => {
 
   const submitHandler = async () => {
     setLoading(true);
-    console.log(
-      "Sent request to server changing filename",
-      cell.value,
-      "to",
-      newName
-    );
+    const params = { params: { ids: cell.id, new_name: newName } };
 
-    // Wait for the server to confirm
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    modalController(null);
+    axios
+      .get("/name", params)
+      .then((res) => {
+        console.log(res);
+        setError(null);
+        modalController(null);
+      })
+      .catch((err) => {
+        setError(err.message);
+      });
     setLoading(false);
   };
 
@@ -71,6 +75,7 @@ const Overlay = ({ cell, modalController }) => {
             name
           </p>
         )}
+        {error && <p className="warning text-body2">{error}</p>}
       </div>
 
       <div className="flex items-end justify-between">

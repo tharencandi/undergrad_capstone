@@ -1,7 +1,6 @@
-import { ReactComponent as ProcessingIcon } from "assets/icons/processing.svg";
+import { ReactComponent as ErrorIcon } from "assets/icons/statusError.svg";
 import { ReactComponent as WaitingIcon } from "assets/icons/waiting.svg";
 import { ReactComponent as EditIcon } from "assets/icons/editIcon.svg";
-
 import loadingGif from "assets/icons/loading-load.gif";
 
 import { DataGrid } from "@mui/x-data-grid";
@@ -24,12 +23,20 @@ const FileTable = () => {
 
   const [editMode, setEditMode] = useState(null);
 
+  const [error, setError] = useState(null);
+
   const data = useSelector((state) => state.data);
 
   const dispatch = useDispatch();
 
   const dataFetch = useCallback(async () => {
-    await fetchData();
+    await fetchData()
+      .then(() => {
+        setError(null);
+      })
+      .catch((err) => {
+        setError(err);
+      });
     setResponse((prevState) => {
       return prevState + 1;
     });
@@ -60,7 +67,10 @@ const FileTable = () => {
           if (status === "completed") {
             return 2;
           }
-          return 3;
+          if (status === "inProgress") {
+            return 3;
+          }
+          return status;
         };
 
         const { fileId, fileName, maskStatus, pngStatus, tifStatus, created } =
@@ -80,7 +90,7 @@ const FileTable = () => {
   function filenameCell(cell) {
     return (
       <div className="filenameCell">
-        {cell.value}
+        {`${cell.value}.svs`}
         <Tooltip title="Edit Name" arrow>
           <button
             onClick={() => {
@@ -104,14 +114,25 @@ const FileTable = () => {
       return <img src={loadingGif} alt={"loading"} width="75" height="37" />;
     } else if (cell.value === 1) {
       return <WaitingIcon></WaitingIcon>;
+    } else {
+      return (
+        <Tooltip title={cell.value} arrow>
+          <ErrorIcon></ErrorIcon>
+        </Tooltip>
+      );
     }
   }
 
   const columns = [
     {
+      field: "id",
+      headerName: "FileID",
+      width: 300,
+    },
+    {
       field: "filename",
       headerName: "Filename",
-      width: 512,
+      width: 650,
       renderCell: filenameCell,
     },
     {
@@ -139,29 +160,36 @@ const FileTable = () => {
       field: "dateCreated",
       headerName: "Date created",
       description: "This column has a value getter and is not sortable.",
-      width: 512,
+      width: 256,
     },
   ];
 
   return (
     <div className="fileTable">
-      {editMode && (
+      {!error && editMode && (
         <NameChangeModal
           modalController={setEditMode}
           cell={editMode}
         ></NameChangeModal>
       )}
-      <DataGrid
-        rows={rows}
-        columns={columns}
-        pageSize={100}
-        rowsPerPageOptions={[5]}
-        checkboxSelection
-        disableSelectionOnClick
-        onSelectionModelChange={(selection) => {
-          dispatch(setSelectedData(selection));
-        }}
-      />
+      {!error && (
+        <DataGrid
+          rows={rows}
+          columns={columns}
+          pageSize={100}
+          rowsPerPageOptions={[5]}
+          checkboxSelection
+          disableSelectionOnClick
+          onSelectionModelChange={(selection) => {
+            dispatch(setSelectedData(selection));
+          }}
+        />
+      )}
+      {error && (
+        <p className="warning text-center pt-12">
+          An error occured while retrieving data: {error.message}
+        </p>
+      )}
     </div>
   );
 };

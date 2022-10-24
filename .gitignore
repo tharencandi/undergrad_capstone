@@ -50,3 +50,6 @@ Thumbs.db
 
 *venv
 temp
+
+#Meta files
+meta_files
