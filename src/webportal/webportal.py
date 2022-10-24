@@ -505,16 +505,25 @@ def scan_rename():
     
 PNG_EXT="png"
 TIF_EXT="tif"
-MASK_EXT="mask"
+MASK_EXT="mask.tif"
 META_EXT="meta"
 SVS_EXT="svs"
 
-def make_fpath(uuid, ext):
-    return os.path.join(DATA_DIR, uuid, uuid + "." + ext)
+def make_fpath(uuid, fname, ext):
+    return os.path.join(DATA_DIR, uuid, fname + "." + ext)
 
 def get_svs_dir(uuid):
     return os.path.join(DATA_DIR, uuid, "")
 
+def get_meta_field(uuid, field):
+    fpath = get_meta(uuid)
+    meta = None
+    with open(fpath, "r") as f:
+        meta = json.loads(f.read())
+    
+    if meta:
+        return meta[field]
+    
 def set_meta_field(uuid, field, value):
     fpath =get_meta(uuid)
     # print(fpath)
@@ -532,7 +541,7 @@ def make_png(uuid, svs_fpath, dest):
     set_meta_field(uuid, "pngStatus", "inProgress")
     res = svs_to_png(svs_fpath, dest)
     if res != GOOD:
-        set_meta_field(uuid, "pngStatus", str(res))
+        set_meta_field(uuid, "pngStatus", "failed")
         return
     set_meta_field(uuid, "pngStatus", "completed")
     return
@@ -542,7 +551,7 @@ def make_tif(uuid, svs_fpath, dest):
     set_meta_field(uuid, "tifStatus", "inProgress")
     res = svs_to_tiff(svs_fpath, dest)
     if res != GOOD:
-        set_meta_field(uuid, "tifStatus", str(res))
+        set_meta_field(uuid, "tifStatus", "failed")
         return
     set_meta_field(uuid, "tifStatus", "completed")
     return
@@ -572,9 +581,10 @@ def generate():
     }
     for target in target_svs:
         if exists(get_svs_dir(target)):
+            fname = get_meta_field(target, "fileName")
             res["ids"].append(target)
             for e in target_exts:
-                TASK_MAP[e].delay(target, make_fpath(target, SVS_EXT), make_fpath(target, e))
+                TASK_MAP[e].delay(target, make_fpath(target, fname, SVS_EXT), make_fpath(target, fname , e))
         else:
             pass
 
