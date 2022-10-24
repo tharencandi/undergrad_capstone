@@ -68,8 +68,6 @@ from tile_crop.util import Time
 
 #   Args:
 #     np_img: Image as a NumPy array.
-#     type: Type of array to return (float or uint8).
-
 #   Returns:
 #     Complement image as Numpy array.
 #   """
