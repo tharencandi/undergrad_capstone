@@ -251,6 +251,20 @@ def all_scans():
             with open(meta_path, 'w') as json_file:
                 json.dump(data, json_file)
 
+    # delete meta files for deleted files
+    meta_files = [f for f in listdir(META_DIR) if not isfile(join(META_DIR, f))]
+
+    for meta_file in meta_files:
+        uuid = meta_file[:len(uuid)-4]
+        uuid_exist = False
+        for dir in listdir(DATA_DIR):
+            if dir == uuid:
+                uuid_exist = True
+                break
+        
+        if not uuid_exist:
+            remove(join(META_DIR, meta_file))
+        
 
     scans = [f for f in listdir(DATA_DIR) if not isfile(join(DATA_DIR, f))]    
     scan_list = []
@@ -357,6 +371,8 @@ def upload():
 
     if filename == '':
         return jsonify("NULL")
+    
+    # if file
 
     file_uuid = str(uuid.uuid4())
 
@@ -390,6 +406,25 @@ def upload():
 
 @application.get("/cancel")
 def cancel():
+    # for each meta file change everything not completed to none
+    for dir in listdir(DATA_DIR):
+        meta_path = get_meta(dir)
+
+        with open(meta_path, 'r') as f:
+            data = json.load(f)
+        
+        if data["tifStatus"] != 'completed':
+            data["tifStatus"] = 'none'
+        if data["maskStatus"] != 'completed':
+            data["maskStatus"] = 'none'
+        if data["pngStatus"] != 'completed':
+            data["pngStatus"] = 'none'
+
+        with open(meta_path, 'w') as json_file:
+            json.dump(data, json_file)
+
+
+
     return jsonify("cancel request")
 
 # delete scan
