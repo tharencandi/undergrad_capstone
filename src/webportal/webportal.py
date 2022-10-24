@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, send_file, g, render_template
+from flask import Flask, request, jsonify, send_file, g, render_template, Response
 from celery import Celery
 from os import listdir, mkdir, remove, rename
 from os.path import isfile, join, exists, expanduser, getctime, dirname, realpath
@@ -11,6 +11,7 @@ import shutil
 import sys, os
 cdir = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.dirname(cdir))
+
 
 # from image_tools.conversion import svs_to_png, svs_to_tiff
 # from image_tools.conversion import GOOD
@@ -89,7 +90,7 @@ def get_file(uuid, ext):
 
     if name == '':
         print("errorrrr")
-        return
+        return ""
 
     # file_path = "{}/{}.{}".format(dir_path,name ,ext)
     file_path = "{}/{}".format(dir_path,name)
@@ -108,7 +109,6 @@ def get_meta(uuid):
 
     meta_path = join(META_DIR, uuid + '.meta')
     if exists(meta_path):
-
         return meta_path
     else:
         return ""
@@ -173,80 +173,6 @@ def get_dir():
 def index():
     return render_template("index.html")
 
-@application.get('/update')
-def check_updates():
-
-    for dir in listdir(DATA_DIR):
-        dir_path = join(DATA_DIR, dir)
-
-        exts = []
-
-        if isfile(dir_path):
-            continue
-            
-        svs_path =  ''
-        meta_exists = False
-        for scan_dir in listdir(dir_path):
-
-            # files in uuid directory
-            # check if svs file exists first
-            if scan_dir.endswith("svs"):
-                svs_path = scan_dir
-
-                # remove .svs from end
-                svs_path = svs_path[:len(svs_path)-4]
-            
-            elif scan_dir.endswith("tif"):
-                exts.append("tif")
-            elif scan_dir.endswith("mask"):
-                exts.append("mask")
-            elif scan_dir.endswith("png"):
-                exts.append("png")  
-
-
-            # check if meta file exists
-            meta_path = get_meta(scan_dir)
-
-            if meta_path != '':
-                # meta exists
-                # check for updates
-                meta_exists = True
-        
-        if svs_path == '':
-            # svs doesnt exist
-            continue
-        
-        if meta_exists:
-            # check for updates
-            with open(meta_path, 'r') as f:
-                data = json.load(f)
-                
-            # key = ext + "Status"
-            # data[key] = "completed"
-            for ext in exts:
-                key = ext + "Status"
-                if data[key] == 'none':
-                    data[key] = 'completed'
-
-            with open(meta_path, 'w') as json_file:
-                json.dump(data, json_file)
-
-
-        else:
-            # create meta
-            create_meta(dir, svs_path, dir_path)
-            meta_path = get_meta(dir)
-            with open(meta_path, 'r') as f:
-                data = json.load(f)
-            
-            for ext in exts:
-                key = ext + "Status"
-                data[key] = "completed"
-
-            with open(meta_path, 'w') as json_file:
-                json.dump(data, json_file)
-    return jsonify("DONE")
-
 # get all files
 # return list of tuples -> (file_id, [extensions], date created)
 @application.get('/all')
@@ -262,6 +188,16 @@ def all_scans():
             
         svs_path =  ''
         meta_exists = False
+
+        # check if meta file exists
+        meta_path = get_meta(dir)
+        print(dir)
+
+        if meta_path != '':
+            # meta exists
+            # check for updates
+            meta_exists = True
+
         for scan_dir in listdir(dir_path):
 
             # files in uuid directory
@@ -278,21 +214,13 @@ def all_scans():
                 exts.append("mask")
             elif scan_dir.endswith("png"):
                 exts.append("png")  
-
-
-            # check if meta file exists
-            meta_path = get_meta(scan_dir)
-
-            if meta_path != '':
-                # meta exists
-                # check for updates
-                meta_exists = True
         
         if svs_path == '':
             # svs doesnt exist
             continue
         
         if meta_exists:
+            # 
             # check for updates
             with open(meta_path, 'r') as f:
                 data = json.load(f)
@@ -306,6 +234,7 @@ def all_scans():
 
             with open(meta_path, 'w') as json_file:
                 json.dump(data, json_file)
+
 
 
         else:
@@ -370,8 +299,10 @@ def get_scan():
 
     # check if directory exists, create if not
     dir_path = join(DATA_DIR, ids)
-    file_path = "{}/{}.{}".format(dir_path,ids,ext)
+    # file_path = "{}/{}.{}".format(dir_path,ids,ext)
     file_path = get_file(ids, ext)
+
+    print(file_path)
 
     if not exists(file_path):
         if ext == 'tif':
@@ -379,9 +310,17 @@ def get_scan():
             file_path = "{}/{}.{}".format(dir_path,ids,ext)
             file_path = get_file(ids, ext)
             if not exists(file_path):
-                return jsonify("File not Found: "+ file_path)
+                return Response(
+        "Requested file to download not found. Please contact the system administrator.",
+        status=500,
+    )
+
         else:
-            return jsonify("File not Found: "+ file_path)
+            return Response(
+        "Requested file to download not found. Please contact the system administrator.",
+        status=500,
+    )
+
     
     else:
         # change status
@@ -529,7 +468,7 @@ def delete():
     
     return jsonify("DONE")
 
-@application.put('/scan')
+@application.get('/name')
 def scan_rename():
     print(request.args)
     id = request.args["ids"]

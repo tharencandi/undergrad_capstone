@@ -44,7 +44,7 @@ const Overlay = ({ cell, modalController }) => {
 
   const submitHandler = async () => {
     setLoading(true);
-    const params = { params: { ids: cell.value, new_name: newName } };
+    const params = { params: { ids: cell.id, new_name: newName } };
 
     axios
       .get("/name", params)

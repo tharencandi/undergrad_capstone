@@ -21,7 +21,7 @@ const useServerAction = () => {
     });
 
     // Convert the list of ids to list of names
-    ids = ids.map((id) => data[id].fileName);
+    // ids = ids.map((id) => data[id].fileName);
 
     if (action === "delete") {
       await axios
