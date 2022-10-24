@@ -54,10 +54,17 @@ const useServerAction = () => {
           // create file link in browser's memory
           const href = URL.createObjectURL(response.data);
 
+          console.log(extension);
+
           // create "a" HTML element with href to file & click
           const link = document.createElement("a");
           link.href = href;
-          link.setAttribute("download", `${ids}.${extension}`); //or any other extension
+          link.setAttribute(
+            "download",
+            `${data[ids].fileName}.${
+              extension[0] === "mask" ? "mask.tif" : extension
+            }`
+          ); //or any other extension
           document.body.appendChild(link);
           link.click();
 

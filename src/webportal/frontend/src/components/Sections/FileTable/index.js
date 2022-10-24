@@ -125,9 +125,14 @@ const FileTable = () => {
 
   const columns = [
     {
+      field: "id",
+      headerName: "FileID",
+      width: 300,
+    },
+    {
       field: "filename",
       headerName: "Filename",
-      width: 512,
+      width: 650,
       renderCell: filenameCell,
     },
     {
@@ -155,7 +160,7 @@ const FileTable = () => {
       field: "dateCreated",
       headerName: "Date created",
       description: "This column has a value getter and is not sortable.",
-      width: 512,
+      width: 256,
     },
   ];
 

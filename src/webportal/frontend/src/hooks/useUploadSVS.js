@@ -16,6 +16,9 @@ const useUploadSVS = () => {
 
       setCurrentUploadingFile(file.name);
 
+      // Delay
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
       const res = await axios
         .post("/scan", formData, {
           headers: {
@@ -38,6 +41,7 @@ const useUploadSVS = () => {
 
     // If there is already a file uploading, then do not start another upload
     if (currentUploadingFile) {
+      console.log("already uploading");
       return;
     }
 
@@ -47,6 +51,7 @@ const useUploadSVS = () => {
       uploadFile(currentFile)
         .then((res) => {
           console.log(res);
+
           setNumberUploaded((prevState) => {
             return prevState + 1;
           });
@@ -80,6 +85,7 @@ const useUploadSVS = () => {
     numberUploaded,
     numberToUpload,
     error,
+    setError,
   ];
 };
 

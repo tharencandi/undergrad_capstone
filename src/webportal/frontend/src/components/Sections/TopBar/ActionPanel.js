@@ -6,10 +6,14 @@ import { useState } from "react";
 import useUploadSVS from "hooks/useUploadSVS";
 import { useSelector } from "react-redux";
 
+import { Tooltip } from "@mui/material";
+import axios from "axios";
+
 const ActionPanel = () => {
   // Modal variants - "download", "generate", "none" (none means no modal open)
   const [modalVariant, setModalVariant] = useState("none");
   const selectedData = useSelector((state) => state.selectedData);
+  const data = useSelector((state) => state.data);
 
   const [
     setUploadQueue,
@@ -17,7 +21,34 @@ const ActionPanel = () => {
     numberUploaded,
     numberToUpload,
     uploadError,
+    setUploadError,
   ] = useUploadSVS();
+
+  let workInProgress = false;
+
+  for (let entry in data) {
+    if (
+      data[entry].tifStatus !== "none" &&
+      data[entry].tifStatus !== "completed"
+    ) {
+      workInProgress = true;
+    }
+    if (
+      data[entry].pngStatus !== "none" &&
+      data[entry].pngStatus !== "completed"
+    ) {
+      workInProgress = true;
+    }
+    if (
+      data[entry].maskStatus !== "none" &&
+      data[entry].maskStatus !== "completed"
+    ) {
+      workInProgress = true;
+    }
+    if (numberToUpload !== 0 || uploadError) {
+      workInProgress = true;
+    }
+  }
 
   const uploadFileChangeHandler = (e) => {
     setUploadQueue(e.target.files);
@@ -51,15 +82,27 @@ const ActionPanel = () => {
       >
         Delete
       </Button>
-      <Button
-        onClick={() => {
-          setModalVariant("cancel");
-        }}
-        danger
-        // TODO Run a function which detects any pending or in progress operations, and enables the button if detected
-      >
-        Cancel
-      </Button>
+      <Tooltip title="Cancel all work in progress and reset errors" arrow>
+        <div>
+          <Button
+            onClick={() => {
+              setUploadQueue([]);
+              setUploadError(null);
+              axios
+                .get("/cancel")
+                .then(() => {})
+                .catch((err) => {
+                  console.log(err);
+                });
+            }}
+            danger
+            hidden={!workInProgress}
+          >
+            Cancel
+          </Button>
+        </div>
+      </Tooltip>
+
       {modalVariant === "none" ? null : (
         <Modal modalController={setModalVariant} variant={modalVariant}></Modal>
       )}

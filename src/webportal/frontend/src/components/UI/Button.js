@@ -4,6 +4,8 @@ const Button = ({
   onClick,
   disabled,
   danger,
+  warning,
+  hidden,
   small = false,
 }) => {
   const baseStyle =
@@ -25,7 +27,7 @@ const Button = ({
     <button
       className={`${small ? smallStyle : baseStyle} ${
         danger ? dangerStyle : variantStyle
-      } ${disabledStyle}`}
+      } ${disabledStyle} ${hidden ? "hidden" : ""}`}
       onClick={disabled ? null : onClick}
     >
       {children}
