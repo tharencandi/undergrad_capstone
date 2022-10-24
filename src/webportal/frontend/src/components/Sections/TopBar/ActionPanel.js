@@ -81,9 +81,14 @@ const ActionPanel = () => {
       >
         Delete
       </Button>
-      <Button onClick={() => {}} danger hidden={!workInProgress}>
-        Cancel All
-      </Button>
+      <Tooltip title="Cancel all work in progress and reset errors" arrow>
+        <div>
+          <Button onClick={() => {}} danger hidden={!workInProgress}>
+            Cancel
+          </Button>
+        </div>
+      </Tooltip>
+
       {modalVariant === "none" ? null : (
         <Modal modalController={setModalVariant} variant={modalVariant}></Modal>
       )}
