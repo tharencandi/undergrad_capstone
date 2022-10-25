@@ -1,6 +1,12 @@
 from tile_crop.slide import *
 import tile_crop.tiles as tiles
 import tile_crop.filter as filter
+
+# import tiles
+# import filter
+# from slide import * 
+# import util
+
 import shutil
 
 
@@ -37,10 +43,10 @@ def single_image_to_folder_of_tiles(image_path = "", cell_threshold = 1, save=Tr
           os.remove(os.path.join(svsDir, item))
 
   #clean up intermediate files
-  shutil.rmtree(FILTER_DIR)
-  for item in os.listdir(DEST_TRAIN_DIR):
-    if item.endswith(".png"):
-          os.remove(os.path.join(DEST_TRAIN_DIR, item))
+  # shutil.rmtree(FILTER_DIR)
+  # for item in os.listdir(DEST_TRAIN_DIR):
+  #   if item.endswith(".png"):
+  #         os.remove(os.path.join(DEST_TRAIN_DIR, item))
   
   
   return [tile_summary.image_name, (tile_summary.num_row_tiles, tile_summary.num_col_tiles), (tile_summary.orig_h,tile_summary.orig_w) ]
