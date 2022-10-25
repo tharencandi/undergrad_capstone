@@ -23,7 +23,7 @@ application = Flask(__name__, static_url_path='',
                   template_folder='frontend/build')
 
 application.config['CELERY_BROKER_URL'] = 'redis://localhost:6379/0'
-# application.config['CELERY_RESULT_BACKEND'] = 'redis://localhost:6379/0'
+application.config['CELERY_RESULT_BACKEND'] = 'redis://localhost:6379/0'
 
 print(application.name)
 celery = Celery("webportal", broker=application.config['CELERY_BROKER_URL'])
@@ -32,12 +32,11 @@ celery.conf.update(application.config)
 home = expanduser("~")
 WEB_PORTAL_DIR =join(home, ".glioblastoma_portal", "")
 DATA_DIR = join(WEB_PORTAL_DIR, "scans/")
-# WEB_PORTAL_DIR = DATA_DIR
 
 dir = dirname(realpath(__file__))
-META_DIR = join(dir, '/meta_files')
+META_DIR = join(WEB_PORTAL_DIR, '/meta_files')
 META_DIR = dir + '/meta_files'
-valid_extensions = ["png", "svs", "tif", "tiff", "mask.tiff"]
+valid_extensions = ["png", "svs", "tif", "tiff", "mask.tiff", "mask.tif"]
 
 # ~/test/
 
@@ -222,6 +221,8 @@ def all_scans():
         if meta_exists:
             # 
             # check for updates
+            print(meta_path)
+            
             with open(meta_path, 'r') as f:
                 data = json.load(f)
                 
@@ -528,9 +529,6 @@ def scan_rename():
 
     dir_path = DATA_DIR + id
 
-    # meta_file = dir_path + id + ".meta"
-
-    # meta_path = dir_path + '/' + id + '.meta'
     meta_path = get_meta(id)
 
     with open(meta_path, 'r') as f:
@@ -545,12 +543,18 @@ def scan_rename():
 
         file_name = f.split('.')
         ext = file_name[-1]
-        file = new_name + '.' + ext
+        # skip other files
+        if ext not in valid_extensions:
+            continue
+        if f.endswith(".mask.tif") or f.endswith(".mask.tiff"):
+            file = new_name + ".mask.tif"
+        else:
+            file = new_name + '.' + ext
 
         rename(dir_path+'/'+f, dir_path+'/'+file)
     
-    new_dir = DATA_DIR + new_name
-    rename(dir_path, new_dir)
+    # new_dir = DATA_DIR + new_name
+    # rename(dir_path, new_dir)
     
     return jsonify("DONE")
     
@@ -635,6 +639,9 @@ def generate():
 
 if __name__ == '__main__':
     print(sys.path)
+
+    # global DATA_DIR
+
     if not os.path.exists(DATA_DIR):
         os.makedirs(DATA_DIR)
     if not exists(META_DIR):
