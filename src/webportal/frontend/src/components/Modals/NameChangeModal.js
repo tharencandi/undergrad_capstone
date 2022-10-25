@@ -3,8 +3,6 @@ import Button from "components/UI/Button";
 import React, { useState, useEffect } from "react";
 import { Input } from "@mui/material";
 import { useSelector } from "react-redux";
-import useServerAction from "hooks/useServerAction";
-import useGetData from "hooks//useGetData";
 import axios from "axios";
 
 const Backdrop = ({ modalController }) => {
