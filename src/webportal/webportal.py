@@ -14,8 +14,8 @@ cdir = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.dirname(cdir))
 
 
-# from image_tools.conversion import svs_to_png, svs_to_tiff
-# from image_tools.conversion import GOOD
+from image_tools.conversion import svs_to_png, svs_to_tiff
+from image_tools.conversion import GOOD
 
 
 application = Flask(__name__, static_url_path='',
@@ -25,18 +25,15 @@ application = Flask(__name__, static_url_path='',
 application.config['CELERY_BROKER_URL'] = 'redis://localhost:6379/0'
 # application.config['CELERY_RESULT_BACKEND'] = 'redis://localhost:6379/0'
 
-print(application.name)
 celery = Celery("webportal", broker=application.config['CELERY_BROKER_URL'])
 celery.conf.update(application.config)
 
 home = expanduser("~")
 WEB_PORTAL_DIR =join(home, ".glioblastoma_portal", "")
 DATA_DIR = join(WEB_PORTAL_DIR, "scans/")
-# WEB_PORTAL_DIR = DATA_DIR
 
 dir = dirname(realpath(__file__))
-META_DIR = join(dir, '/meta_files')
-META_DIR = dir + '/meta_files'
+META_DIR = join(WEB_PORTAL_DIR, '/meta_files')
 valid_extensions = ["png", "svs", "tif", "tiff", "mask.tiff"]
 
 # ~/test/
@@ -134,37 +131,39 @@ def create_meta(uuid, file_name, dir_path):
         "fileName": file_name,
         # "created": now.strftime("%d/%m/%Y %H:%M:%S"),
         # "created": file_create_date,
-        "created": datetime.fromtimestamp(file_create_date).strftime('%Y-%m-%d %H:%M:%S')
-,
+        "created": datetime.fromtimestamp(file_create_date).strftime('%Y-%m-%d %H:%M:%S'),
         "tifStatus": "none",
+        "tifJobId": "",
         "pngStatus": "none",
-        "maskStatus": "none"
+        "pngJobId": "",
+        "maskStatus": "none",
+        "maskJobId": "" 
     }
 
     with open("{}/{}.meta".format(META_DIR, uuid), 'w') as json_file:
         json.dump(meta_data, json_file)
 
 
-# set web portal directory
-@application.post('/dir')
-def change_dir():
-    global DATA_DIR
+# # set web portal directory
+# @application.post('/dir')
+# def change_dir():
+#     global DATA_DIR
 
-    print(DATA_DIR)
-    dir = request.args['dir']
+#     print(DATA_DIR)
+#     dir = request.args['dir']
 
-    if dir[-1] != '/':
-        dir = dir + '/'
+#     if dir[-1] != '/':
+#         dir = dir + '/'
 
-    DATA_DIR = dir
+#     DATA_DIR = dir
 
-    return jsonify("DONE")
+#     return jsonify("DONE")
 
-# get web portal directory
-@application.get('/dir')
-def get_dir():
+# # get web portal directory
+# @application.get('/dir')
+# def get_dir():
 
-    return jsonify(DATA_DIR)
+#     return jsonify(DATA_DIR)
 
 # home page
 @application.get('/')
