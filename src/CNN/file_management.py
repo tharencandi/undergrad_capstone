@@ -13,7 +13,17 @@ MANIFEST_OUT = "MANIFEST_OUT"
 MASK_DIR = "MASK_DIR"
 SVS_DIR =  "SVS_DIR"
 UPLOAD_LOG = "UPLOAD_LOG"
-KEYS = [TMP_DIR, MANIFEST_IN, MANIFEST_OUT, MASK_DIR, SVS_DIR, UPLOAD_LOG]
+UPLOAD_TRUE = "UPLOAD_TRUE"
+DELETE_SVS_ON_COMPLETION = "DELETE_SVS_ON_COMPLETION"
+UPLOAD_USR = "UPLOAD_USR"
+UPLOAD_PWORD = "UPLOAD_PWORD" 
+
+KEYS = [
+    TMP_DIR, MANIFEST_IN, MANIFEST_OUT, 
+    MASK_DIR, SVS_DIR, UPLOAD_LOG, UPLOAD_TRUE, 
+    DELETE_SVS_ON_COMPLETION, UPLOAD_USR, UPLOAD_PWORD
+]
+
 MANIFEST_HEADERS = "id\tfilename\tmd5\tsize\tstate\n"
 
 def clear_dir(dir):
@@ -27,7 +37,7 @@ def clear_dir(dir):
 def conf_init(conf):
         for key in conf:
             if key not in KEYS:
-                raise ValueError(f"conf file must contain the following fields: {KEYS}.")
+                raise ValueError(f"conf file must contain the following fields: {KEYS}.")    
         if not os.path.exists(conf[TMP_DIR]):
             print(f"tmp directory created: {TMP_DIR}.")
             os.mkdir(conf[TMP_DIR])

@@ -1,6 +1,11 @@
+
 import os
 import subprocess as sb
 import sys
+
+if "/CNN" not in os.path.abspath(""):
+    sys.path.append(os.path.abspath("") + "/src/CNN")
+
 import cv2 as cv
 import numpy as np
 import tensorflow as tf
@@ -15,13 +20,15 @@ import tifffile as tif
 #import src.tile_crop.tile_crop_main
 from tile_crop.tile_crop_main import single_image_to_folder_of_tiles as tile_image
 from client import upload 
-from multiprocessing import Process
+
 #from bin_transcoder import encode_binary
 IMG_SIZE = (102, 102)
 MODEL = 'data/models/default_DRAN.json'
-WEIGHTS = 'data/models/checkpoint'
+WEIGHTS = 'data/models/b_16_e50_preTrue_wmyHeNormal_le0.001.h5'
 TILE_MASK_NAME_F = "{}_{}.png"
-DEBUG = True
+DEBUG = False
+UPLOAD = True
+DELETE_SVS_ON_COMPLETION = False
 model_config = ""
 with open(MODEL, "r") as f:
     model_config = f.read().strip()
@@ -76,7 +83,7 @@ def create_windows(img):
     windows = []
     right_buff = (img.shape[1] % 54) + 102
     bottom_buff = (img.shape[0] % 54) + 102
-    img = cv.copyMakeBorder(img, 24, bottom_buff , 24, right_buff, cv.BORDER_CONSTANT)
+    img = cv.copyMakeBorder(img, 24, bottom_buff , 24, right_buff, cv.BORDER_REFLECT)
     img = np.array(img)
 
     tile_dim= (
@@ -91,10 +98,8 @@ def create_windows(img):
             y = (j * 54) + 24
             window = img[x-24:x+78, y-24:y+78]
             windows.append(window)
-            #img_center = og_img[x-24:(x-24) + 54, y-24:(y-24) + 54]    
-            #windows.append(np.array([window]))
-        
-    return np.float32(windows), tile_dim
+   
+    return np.uint8(windows), tile_dim
 
 
  
@@ -117,7 +122,6 @@ def predict_image(img):
     for x in range(tiles[0]):
         for y in range(tiles[1]):
             
-            #mask = model.predict(imgs[i])
             mask = get_mask_img(masks[i])
             x_off = 54
             y_off = 54
@@ -150,7 +154,6 @@ def construct_whole_mask(num_tiles, in_loc, out_loc, out_name, img_size):
     try:
         count = 0
 
-        #pre-read first tile to get the "ordinary" tile shape. 
         i,j = 1,1
         print("stitching whole mask of dimensions", img_size)
         x = 0
@@ -162,9 +165,7 @@ def construct_whole_mask(num_tiles, in_loc, out_loc, out_name, img_size):
                 f_name = TILE_MASK_NAME_F.format(i,j)
                 tile_mask = cv.imread(f"{in_loc}/{f_name}",cv.IMREAD_GRAYSCALE)
                 t_height,t_width  = tile_mask.shape
-  
                 whole_mask[y:y+t_height,x:x+t_width] = tile_mask
-        
                 x+= t_width        
                 j+=1
                 if j > num_tiles[1]:
@@ -175,14 +176,15 @@ def construct_whole_mask(num_tiles, in_loc, out_loc, out_name, img_size):
             if i > num_tiles[0]:
                 break
             
-
-        tif.imwrite(
-                f"{out_loc}/{out_name}",
-                whole_mask,
-                tile=(1024, 1024),
-                compression='zlib',
-                compressionargs={'level': 8},
-        )
+        print("writing whole mask to png")
+        # tif.imwrite(
+        #         f"{out_loc}/{out_name}",
+        #         whole_mask,
+        #         tile=(1024, 1024),
+        #         compression='zlib',
+        #         compressionargs={'level': 8},
+        # )
+        cv.imwrite(f"{out_loc}/{out_name}", whole_mask)
 
         del whole_mask
         if os.path.isfile(TMP_MASK_P):
@@ -210,7 +212,7 @@ def predict_slide(svs_id, svs_file_name, svs_dir, tmp_dir, masks_dir):
     progress is resumed by to first unpredicted tile.
     
     """
-    ZOOM = 40
+    
     TILE_NAME_PREDICT = "r{}-c{}_keep.png"
     TILE_NAME_IGNORE = "r{}-c{}_delete.png"
     TILE_JSON = "meta.json"
@@ -278,11 +280,6 @@ def predict_slide(svs_id, svs_file_name, svs_dir, tmp_dir, masks_dir):
             f_name = TILE_MASK_NAME_F.format(i,j)
             cv.imwrite(f"{tmp_dir}/masks/{f_name}", img = mask)
 
-            # dataset.encode_label (
-            #     mask = mask, 
-            #     file_location = f"{tmp_dir}/masks", 
-            #     filename = TILE_MASK_NAME_F.format(i,j)
-            # )
 
     mask_loc = construct_whole_mask (
         num_tiles = num_tiles, 
@@ -293,6 +290,7 @@ def predict_slide(svs_id, svs_file_name, svs_dir, tmp_dir, masks_dir):
     )
     
     # clean up
+    print("removing temporary files")
     file_management.clear_dir(tmp_dir)
 
     return mask_loc
@@ -344,26 +342,26 @@ def predict_manifest(p_conf: dict):
 
         svs_manager.append_manifest_out(current_svs, svs_file_name, f"{current_svs}.mask")
 
-        print(f"Processing complete. Deleting svs with id {current_svs}")
+        print(f"Processing complete")
 
-        svs_manager.delete_svs(current_svs)
-
-        print("forking process to upload mask to DB server.")
-
-        p = Process(target=uploader_wrapper, args=(current_svs, mask_file, svs_manager))
+       
+        if p_conf[file_management.UPLOAD_TRUE]:
+            print("upload mask to DB server.")
+            uploader = upload.MaskUploader(file_management.UPLOAD_USR, file_management.UPLOAD_PWORD)
+            try:
+                ret = uploader.upload_mask(upload.GBM, current_svs, mask_file)
+                print(f"upload ret for svs {current_svs} - - {ret}")
+                if ret not in [upload.MASK_ALREADY_UPLOADED,upload.MASK_UPLOAD_SUCCESS]:
+                    svs_manager.upload_log(current_svs, ret)
+            except Exception as e:
+                print(e)
+                svs_manager.upload_log(current_svs, e)
+        
+        if p_conf[file_management.DELETE_SVS_ON_COMPLETION]:
+            print(f"Deleting svs with id {current_svs}")
+            svs_manager.delete_svs(current_svs)
 
         current_svs = svs_manager.get_new_svs()
-
-
-def uploader_wrapper(svs_uid, mask_file_path, svs_manager):
-    print("in uploader")
-    uploader = upload.MaskUploader("pas", "pas")
-    ret = uploader.upload_mask(upload.GBM, svs_uid, mask_file_path)
-    print(f"upload ret for svs {svs_uid} - - {ret}")
-    if ret not in [upload.MASK_ALREADY_UPLOADED,upload.MASK_UPLOAD_SUCCESS]:
-        svs_manager.upload_log(svs_uid, ret)
-    
-
 
 
 def main():
