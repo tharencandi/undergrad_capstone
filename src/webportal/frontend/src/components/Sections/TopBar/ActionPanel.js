@@ -2,7 +2,7 @@ import Button from "components/UI/Button";
 import Modal from "components/Modals";
 import UploadModalContent from "components/Modals/UploadModal";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import useUploadSVS from "hooks/useUploadSVS";
 import { useSelector } from "react-redux";
 
@@ -25,6 +25,8 @@ const ActionPanel = () => {
   ] = useUploadSVS();
 
   let workInProgress = false;
+
+  const inputRef = useRef();
 
   for (let entry in data) {
     if (
@@ -51,19 +53,27 @@ const ActionPanel = () => {
   }
 
   const uploadFileChangeHandler = (e) => {
-    setUploadQueue(e.target.files);
+    const files = [...e.target.files];
+    setUploadQueue(files);
+    if (inputRef.current) {
+      inputRef.current.value = "";
+    }
+    console.log(files);
   };
 
   return (
     <div className="grid grid-cols-2 lg:flex justify-evenly gap-4 xl:gap-6">
       <div className="relative overflow-hidden inline-block md:mr-6 xl:mr-12 cursor-pointer">
-        <Button variant="highlight">Upload SVS</Button>
+        <Button variant="highlight" disabled={numberToUpload > 0}>
+          Upload SVS
+        </Button>
         <input
           accept=".svs"
           multiple
           type="file"
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
           onChange={uploadFileChangeHandler}
+          ref={inputRef}
         />
       </div>
       <Button
