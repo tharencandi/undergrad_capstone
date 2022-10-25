@@ -33,10 +33,16 @@ home = expanduser("~")
 WEB_PORTAL_DIR =join(home, ".glioblastoma_portal", "")
 DATA_DIR = join(WEB_PORTAL_DIR, "scans/")
 
-dir = dirname(realpath(__file__))
-META_DIR = join(WEB_PORTAL_DIR, '/meta_files')
-META_DIR = dir + '/meta_files'
+# dir = dirname(realpath(__file__))
+# META_DIR = join(WEB_PORTAL_DIR, '/meta_files')
+# META_DIR = dir + '/meta_files'
+
+META_DIR = join(WEB_PORTAL_DIR, "meta_files/")
 valid_extensions = ["png", "svs", "tif", "tiff", "mask.tiff", "mask.tif"]
+
+# add absolute path to hard drive folders
+GBM_DIR = ""
+LGG_DIR = ""
 
 # ~/test/
 
@@ -646,5 +652,26 @@ if __name__ == '__main__':
         os.makedirs(DATA_DIR)
     if not exists(META_DIR):
         os.makedirs(META_DIR)
+    
+    if len(sys.argv) > 1:
+        path_input = sys.argv[1]
+
+        if path_input.upper() == 'GBM':
+            print("GBM file directory set at {}".format(GBM_DIR))
+            DATA_DIR = GBM_DIR
+
+        elif path_input.upper() == 'LGG':
+            print("LGG file directory set at {}".format(LGG_DIR))
+            DATA_DIR = LGG_DIR
+
+        else:
+
+            if exists(path_input) and not isfile(path_input):
+                print("File directory set at {}".format(path_input))
+                DATA_DIR = path_input
+            else:
+                print("{} is not a valid directory, default directory {} set."\
+                    .format(path_input, DATA_DIR))
+
     application.run(debug=True, port = 8080)
 
