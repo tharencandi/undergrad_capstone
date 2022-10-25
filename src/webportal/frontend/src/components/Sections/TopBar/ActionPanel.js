@@ -27,6 +27,7 @@ const ActionPanel = () => {
   let workInProgress = false;
 
   const inputRef = useRef();
+  const manifestRef = useRef();
 
   for (let entry in data) {
     if (
@@ -61,9 +62,37 @@ const ActionPanel = () => {
     console.log(files);
   };
 
+  const manifestFileChangeHandler = async (e) => {
+    // upload e.target.file
+    let formData = new FormData();
+    formData.append("file", e.target.files[0]);
+
+    await axios
+      .post("/automateddownload", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      })
+      .then(() => {
+        setUploadError(null);
+      })
+      .catch((err) => {
+        console.log(err);
+        if (err.response.status === 400) {
+          setUploadError("Manifest upload failed: Bad format for manifest");
+        } else {
+          setUploadError("Problem uploading manifest");
+        }
+      });
+
+    if (manifestRef.current) {
+      manifestRef.current.value = "";
+    }
+  };
+
   return (
     <div className="grid grid-cols-2 lg:flex justify-evenly gap-4 xl:gap-6">
-      <div className="relative overflow-hidden inline-block md:mr-6 xl:mr-12 cursor-pointer">
+      <div className="relative overflow-hidden inline-block cursor-pointer">
         <Button variant="highlight" disabled={numberToUpload > 0}>
           Upload SVS
         </Button>
@@ -76,11 +105,24 @@ const ActionPanel = () => {
           ref={inputRef}
         />
       </div>
+      <div className="relative overflow-hidden inline-block md:mr-6 xl:mr-12 cursor-pointer">
+        <Button variant="highlight" disabled={numberToUpload > 0}>
+          Manifest
+        </Button>
+        <input
+          type="file"
+          ref={manifestRef}
+          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+          onChange={manifestFileChangeHandler}
+        />
+      </div>
       <Button
         onClick={() => {
           setModalVariant("generate");
         }}
-        disabled={selectedData.length === 0 ? true : false}
+        disabled={
+          selectedData.length === 0 || numberToUpload > 0 ? true : false
+        }
       >
         Generate
       </Button>
@@ -88,7 +130,9 @@ const ActionPanel = () => {
         onClick={() => {
           setModalVariant("delete");
         }}
-        disabled={selectedData.length === 0 ? true : false}
+        disabled={
+          selectedData.length === 0 || numberToUpload > 0 ? true : false
+        }
       >
         Delete
       </Button>
