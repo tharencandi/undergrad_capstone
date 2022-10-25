@@ -10,6 +10,8 @@ import json
 import shutil
 import sys, os
 
+from meta_files import *
+from fs import *
 cdir = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.dirname(cdir))
 
@@ -103,9 +105,9 @@ def get_file(uuid, ext):
 #     return base
 
 # get meta file, returns path to meta file
-def get_meta(uuid):
+def get_meta(uuid, meta_dir):
 
-    meta_path = join(META_DIR, uuid + '.meta')
+    meta_path = join(meta_dir, uuid + '.meta')
     if exists(meta_path):
         return meta_path
     else:
@@ -129,6 +131,7 @@ def create_meta(uuid, file_name, dir_path):
 
     meta_data = {
         'fileId': uuid,
+        'case': '',
         "fileName": file_name,
         "dirPath": dir_path,
         "filePath": file_path,
@@ -188,7 +191,7 @@ def all_scans():
         meta_exists = False
 
         # check if meta file exists
-        meta_path = get_meta(dir)
+        meta_path = get_meta(dir, META_DIR)
         # print(dir)
 
         if meta_path != '':
@@ -242,7 +245,7 @@ def all_scans():
         else:
             # create meta
             create_meta(dir, svs_path, dir_path)
-            meta_path = get_meta(dir)
+            meta_path = get_meta(dir, META_DIR)
             with open(meta_path, 'r') as f:
                 data = json.load(f)
             
@@ -284,7 +287,7 @@ def all_scans():
             if ext in valid_extensions:
                 extensions.append(ext)
 
-        meta = get_meta(id)
+        meta = get_meta(id, META_DIR)
 
         meta_data = open(meta, "r")
         data = json.load(meta_data)
@@ -360,7 +363,7 @@ def get_scan():
                     "Requested file to download not found. Please contact the system administrator.",
                     status=500,
                 )
-            meta_path = get_meta(ids)
+            meta_path = get_meta(ids, META_DIR)
 
         else:
             return Response(
@@ -371,7 +374,7 @@ def get_scan():
     
     else:
         # change status
-        meta_path = get_meta(ids)
+        meta_path = get_meta(ids, META_DIR)
 
         with open(meta_path, 'r') as f:
             data = json.load(f)
@@ -441,14 +444,14 @@ def upload():
 def cancel():
     # for each meta file change everything not completed to none
     for dir in listdir(DATA_DIR):
-        meta_path = get_meta(dir)
+        meta_path = get_meta(dir, META_DIR)
 
         for e in [PNG_EXT, TIF_EXT, META_MASK_KEY]:
             field = e+"JobId"
-            jid = get_meta_field(dir, field)
+            jid = get_meta_field(dir, field, META_DIR)
             if jid != "":
                 celery.control.revoke(jid, terminate=True, signal="SIGUSR1")
-            set_meta_field(dir, field, "")
+            set_meta_field(dir, field, "", META_DIR)
 
 
 
@@ -498,7 +501,7 @@ def delete():
                         print(ext)
                         remove(join(dir_path, f))
 
-                        meta_path = get_meta(id)
+                        meta_path = get_meta(id, META_DIR)
 
                         with open(meta_path, 'r') as f:
                             data = json.load(f)
@@ -524,7 +527,7 @@ def scan_rename():
 
     dir_path = DATA_DIR + id
 
-    meta_path = get_meta(id)
+    meta_path = get_meta(id, META_DIR)
 
     with open(meta_path, 'r') as f:
             data = json.load(f)
@@ -552,13 +555,6 @@ def scan_rename():
     # rename(dir_path, new_dir)
     
     return jsonify("DONE")
-    
-PNG_EXT="png"
-TIF_EXT="tif"
-MASK_EXT="mask.tif"
-META_MASK_KEY="mask"
-META_EXT="meta"
-SVS_EXT="svs"
 
 def make_fpath(uuid, fname, ext):
     return os.path.join(DATA_DIR, uuid, fname + "." + ext)
@@ -566,45 +562,28 @@ def make_fpath(uuid, fname, ext):
 def get_svs_dir(uuid):
     return os.path.join(DATA_DIR, uuid, "")
 
-def get_meta_field(uuid, field):
-    fpath = get_meta(uuid)
-    meta = None
-    with open(fpath, "r") as f:
-        meta = json.loads(f.read())
+
     
-    if meta:
-        return meta[field]
-    
-def set_meta_field(uuid, field, value):
-    fpath =get_meta(uuid)
-    # print(fpath)
-    meta = None
-    with open(fpath, "r") as f:
-        meta = json.loads(f.read())
-        meta[field] = value
-    
-    if meta:
-        with open(fpath, "w") as o:
-            json.dump(meta, o)
+
 
 @celery.task()
 def make_png(uuid, svs_fpath, dest):
-    set_meta_field(uuid, "pngStatus", "inProgress")
+    set_meta_field(uuid, "pngStatus", "inProgress", META_DIR)
     res = svs_to_png(svs_fpath, dest)
     if res != GOOD:
-        set_meta_field(uuid, "pngStatus", "failed")
+        set_meta_field(uuid, "pngStatus", "failed", META_DIR)
         return
-    set_meta_field(uuid, "pngStatus", "completed")
+    set_meta_field(uuid, "pngStatus", "completed", META_DIR)
     return
 
 @celery.task()
 def make_tif(uuid, svs_fpath, dest):
-    set_meta_field(uuid, "tifStatus", "inProgress")
+    set_meta_field(uuid, "tifStatus", "inProgress", META_DIR)
     res = svs_to_tiff(svs_fpath, dest)
     if res != GOOD:
-        set_meta_field(uuid, "tifStatus", "failed")
+        set_meta_field(uuid, "tifStatus", "failed", META_DIR)
         return
-    set_meta_field(uuid, "tifStatus", "completed")
+    set_meta_field(uuid, "tifStatus", "completed", META_DIR)
     return
  
 @celery.task()
@@ -644,11 +623,11 @@ def generate():
     }
     for target in target_svs:
         if exists(get_svs_dir(target)):
-            fname = get_meta_field(target, "fileName")
+            fname = get_meta_field(target, "fileName", META_DIR)
             res["ids"].append(target)
             for e in target_exts:
                 task = TASK_MAP[e].delay(target, make_fpath(target, fname, SVS_EXT), make_fpath(target, fname , e))
-                set_meta_field(target, e + "JobId", task.id)
+                set_meta_field(target, e + "JobId", task.id, META_DIR)
         else:
             pass
 
