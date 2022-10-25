@@ -14,8 +14,8 @@ cdir = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.dirname(cdir))
 
 
-# from image_tools.conversion import svs_to_png, svs_to_tiff
-# from image_tools.conversion import GOOD
+from image_tools.conversion import svs_to_png, svs_to_tiff
+from image_tools.conversion import GOOD
 
 
 application = Flask(__name__, static_url_path='',
@@ -25,7 +25,6 @@ application = Flask(__name__, static_url_path='',
 application.config['CELERY_BROKER_URL'] = 'redis://localhost:6379/0'
 application.config['CELERY_RESULT_BACKEND'] = 'redis://localhost:6379/0'
 
-print(application.name)
 celery = Celery("webportal", broker=application.config['CELERY_BROKER_URL'])
 celery.conf.update(application.config)
 
@@ -34,9 +33,8 @@ WEB_PORTAL_DIR =join(home, ".glioblastoma_portal", "")
 DATA_DIR = join(WEB_PORTAL_DIR, "scans/")
 
 dir = dirname(realpath(__file__))
-META_DIR = join(WEB_PORTAL_DIR, '/meta_files')
-META_DIR = dir + '/meta_files'
-valid_extensions = ["png", "svs", "tif", "tiff", "mask.tiff", "mask.tif"]
+META_DIR = join(WEB_PORTAL_DIR, 'meta_files')
+valid_extensions = ["png", "svs", "tif", "tiff", "mask.tiff"]
 
 # ~/test/
 
@@ -129,41 +127,42 @@ def create_meta(uuid, file_name, dir_path):
 
     meta_data = {
         'fileId': uuid,
-        # "fileName": filename,
         "fileName": file_name,
-        # "created": now.strftime("%d/%m/%Y %H:%M:%S"),
-        # "created": file_create_date,
-        "created": datetime.fromtimestamp(file_create_date).strftime('%Y-%m-%d %H:%M:%S')
-,
+        "dirPath": dir_path,
+        "filePath": file_path,
+        "created": datetime.fromtimestamp(file_create_date).strftime('%Y-%m-%d %H:%M:%S'),
         "tifStatus": "none",
+        "tifJobId": "",
         "pngStatus": "none",
-        "maskStatus": "none"
+        "pngJobId": "",
+        "maskStatus": "none",
+        "maskJobId": "" 
     }
 
     with open("{}/{}.meta".format(META_DIR, uuid), 'w') as json_file:
         json.dump(meta_data, json_file)
 
 
-# set web portal directory
-@application.post('/dir')
-def change_dir():
-    global DATA_DIR
+# # set web portal directory
+# @application.post('/dir')
+# def change_dir():
+#     global DATA_DIR
 
-    print(DATA_DIR)
-    dir = request.args['dir']
+#     print(DATA_DIR)
+#     dir = request.args['dir']
 
-    if dir[-1] != '/':
-        dir = dir + '/'
+#     if dir[-1] != '/':
+#         dir = dir + '/'
 
-    DATA_DIR = dir
+#     DATA_DIR = dir
 
-    return jsonify("DONE")
+#     return jsonify("DONE")
 
-# get web portal directory
-@application.get('/dir')
-def get_dir():
+# # get web portal directory
+# @application.get('/dir')
+# def get_dir():
 
-    return jsonify(DATA_DIR)
+#     return jsonify(DATA_DIR)
 
 # home page
 @application.get('/')
@@ -560,16 +559,25 @@ def scan_rename():
     
 PNG_EXT="png"
 TIF_EXT="tif"
-MASK_EXT="mask"
+MASK_EXT="mask.tif"
 META_EXT="meta"
 SVS_EXT="svs"
 
-def make_fpath(uuid, ext):
-    return os.path.join(DATA_DIR, uuid, uuid + "." + ext)
+def make_fpath(uuid, fname, ext):
+    return os.path.join(DATA_DIR, uuid, fname + "." + ext)
 
 def get_svs_dir(uuid):
     return os.path.join(DATA_DIR, uuid, "")
 
+def get_meta_field(uuid, field):
+    fpath = get_meta(uuid)
+    meta = None
+    with open(fpath, "r") as f:
+        meta = json.loads(f.read())
+    
+    if meta:
+        return meta[field]
+    
 def set_meta_field(uuid, field, value):
     fpath =get_meta(uuid)
     # print(fpath)
@@ -587,7 +595,7 @@ def make_png(uuid, svs_fpath, dest):
     set_meta_field(uuid, "pngStatus", "inProgress")
     res = svs_to_png(svs_fpath, dest)
     if res != GOOD:
-        set_meta_field(uuid, "pngStatus", str(res))
+        set_meta_field(uuid, "pngStatus", "failed")
         return
     set_meta_field(uuid, "pngStatus", "completed")
     return
@@ -597,7 +605,7 @@ def make_tif(uuid, svs_fpath, dest):
     set_meta_field(uuid, "tifStatus", "inProgress")
     res = svs_to_tiff(svs_fpath, dest)
     if res != GOOD:
-        set_meta_field(uuid, "tifStatus", str(res))
+        set_meta_field(uuid, "tifStatus", "failed")
         return
     set_meta_field(uuid, "tifStatus", "completed")
     return
@@ -613,7 +621,14 @@ TASK_MAP = {
     MASK_EXT: make_mask
 }
 
+@application.post('/automateddownload')
+def download_gdc_files():
+    if not request.files or 'file' not in request.files:
+        return "", 400
+    file = request.files['file']
+    fname = file.filename
 
+    return "", 200
 
 # run algo, generate mask
 @application.post('/generate')
@@ -627,9 +642,10 @@ def generate():
     }
     for target in target_svs:
         if exists(get_svs_dir(target)):
+            fname = get_meta_field(target, "fileName")
             res["ids"].append(target)
             for e in target_exts:
-                TASK_MAP[e].delay(target, make_fpath(target, SVS_EXT), make_fpath(target, e))
+                TASK_MAP[e].delay(target, make_fpath(target, fname, SVS_EXT), make_fpath(target, fname , e))
         else:
             pass
 
