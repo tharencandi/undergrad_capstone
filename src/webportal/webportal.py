@@ -16,6 +16,8 @@ sys.path.append(os.path.dirname(cdir))
 
 from image_tools.conversion import svs_to_png, svs_to_tiff
 from image_tools.conversion import GOOD
+from download_tool.gdc_client import gdc_client
+from download_tool.download import *
 
 
 application = Flask(__name__, static_url_path='',
@@ -441,18 +443,12 @@ def cancel():
     for dir in listdir(DATA_DIR):
         meta_path = get_meta(dir)
 
-        with open(meta_path, 'r') as f:
-            data = json.load(f)
-        
-        if data["tifStatus"] != 'completed':
-            data["tifStatus"] = 'none'
-        if data["maskStatus"] != 'completed':
-            data["maskStatus"] = 'none'
-        if data["pngStatus"] != 'completed':
-            data["pngStatus"] = 'none'
-
-        with open(meta_path, 'w') as json_file:
-            json.dump(data, json_file)
+        for e in [PNG_EXT, TIF_EXT, META_MASK_KEY]:
+            field = e+"JobId"
+            jid = get_meta_field(dir, field)
+            if jid != "":
+                celery.control.revoke(jid, terminate=True, signal="SIGUSR1")
+            set_meta_field(dir, field, "")
 
 
 
@@ -560,6 +556,7 @@ def scan_rename():
 PNG_EXT="png"
 TIF_EXT="tif"
 MASK_EXT="mask.tif"
+META_MASK_KEY="mask"
 META_EXT="meta"
 SVS_EXT="svs"
 
@@ -615,6 +612,9 @@ def make_mask(uuid, svs_fpath, dest):
     time.sleep(60)
     return
 
+@celery.task()
+def download_from_manifest(manifest):
+    pass
 TASK_MAP = {
     PNG_EXT: make_png,
     TIF_EXT: make_tif,
@@ -627,6 +627,8 @@ def download_gdc_files():
         return "", 400
     file = request.files['file']
     fname = file.filename
+
+    manifest = file.read()
 
     return "", 200
 
@@ -645,12 +647,12 @@ def generate():
             fname = get_meta_field(target, "fileName")
             res["ids"].append(target)
             for e in target_exts:
-                TASK_MAP[e].delay(target, make_fpath(target, fname, SVS_EXT), make_fpath(target, fname , e))
+                task = TASK_MAP[e].delay(target, make_fpath(target, fname, SVS_EXT), make_fpath(target, fname , e))
+                set_meta_field(target, e + "JobId", task.id)
         else:
             pass
 
     return jsonify(res), 200
-
 
 
 if __name__ == '__main__':
