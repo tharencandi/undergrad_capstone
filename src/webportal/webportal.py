@@ -33,13 +33,8 @@ WEB_PORTAL_DIR =join(home, ".glioblastoma_portal", "")
 DATA_DIR = join(WEB_PORTAL_DIR, "scans/")
 
 dir = dirname(realpath(__file__))
-META_DIR = join(WEB_PORTAL_DIR, '/meta_files')
-<<<<<<< HEAD
+META_DIR = join(WEB_PORTAL_DIR, 'meta_files')
 valid_extensions = ["png", "svs", "tif", "tiff", "mask.tiff"]
-=======
-META_DIR = dir + '/meta_files'
-valid_extensions = ["png", "svs", "tif", "tiff", "mask.tiff", "mask.tif"]
->>>>>>> 5ac6a707c8cda1d200c89bf677555ee9a0080dae
 
 # ~/test/
 
@@ -132,10 +127,9 @@ def create_meta(uuid, file_name, dir_path):
 
     meta_data = {
         'fileId': uuid,
-        # "fileName": filename,
         "fileName": file_name,
-        # "created": now.strftime("%d/%m/%Y %H:%M:%S"),
-        # "created": file_create_date,
+        "dirPath": dir_path,
+        "filePath": file_path,
         "created": datetime.fromtimestamp(file_create_date).strftime('%Y-%m-%d %H:%M:%S'),
         "tifStatus": "none",
         "tifJobId": "",
@@ -627,7 +621,14 @@ TASK_MAP = {
     MASK_EXT: make_mask
 }
 
+@application.post('/automateddownload')
+def download_gdc_files():
+    if not request.files or 'file' not in request.files:
+        return "", 400
+    file = request.files['file']
+    fname = file.filename
 
+    return "", 200
 
 # run algo, generate mask
 @application.post('/generate')
