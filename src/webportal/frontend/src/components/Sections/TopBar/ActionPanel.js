@@ -62,13 +62,32 @@ const ActionPanel = () => {
     console.log(files);
   };
 
-  const manifestFileChangeHandler = (e) => {
+  const manifestFileChangeHandler = async (e) => {
     // upload e.target.file
+    let formData = new FormData();
+    formData.append("file", e.target.files[0]);
+
+    await axios
+      .post("/automateddownload", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      })
+      .then(() => {
+        setUploadError(null);
+      })
+      .catch((err) => {
+        console.log(err);
+        if (err.response.status === 400) {
+          setUploadError("Manifest upload failed: Bad format for manifest");
+        } else {
+          setUploadError("Problem uploading manifest");
+        }
+      });
+
     if (manifestRef.current) {
       manifestRef.current.value = "";
     }
-
-    // If error, set an upload error
   };
 
   return (
