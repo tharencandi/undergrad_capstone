@@ -11,7 +11,7 @@ import json
 import shutil
 import sys, os
 
-from meta_files import *
+from metafiles import *
 from fs import *
 
 cdir = os.path.dirname(os.path.realpath(__file__))
@@ -22,7 +22,7 @@ from image_tools.conversion import svs_to_png, svs_to_tiff
 from image_tools.conversion import GOOD
 from download_tool.gdc_client import gdc_client
 from download_tool.download import *
-
+from CNN.predict import predict_slide
 
 application = Flask(__name__, static_url_path='',
                   static_folder='frontend/build',
@@ -90,11 +90,11 @@ def create_meta(uuid, file_name, case, dir_path, meta_dir):
 
     meta_path = get_meta_path(uuid, meta_dir)
     file_path = join(dir_path, file_name) + '.svs'
-    print(meta_path)
-    print(file_path)
-    print(uuid)
-    print(file_name)
-    print(dir_path)
+    # print(meta_path)
+    # print(file_path)
+    # print(uuid)
+    # print(file_name)
+    # print(dir_path)
 
     meta_data = {
         'fileId': uuid,
@@ -260,7 +260,17 @@ def make_tif(uuid, svs_fpath, dest, meta_dir):
  
 @celery.task()
 def make_mask(uuid, svs_fpath, dest, meta_dir):
-    time.sleep(60)
+    set_meta_field(uuid, "maskStatus", "inProgress", meta_dir)
+    base_name = get_meta_field(uuid, "fileName", meta_dir)
+    name = base_name + ".svs"
+    svs_dir = get_svs_dir(uuid, meta_dir)
+    res = predict_slide(uuid, name, svs_dir, WEB_PORTAL_DIR[0:-1], svs_dir)
+    if res == None:
+        set_meta_field(uuid, "maskStatus", "failed", meta_dir)
+        return
+    os.rename(res, make_fpath(uuid, base_name, "mask", meta_dir))  
+        
+    set_meta_field(uuid, "maskStatus", "completed", meta_dir)
     return
 
 @celery.task()
@@ -269,7 +279,7 @@ def download_from_manifest(manifest):
 TASK_MAP = {
     PNG_EXT: make_png,
     TIF_EXT: make_tif,
-    MASK_EXT: make_mask
+    "mask": make_mask
 }
 
 @application.post('/automateddownload')
@@ -330,5 +340,10 @@ if __name__ == '__main__':
         os.makedirs(application.config[DATA_DIR_K] )
     if not os.path.exists(application.config[META_DIR_K]):
             os.makedirs(application.config[META_DIR_K])
+    if not os.path.exists(WEB_PORTAL_DIR):
+        os.makedirs(WEB_PORTAL_DIR)
+    masks_dir = os.path.join(WEB_PORTAL_DIR, "masks")
+    if not os.path.exists(masks_dir):
+        os.makedirs(masks_dir)
     application.run(debug=True, port = 8080)
 

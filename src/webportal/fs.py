@@ -19,7 +19,7 @@ def get_svs_dir(uuid, meta_dir):
 
 def populate_meta(uuid, object_dir_path, meta_dir):
     object_files = [f for f in os.listdir(object_dir_path) if os.path.isfile(os.path.join(object_dir_path, f))]
-    print(object_files)
+    #print(object_files)
     fnmask = None
     fnPNG = None
     fnTIF = None

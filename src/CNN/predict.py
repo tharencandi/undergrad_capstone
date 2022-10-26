@@ -3,30 +3,31 @@ import os
 import subprocess as sb
 import sys
 
+cdir = os.path.dirname(os.path.realpath(__file__))
+sys.path.append(os.path.dirname(cdir))
+
 if "/CNN" not in os.path.abspath(""):
     sys.path.append(os.path.abspath("") + "/src/CNN")
 
 import cv2 as cv
 import numpy as np
 import tensorflow as tf
-import cnn_model as cnn_model
-import file_management as file_management
-import dataset as dataset
+import CNN.file_management as file_management
 import math
 import json
 from gc import collect
 from yaml import safe_load
 import tifffile as tif
 #import src.tile_crop.tile_crop_main
-from tile_crop.tile_crop_main import single_image_to_folder_of_tiles as tile_image
-from client import upload 
+from CNN.tile_crop.tile_crop_main import single_image_to_folder_of_tiles as tile_image
+from CNN.client import upload 
 
 #from bin_transcoder import encode_binary
 IMG_SIZE = (102, 102)
-MODEL = 'data/models/default_DRAN.json'
-WEIGHTS = "data/models/b16_e50_pre_blackaug.h5"
+MODEL = '/home/tharen/UNI/cell_processing/data/models/default_DRAN.json'
+WEIGHTS = "/home/tharen/UNI/cell_processing/data/models/b16_e50_pre_blackaug.h5"
 TILE_MASK_NAME_F = "{}_{}.png"
-DEBUG = False
+DEBUG = True
 model_config = ""
 with open(MODEL, "r") as f:
     model_config = f.read().strip()
@@ -275,7 +276,7 @@ def predict_slide(svs_id, svs_file_name, svs_dir, tmp_dir, masks_dir):
         num_tiles = num_tiles, 
         in_loc = f"{tmp_dir}/masks", 
         out_loc = masks_dir, 
-        out_name = f"{svs_id}.png",
+        out_name = f"{svs_id}.mask.png",
         img_size = (width, height)
     )
     

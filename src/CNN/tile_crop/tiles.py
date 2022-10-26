@@ -29,10 +29,10 @@ import numpy as np
 import os
 from PIL import Image, ImageDraw, ImageFont
 from enum import Enum
-import tile_crop.util as util
-import tile_crop.filter as filter
-import tile_crop.slide as slide
-from tile_crop.util import Time
+import CNN.tile_crop.util as util
+import CNN.tile_crop.filter as filter
+import CNN.tile_crop.slide as slide
+from CNN.tile_crop.util import Time
 
 # import util
 # import slide
@@ -63,8 +63,8 @@ FADED_MEDIUM_COLOR = (255, 255, 128)
 FADED_LOW_COLOR = (255, 210, 128)
 FADED_NONE_COLOR = (255, 128, 128)
 
-FONT_PATH = "data/Courier_New_Bold.ttf"
-SUMMARY_TITLE_FONT_PATH = "data/Courier_New_Bold.ttf"
+FONT_PATH = "/home/tharen/UNI/cell_processing/data/Courier New Bold.ttf"
+SUMMARY_TITLE_FONT_PATH = "/home/tharen/UNI/cell_processing/data/Courier New Bold.ttf"
 # FONT_PATH = "/Library/Fonts/Arial Bold.ttf"
 # SUMMARY_TITLE_FONT_PATH = "/Library/Fonts/Courier New Bold.ttf"
 SUMMARY_TITLE_TEXT_COLOR = (0, 0, 0)
