@@ -4,6 +4,12 @@ import time
 import sys
 import os
 from Crypto.Hash import MD5
+
+
+cdir = os.path.dirname(os.path.realpath(__file__))
+sys.path.append(os.path.dirname(cdir))
+
+
 from download.gdc_client import gdc_client
 from download.DownloadError import DownloadError
 from download.download_error_handler import download_error_handler
@@ -122,11 +128,13 @@ if __name__ == "__main__":
                             # output dir
                             out_path = conf[OUTPUT_DIR]
 
-                            # object dir
-                            out_path = os.path.join(out_path, sln[I_ID])
-                            if not os.path.exists(out_path) and not os.path.isdir(out_path):
-                                print(out_path)
-                                os.mkdir(out_path)
+                            #this is false when this script is used for predict_manifest.
+                            if conf[MIMIC_GDC_FOLDERS]:
+                                # object dir
+                                out_path = os.path.join(out_path, sln[I_ID])
+                                if not os.path.exists(out_path) and not os.path.isdir(out_path):
+                                    print(out_path)
+                                    os.mkdir(out_path)
 
                             out_path =  os.path.join(out_path, sln[I_FILENAME])
                             # download data as a stream to limit RAM usage
