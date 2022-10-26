@@ -5,6 +5,9 @@ import numpy as np
 import os
 
 
+SAVE_DIR = "data/results"
+NUM_TEST_IMGS = 18
+
 """
 model and model weights used defined at top of predict.py
 """
@@ -40,4 +43,4 @@ def predict_validation_set(n, save_location):
     print("mean iou: " + str(iou_sum / count))
 
 if __name__ == "__main__":
-    predict_validation_set(18, "data/results")
+    predict_validation_set(NUM_TEST_IMGS, SAVE_DIR)

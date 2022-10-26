@@ -6,14 +6,17 @@ from keras.regularizers import L2
 from enum import Enum
 
 """
-    CNN MODELS - BASIC UNET and DRAN
+    CNN MODELS - DRAN
 
-    TO MAKE:
-    MDRAN
+    if used as main function, DRAN model is saved to MODEL_SAVE_PATH as a json obj
+
+    see original paper: https://www.frontiersin.org/articles/10.3389/fbioe.2019.00053/full 
 """
-TRAINING = True #if true model applied noise to input images
+
 PREACTIVE = True
 L2f = 1e-5
+
+MODEL_SAVE_PATH = "data/models/default_DRAN.json"
 
 class myInitialiers(Enum):
     myHeNormal = 1
@@ -35,9 +38,15 @@ class UpdatedMeanIoU(tf.keras.metrics.MeanIoU):
     return super().update_state(y_true, y_pred, sample_weight)
 
 
-#RESNET-50 identity residual block
-def identity_block(x, filters,  initialiser=myInitialiers.myHeUniform):
 
+def identity_block(x, filters,  initialiser=myInitialiers.myHeUniform):
+    """
+    Idenity residual block for RESNET-50 AND preactivated RESNET-50. 
+    SEE CONSTANT PREACTIVE AT TOP OF FILE. 
+
+    filters is a list of filters for each (one for each convolution)
+  
+    """
     if initialiser == myInitialiers.myHeNormal:
         initializer = tf.keras.initializers.HeNormal()
     elif initialiser == myInitialiers.myHeUniform:
@@ -77,10 +86,16 @@ def resize(x, size):
     
     return x
 
-# DRAN decoder unit
-# All the convolution operations in the decoder use no padding and a stride 1
-def decoder(x, decoder_num, initialiser=myInitialiers.myHeUniform):
 
+def decoder(x, decoder_num, initialiser=myInitialiers.myHeUniform):
+    """
+        DRAN decoder unit
+        All the convolution operations in the decoder use no padding and a stride 1
+
+        also supposrts additional decoder for MDRAN (MDRAN is not implemeneted).
+
+        Decoder num determines which decoder is used. (see paper for context)
+    """
     if initialiser == myInitialiers.myHeNormal:
         initializer = tf.keras.initializers.HeNormal()
     elif initialiser == myInitialiers.myHeUniform:
@@ -111,9 +126,15 @@ def decoder(x, decoder_num, initialiser=myInitialiers.myHeUniform):
     return x
  
 
- # Convolution residual block for RESNET-50
- # NOT pre-activated resnet
+
+
 def convolutional_block(x,s, filters, initialiser=myInitialiers.myHeUniform):
+    """
+    Convolution residual block for RESNET-50 AND preactivated RESNET-50. 
+    SEE CONSTANT PREACTIVE AT TOP OF FILE. 
+
+    filters is a list of filters (one for each convolution)
+    """
 
     if initialiser == myInitialiers.myHeNormal:
         initializer = tf.keras.initializers.HeNormal()
@@ -166,20 +187,22 @@ def add_sample_weights(image, label, weights_ls):
   return image, label, sample_weights
 
 
-# modified from resnet34 from link
-# implementing DRAN - uses modified pre-activated RESNET for contracting path (from article we have data from)
 
-# resnet34: https://www.analyticsvidhya.com/blog/2021/08/how-to-code-your-resnet-from-scratch-in-tensorflow/#h2_9 
-def DRAN(shape = (102, 102, 3), classes = 2, initialiser=myInitialiers.myHeUniform) -> Model:
-    
-  
+def DRAN(shape = (102, 102, 3), classes = 2, initialiser=myInitialiers.myHeUniform, isTraining=False) -> Model:
+    """
+        do not change shape and classes unless using this model for different dataset and application.
+
+        isTraining = True will add random gaussian noise to all inputs.
+
+        returns keras model object. 
+    """
     
     
     # Step 1 (Setup Input Layer)
     x_input = tf.keras.layers.Input(shape)
     
     #add random noise 
-    if TRAINING:
+    if isTraining:
         x_input = tf.keras.layers.GaussianNoise(stddev= 0.1, input_shape=(102,102,3))(x_input)
 
 
@@ -269,7 +292,7 @@ def save_default_model():
                             loss="sparse_categorical_crossentropy",
                             metrics=[UpdatedMeanIoU(num_classes=2),])
     model_config = model.to_json()
-    with open("data/models/default_DRAN.json", "w") as f:
+    with open(MODEL_SAVE_PATH, "w") as f:
         f.write(model_config)
     
 

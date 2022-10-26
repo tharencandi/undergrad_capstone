@@ -7,13 +7,23 @@ from skimage.util.shape import view_as_windows
 import sys
 import os
 from os import path
-TRAIN_LOCATION = "data/training/"
+
+
+"""
+    location of original images. If you do not have them downloaded.
+    Go to: 
+    - https://drive.google.com/drive/folders/1Raa2NuSqzvjDePrft9xDHf7HngxPowDo?usp=sharing 
+    - https://drive.google.com/drive/folders/14OCZf5EuLY4_TjNVGIOABA0pd3NoboN2?usp=sharing 
+"""
+TRAIN_LOCATION = "data/trainings/"
 VAL_LOCATION = "data/validation/"
 
-
+"""
+DO NOT MODIFY
+"""
 IMG_SIZE = (102, 102)
 LBL_SIZE = (54, 54)
-NUM = 15
+NUM = 16
 
 
 """
