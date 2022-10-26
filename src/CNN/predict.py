@@ -12,13 +12,12 @@ if "/CNN" not in os.path.abspath(""):
 import cv2 as cv
 import numpy as np
 import tensorflow as tf
-import CNN.file_management as file_management
 import math
-import json
+from json import load, dump
 from gc import collect
 from yaml import safe_load
-import tifffile as tif
-#import src.tile_crop.tile_crop_main
+
+import CNN.file_management as file_management
 from CNN.tile_crop.tile_crop_main import single_image_to_folder_of_tiles as tile_image
 from CNN.client import upload 
 
@@ -217,7 +216,7 @@ def predict_slide(svs_id, svs_file_name, svs_dir, tmp_dir, masks_dir):
     if os.path.exists(json_file_path):
         integrity = True
         with open(json_file_path, "r") as json_fd:
-            j_dict = json.load(json_fd)
+            j_dict = load(json_fd)
         try:
             num_tiles = j_dict["num_tiles"]
             width, height = j_dict["dimensions"]
@@ -251,7 +250,7 @@ def predict_slide(svs_id, svs_file_name, svs_dir, tmp_dir, masks_dir):
             j_dict["current_tile"] = (i,j)
             
             with open(json_file_path, "w") as json_fd:
-                json.dump(j_dict, json_fd)
+                dump(j_dict, json_fd)
             
             print(f"\npredicting {(i,j)}\n")
 

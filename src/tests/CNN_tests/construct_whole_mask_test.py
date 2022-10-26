@@ -1,10 +1,13 @@
 from textwrap import fill
 from CNN.predict import construct_whole_mask
+from CNN.cnn_model import save_default_model
 import numpy as np
 import cv2 as cv
 from os import path, mkdir
 import shutil
 
+
+save_default_model()
 TMP = "src/tests/CNN_tests/tmp"
 if not path.exists(TMP):
     mkdir(TMP)

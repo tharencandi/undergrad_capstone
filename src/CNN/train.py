@@ -6,15 +6,18 @@ from keras import layers
 #import matplotlib.pyplot as plt
 import numpy as np
 import cv2 as cv
-from cnn_model import * 
 import os
-from augmentation import augment
+import sys
 from mpl_toolkits.mplot3d import Axes3D  
 import matplotlib.pyplot as plt
 from enum import Enum
 import keras_tuner as kt
 
+cdir = os.path.dirname(os.path.realpath(__file__))
+sys.path.append(os.path.dirname(cdir))
 
+from CNN.augmentation import augment
+from CNN.cnn_model import * 
 """
     DO NOT MODIFY
 """

@@ -1,12 +1,20 @@
 
+
+
+
 import cv2 as cv
 import numpy as np
 import tensorflow as tf
 import random
 from skimage.util.shape import view_as_windows 
 import sys
-import os
-from os import path
+
+from os import path, mkdir
+
+cdir = path.dirname(path.realpath(__file__))
+sys.path.append(path.dirname(cdir))
+
+
 
 
 """
@@ -254,7 +262,7 @@ def main():
         if (folder[-1] != '/'):
             folder += "/"
         if not path.exists(folder):
-            os.mkdir(folder)
+            mkdir(folder)
 
         if dataset_type.lower() == "nbl":
 
