@@ -12,3 +12,5 @@ imutils==0.5.4
 openslide-python==1.2.0
 pillow==9.0.1
 tifffile==2022.10.10
+keras_tuner==1.1.3
+
