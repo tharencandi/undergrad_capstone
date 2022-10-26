@@ -1,3 +1,7 @@
+import os
+import json
+from  datetime import datetime
+
 META_DATA_FORMAT = {
         'fileId': '',
         'case': '',
@@ -13,7 +17,7 @@ META_DATA_FORMAT = {
         "maskJobId": "" 
     }
 def get_meta_path(uuid, meta_dir):
-    return os.join(meta_dir, uuid)
+    return os.path.join(meta_dir, uuid+".meta")
    
 def set_meta_field(uuid, field, value, meta_dir):
     fpath =get_meta_path(uuid, meta_dir)
@@ -37,11 +41,11 @@ def get_meta_field(uuid, field, meta_dir):
         return meta[field]
 
 def make_meta(uuid, meta_dir, **kwargs):
-    if not os.exists(get_meta_path(uuid, meta_dir)):
-        with open(uuid+".meta", "w") as f:
+    if not os.path.exists(get_meta_path(uuid, meta_dir)):
+        with open(get_meta_path(uuid, meta_dir), "w") as f:
             json.dump(META_DATA_FORMAT, f)
-    for k, v in kwargs:
+    for k, v in kwargs.items():
         set_meta_field(uuid, k, v, meta_dir)
     
     if 'created' not in kwargs:
-        set_meta_field(uuid, 'created', datetime.fromtimestamp(file_create_date).strftime('%Y-%m-%d %H:%M:%S'), meta_dir)
+        set_meta_field(uuid, 'created', datetime.fromtimestamp(os.path.getctime(get_meta_path(uuid, meta_dir))).strftime('%Y-%m-%d %H:%M:%S'), meta_dir)

@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify, send_file, g, render_template, Response
 from celery import Celery
+import argparse
 from os import listdir, mkdir, remove, rename
 from os.path import isfile, join, exists, expanduser, getctime, dirname, realpath
 from datetime import datetime
@@ -12,6 +13,7 @@ import sys, os
 
 from meta_files import *
 from fs import *
+
 cdir = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.dirname(cdir))
 
@@ -35,51 +37,16 @@ celery.conf.update(application.config)
 home = expanduser("~")
 WEB_PORTAL_DIR =join(home, ".glioblastoma_portal", "")
 DATA_DIR = join(WEB_PORTAL_DIR, "scans/")
-
+DATA_DIR_K = "datadir"
+META_DIR_K = "metadir"
 dir = dirname(realpath(__file__))
 META_DIR = join(WEB_PORTAL_DIR, 'meta_files')
 valid_extensions = ["png", "svs", "tif", "tiff", "mask.tiff"]
 
-# ~/test/
-
-# DATABASE = '/home/haeata/.glioblastoma_portal/file.db'
-
-# def query_db(query, args=(), one=False):
-#     cur = get_db().execute(query, args)
-#     rv = cur.fetchall()
-#     cur.close()
-#     return (rv[0] if rv else None) if one else rv
-  
-# def get_db():
-#     db = getattr(g, '_database', None)
-#     if db is None:
-#         db = g._database = sqlite3.connect(DATABASE)
-#         db.row_factory = sqlite3.Row
-#     return db
-
-# @application.teardown_appcontext
-# def close_connection(exception):
-#     db = getattr(g, '_database', None)
-#     if db is not None:
-#         db.close()
-
-# def init_db_if_not_exists():
-#     with application.app_context():
-#         db = get_db()
-#         with application.open_resource('schema.sql', mode='r') as f:
-#             db.cursor().executescript(f.read()) 
-#         db.commit()
-
-# def make_file_id(fname):
-#     base = fname.split(".")[:-1]
-#     base = "".join(base)
-#     h = SHA256.new()
-#     h.update(base.encode())
-#     return h.hexdigest()
 
 # get specific file path,
-def get_file(uuid, ext):
-    dir_path = DATA_DIR + uuid
+def get_file(uuid, ext, data_dir):
+    dir_path = data_dir  + uuid
 
     name = ''
     for f in listdir(dir_path):
@@ -99,10 +66,6 @@ def get_file(uuid, ext):
 
     return file_path
 
-# def make_id(fname):
-#     base = fname.split(".")[:-1]
-#     base = "".join(base)
-#     return base
 
 # get meta file, returns path to meta file
 def get_meta(uuid, meta_dir):
@@ -115,27 +78,31 @@ def get_meta(uuid, meta_dir):
 
 
 # save file object into file system
-def save_file(file_obj, id, ext, uuid):
+# def save_file(file_obj, id, ext, uuid, data_dir):
 
-    dir_path = DATA_DIR + uuid
-    file_path = "{}/{}.{}".format(dir_path,id,ext)
+#     dir_path = data_dir  + uuid
+#     file_path = "{}/{}.{}".format(dir_path,id,ext)
 
-    file_obj.save(file_path)
-    return file_path
+#     file_obj.save(file_path)
+#     return file_path
 
-def create_meta(uuid, file_name, dir_path):
+def create_meta(uuid, file_name, case, dir_path, meta_dir):
 
+    meta_path = get_meta_path(uuid, meta_dir)
     file_path = join(dir_path, file_name) + '.svs'
-
-    file_create_date = getctime(file_path)
+    print(meta_path)
+    print(file_path)
+    print(uuid)
+    print(file_name)
+    print(dir_path)
 
     meta_data = {
         'fileId': uuid,
-        'case': '',
+        'case': case,
         "fileName": file_name,
         "dirPath": dir_path,
         "filePath": file_path,
-        "created": datetime.fromtimestamp(file_create_date).strftime('%Y-%m-%d %H:%M:%S'),
+        "created": "",
         "tifStatus": "none",
         "tifJobId": "",
         "pngStatus": "none",
@@ -144,30 +111,10 @@ def create_meta(uuid, file_name, dir_path):
         "maskJobId": "" 
     }
 
-    with open("{}/{}.meta".format(META_DIR, uuid), 'w') as json_file:
+
+    with open(meta_path, 'w') as json_file:
         json.dump(meta_data, json_file)
 
-
-# # set web portal directory
-# @application.post('/dir')
-# def change_dir():
-#     global DATA_DIR
-
-#     print(DATA_DIR)
-#     dir = request.args['dir']
-
-#     if dir[-1] != '/':
-#         dir = dir + '/'
-
-#     DATA_DIR = dir
-
-#     return jsonify("DONE")
-
-# # get web portal directory
-# @application.get('/dir')
-# def get_dir():
-
-#     return jsonify(DATA_DIR)
 
 # home page
 @application.get('/')
@@ -179,224 +126,33 @@ def index():
 @application.get('/all')
 def all_scans():
     # check for updates first
-    for dir in listdir(DATA_DIR):
-        dir_path = join(DATA_DIR, dir)
-
-        exts = []
-
-        if isfile(dir_path):
-            continue
-            
-        svs_path =  ''
-        meta_exists = False
-
-        # check if meta file exists
-        meta_path = get_meta(dir, META_DIR)
-        # print(dir)
-
-        if meta_path != '':
-            # meta exists
-            # check for updates
-            meta_exists = True
-
-        for scan_dir in listdir(dir_path):
-
-            # files in uuid directory
-            # check if svs file exists first
-            if scan_dir.endswith("svs"):
-                svs_path = scan_dir
-
-                # remove .svs from end
-                svs_path = svs_path[:len(svs_path)-4]
-            elif scan_dir.endswith("mask.tif") or scan_dir.endswith("mask.tiff"):
-                exts.append("mask")
-            elif (scan_dir.endswith("tif") or scan_dir.endswith("tiff")) \
-                and not (scan_dir.endswith("mask.tif") or scan_dir.endswith("mask.tiff")):
-                exts.append("tif")
-                
- 
-            elif scan_dir.endswith("png"):
-                exts.append("png")  
-        
-        if svs_path == '':
-            # svs doesnt exist
-            continue
-        
-        if meta_exists:
-            # 
-            # check for updates
-            print(meta_path)
-            
-            with open(meta_path, 'r') as f:
-                data = json.load(f)
-                
-            # key = ext + "Status"
-            # data[key] = "completed"
-            for ext in exts:
-                key = ext + "Status"
-                if data[key] == 'none':
-                    data[key] = 'completed'
-
-            with open(meta_path, 'w') as json_file:
-                json.dump(data, json_file)
+    res = {}
+    print(application.config[META_DIR_K])
+    for f in listdir(application.config[META_DIR_K]):
+        meta_json = dict()
+        with open(os.path.join(application.config[META_DIR_K], f), "r") as f:
+            meta_json = json.load(f)
+            res[meta_json["fileId"]] = meta_json
 
 
+    return jsonify(res)
 
-        else:
-            # create meta
-            create_meta(dir, svs_path, dir_path)
-            meta_path = get_meta(dir, META_DIR)
-            with open(meta_path, 'r') as f:
-                data = json.load(f)
-            
-            for ext in exts:
-                key = ext + "Status"
-                data[key] = "completed"
+  
 
-            with open(meta_path, 'w') as json_file:
-                json.dump(data, json_file)
 
-    # delete meta files for deleted files
-    meta_files = [f for f in listdir(META_DIR) if isfile(join(META_DIR, f))]
-    for meta_file in meta_files:
-        uuid = meta_file[:len(meta_file)-5]
-        uuid_exist = False
-        for dir in listdir(DATA_DIR):
-            if dir == uuid:
-                uuid_exist = True
-                break
-        if not uuid_exist:
-            remove(join(META_DIR, meta_file))
-        
-
-    scans = [f for f in listdir(DATA_DIR) if not isfile(join(DATA_DIR, f))]    
-    scan_list = []
-
-    # return jsonify("a1")
-    for id in scans:
-        scan_id = id
-        extensions = []
-        date = ""
-        dir_path = "{}{}/".format(DATA_DIR,id)
-
-        # get extensions
-        files = [f for f in listdir(dir_path) if isfile(join(dir_path, f))]
-
-        for file in files:
-            ext = file[-3:]
-            if ext in valid_extensions:
-                extensions.append(ext)
-
-        meta = get_meta(id, META_DIR)
-
-        meta_data = open(meta, "r")
-        data = json.load(meta_data)
-
-        meta_data.close()
-        scan_list.append(data)
-    
-    json_obj = {}
-    
-    for scan in scan_list:
-
-        id = scan["fileId"]
-        json_obj[id] = scan
-    # return jsonify(scan_list)
-    # print(jsonify(json_obj))
-
-    return jsonify(json_obj)
-    # return json_obj
-
-# download specified scan as extension as zipped file
 @application.get('/scan')
 def get_scan():
     #
     ids = request.args["ids[]"]
     ext = request.args["extension[]"]
-
-
-    # check if directory exists, create if not
-    dir_path = join(DATA_DIR, ids)
-    # file_path = "{}/{}.{}".format(dir_path,ids,ext)
-    if ext == 'mask':
-        mask_ext = 'mask.tif'
-        mask_ext2 = 'mask.tiff'
-        file_path = get_file(ids, mask_ext)
-        file_path2 = get_file(ids, mask_ext2)
-        if exists(file_path):
-            return send_file(file_path)
-        elif exists(file_path2):
-            return send_file(file_path2)
-        else:
-                return Response(
-                    "Requested file to download not found. Please contact the system administrator.",
-                    status=500,
-                )
-
-    # elif ext == 'tif':
-    #     # mask_ext = 'mask.tif'
-    #     # mask_ext2 = 'mask.tiff'
-    #     file_path = get_file(ids, ext)
-    #     file_path2 = get_file(ids, 'tiff')
-    #     if exists(file_path):
-    #         return send_file(file_path)
-    #     elif exists(file_path2):
-    #         return send_file(file_path2)
-    #     else:
-    #             return Response(
-    #                 "Requested file to download not found. Please contact the system administrator.",
-    #                 status=500,
-    #             )
-
-    else:
-        file_path = get_file(ids, ext)
-
-    print(file_path)
-
-    if not exists(file_path):
-        if ext == 'tif':
-            ext = 'tiff'
-            file_path = "{}/{}.{}".format(dir_path,ids,ext)
-            file_path = get_file(ids, ext)
-            if not exists(file_path):
-                return Response(
-                    "Requested file to download not found. Please contact the system administrator.",
-                    status=500,
-                )
-            meta_path = get_meta(ids, META_DIR)
-
-        else:
-            return Response(
-        "Requested file to download not found. Please contact the system administrator.",
-        status=500,
-    )
-
     
+    fname = get_meta_field(ids, "fileName", application.config[META_DIR_K])
+    path = make_fpath(ids, fname, ext, application.config[META_DIR_K])
+
+    if not exists(path):
+        abort(404)
     else:
-        # change status
-        meta_path = get_meta(ids, META_DIR)
-
-        with open(meta_path, 'r') as f:
-            data = json.load(f)
-        
-        key = ext + "Status"
-        data[key] = "inProgress"
-
-        with open(meta_path, 'w') as json_file:
-            json.dump(data, json_file)
-
-
-    with open(meta_path, 'r') as f:
-            data = json.load(f)
-        
-    key = ext + "Status"
-    data[key] = "completed"
-
-    with open(meta_path, 'w') as json_file:
-        json.dump(data, json_file)
-
-    return send_file(file_path)
-
+        return send_file(path)
 
 # upload a new scan
 @application.post('/scan')
@@ -406,56 +162,42 @@ def upload():
     filename = file.filename
 
     if filename == '':
-        return jsonify("NULL")
+        return abort(400)
     
-    # if file
-
     file_uuid = str(uuid.uuid4())
 
-    # assumes file is svs
-    # remove '.svs' from end to get id
+    object_dir = os.path.join(application.config[DATA_DIR_K], file_uuid)
+    if not exists(object_dir):
+        mkdir(object_dir)
 
-    id = filename[:len(filename) - 4]
-    ext = 'svs'
+    base_fname = "".join(filename.split(".")[:-1])
+    print(base_fname)
+    create_meta(file_uuid, base_fname, case_centric_ftree.UKNOWN_CASE,object_dir, application.config[META_DIR_K])
 
-    # check if directory exists
-    dir_path = DATA_DIR + file_uuid
-    path = dir_path
+    save_path = make_fpath(file_uuid, base_fname, SVS_EXT, application.config[META_DIR_K])
+    print(save_path)
+    file.save(save_path)
+    file_create_date = getctime(save_path)
+    set_meta_field(file_uuid, "created", datetime.fromtimestamp(file_create_date).strftime('%Y-%m-%d %H:%M:%S'), application.config[META_DIR_K])
 
-    counter = 1
-    while exists(dir_path):
-        dir_path = path + "(" + str(counter) + ")"
-        counter += 1
-
-    # id = dir_path.split('/')[-1]
-    file_path = "{}/{}.{}".format(dir_path,id,ext)
-
-    mkdir(dir_path)
-
-    
-    now = datetime.now()
-
-    file_path = save_file(file, id, ext, file_uuid)
-    create_meta(str(file_uuid), id, dir_path)
-
-    return jsonify(str(file_uuid))
+    return jsonify(file_uuid)
 
 @application.get("/cancel")
 def cancel():
     # for each meta file change everything not completed to none
-    for dir in listdir(DATA_DIR):
-        meta_path = get_meta(dir, META_DIR)
+    for dir in listdir(application.config[DATA_DIR_K] ):
+        meta_path = get_meta(dir, application.config[META_DIR_K])
 
         for e in [PNG_EXT, TIF_EXT, META_MASK_KEY]:
             field = e+"JobId"
-            jid = get_meta_field(dir, field, META_DIR)
+            jid = get_meta_field(dir, field, application.config[META_DIR_K])
             if jid != "":
                 celery.control.revoke(jid, terminate=True, signal="SIGUSR1")
-            set_meta_field(dir, field, "", META_DIR)
+            set_meta_field(dir, field, "", application.config[META_DIR_K])
 
 
 
-    return jsonify("cancel request")
+    return "", 200
 
 # delete scan
 @application.delete('/scan')
@@ -466,58 +208,17 @@ def delete():
     # ids = request.json["ids[]"]
     # ids = request.json["extension[]"]
     
-    meta_file = ''
-    for id in ids:
-
+    for uuid in ids:
+        fname = get_meta_field(uuid, "fileName", application.config[META_DIR_K])
         for ext in exts:
-            # ext2 = 'tiff'
-            ext2 = "none"
-
-
-            dir_path = DATA_DIR + id
-
-            if ext == "svs":
-                # print(dir_path)
-                try:
-                    shutil.rmtree(dir_path)
-                    # return jsonify("DONE")
-                    break
-                except Exception as e:
-                    
-                    return jsonify(e)
-
-            else:
-
-                for f in listdir(dir_path):
-
-                    if ext == "mask.tif" or ext == "mask":
-
-                        ext = "mask.tif"
-                        ext2 = "mask.tiff"
-                    elif ext == "tif":
-                        ext2 = "tiff"
-
-                    if f.endswith(ext) or f.endswith(ext2):
-                        print(ext)
-                        remove(join(dir_path, f))
-
-                        meta_path = get_meta(id, META_DIR)
-
-                        with open(meta_path, 'r') as f:
-                            data = json.load(f)
-
-                        if ext == "mask.tif" or ext2 == "mask.tiff":
-                            ext = "mask"
-                        key = ext + "Status"
-                        data[key] = "none"
-                        print(key)
-
-                        with open(meta_path, 'w') as json_file:
-                            json.dump(data, json_file)
-
-                        break
+            if ext != SVS_EXT and get_meta_field(uuid, ext + "Status", application.config[META_DIR_K]) == "completed":
+                os.remove(make_fpath(uuid, fname, ext, application.config[META_DIR_K]))
+                set_meta_field(uuid, ext + "Status", "none", application.config[META_DIR_K])
+            elif ext == SVS_EXT:
+                shutil.rmtree(get_meta_field(uuid, "dirPath", application.config[META_DIR_K]))
+                os.remove(get_meta_path(uuid, application.config[META_DIR_K]))
     
-    return jsonify("DONE")
+    return "", 200
 
 @application.get('/name')
 def scan_rename():
@@ -525,69 +226,40 @@ def scan_rename():
     id = request.args["ids"]
     new_name = request.args["new_name"]
 
-    dir_path = DATA_DIR + id
-
-    meta_path = get_meta(id, META_DIR)
-
-    with open(meta_path, 'r') as f:
-            data = json.load(f)
-        
-    data["fileName"] = new_name
-
-    with open(meta_path, 'w') as json_file:
-        json.dump(data, json_file)
+    dir_path = get_meta_field(id, "dirPath", application.config[META_DIR_K])
+    set_meta_field(id, "fileName", new_name, application.config[META_DIR_K])
 
     for f in listdir(dir_path):
 
-        file_name = f.split('.')
-        ext = file_name[-1]
-        # skip other files
-        if ext not in valid_extensions:
-            continue
-        if f.endswith(".mask.tif") or f.endswith(".mask.tiff"):
-            file = new_name + ".mask.tif"
-        else:
-            file = new_name + '.' + ext
+        ext = f.split(".")
+        os.rename(os.path.join(dir_path, f), os.path.join(dir_path, new_name + "." + ext))
 
-        rename(dir_path+'/'+f, dir_path+'/'+file)
-    
-    # new_dir = DATA_DIR + new_name
-    # rename(dir_path, new_dir)
-    
-    return jsonify("DONE")
-
-def make_fpath(uuid, fname, ext):
-    return os.path.join(DATA_DIR, uuid, fname + "." + ext)
-
-def get_svs_dir(uuid):
-    return os.path.join(DATA_DIR, uuid, "")
-
-
+    return "", 200
     
 
 
 @celery.task()
-def make_png(uuid, svs_fpath, dest):
-    set_meta_field(uuid, "pngStatus", "inProgress", META_DIR)
+def make_png(uuid, svs_fpath, dest, meta_dir):
+    set_meta_field(uuid, "pngStatus", "inProgress", meta_dir)
     res = svs_to_png(svs_fpath, dest)
     if res != GOOD:
-        set_meta_field(uuid, "pngStatus", "failed", META_DIR)
+        set_meta_field(uuid, "pngStatus", "failed", meta_dir)
         return
-    set_meta_field(uuid, "pngStatus", "completed", META_DIR)
+    set_meta_field(uuid, "pngStatus", "completed", meta_dir)
     return
 
 @celery.task()
-def make_tif(uuid, svs_fpath, dest):
-    set_meta_field(uuid, "tifStatus", "inProgress", META_DIR)
+def make_tif(uuid, svs_fpath, dest, meta_dir):
+    set_meta_field(uuid, "tifStatus", "inProgress", meta_dir)
     res = svs_to_tiff(svs_fpath, dest)
     if res != GOOD:
-        set_meta_field(uuid, "tifStatus", "failed", META_DIR)
+        set_meta_field(uuid, "tifStatus", "failed", meta_dir)
         return
-    set_meta_field(uuid, "tifStatus", "completed", META_DIR)
+    set_meta_field(uuid, "tifStatus", "completed", meta_dir)
     return
  
 @celery.task()
-def make_mask(uuid, svs_fpath, dest):
+def make_mask(uuid, svs_fpath, dest, meta_dir):
     time.sleep(60)
     return
 
@@ -622,26 +294,41 @@ def generate():
         "ids": []
     }
     for target in target_svs:
-        if exists(get_svs_dir(target)):
-            fname = get_meta_field(target, "fileName", META_DIR)
+        if exists(get_svs_dir(target, application.config[META_DIR_K])):
+            fname = get_meta_field(target, "fileName", application.config[META_DIR_K])
             res["ids"].append(target)
             for e in target_exts:
-                task = TASK_MAP[e].delay(target, make_fpath(target, fname, SVS_EXT), make_fpath(target, fname , e))
-                set_meta_field(target, e + "JobId", task.id, META_DIR)
+                task = TASK_MAP[e].delay(target, make_fpath(target, fname , SVS_EXT, application.config[META_DIR_K]), make_fpath(target, fname , e, application.config[META_DIR_K]), application.config[META_DIR_K])
+                set_meta_field(target, e + "JobId", task.id, application.config[META_DIR_K])
         else:
             pass
 
     return jsonify(res), 200
 
+HELP="Absolute path to an existing directory of wholside data. It expects the directory to consist of a set of sub directories representing each case, with each wholeslide object stored in its own sub directory within the directory of the case to which it belongs."
 
 if __name__ == '__main__':
-    print(sys.path)
+    parser = argparse.ArgumentParser(description='Glioblastoma processing portal. ')
+    parser.add_argument('--existingDataPath', help=HELP)
+    args = parser.parse_args()
+    print(args)
+    application.config[DATA_DIR_K] = DATA_DIR
+    application.config[META_DIR_K] = META_DIR
 
-    # global DATA_DIR
+    if args.existingDataPath is not None:
+        print(args)
+        print(args)
+        application.config[META_DIR_K] = os.path.join(args.existingDataPath, ".meta")
+        if not os.path.exists(application.config[META_DIR_K]):
+            os.makedirs(application.config[META_DIR_K])
+        data_tree = case_centric_ftree(args.existingDataPath)
+        data_tree.make_meta_files_if_not_exist(application.config[META_DIR_K])
+        application.config[DATA_DIR_K]  = os.path.join(data_tree.get_case_dir(case_centric_ftree.UKNOWN_CASE))
 
-    if not os.path.exists(DATA_DIR):
-        os.makedirs(DATA_DIR)
-    if not exists(META_DIR):
-        os.makedirs(META_DIR)
+
+    if not os.path.exists(application.config[DATA_DIR_K] ):
+        os.makedirs(application.config[DATA_DIR_K] )
+    if not os.path.exists(application.config[META_DIR_K]):
+            os.makedirs(application.config[META_DIR_K])
     application.run(debug=True, port = 8080)
 
