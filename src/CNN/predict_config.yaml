@@ -5,3 +5,7 @@ MANIFEST_OUT: "data/manifest.out"
 MASK_DIR: "data/masks"
 SVS_DIR: "data/svs_files"
 UPLOAD_LOG: "data/logs/upload_log.log"
+UPLOAD_TRUE: False
+DELETE_SVS_ON_COMPLETION: False
+UPLOAD_USR: "username"
+UPLOAD_PWORD: "password"
