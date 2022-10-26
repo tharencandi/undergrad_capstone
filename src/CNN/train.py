@@ -145,6 +145,8 @@ def grid_search(max_epochs,
         (highest miou of test set.)
 
         configure early stopping with earlyStopping = True, and patience = x
+        
+        save == True, then Model weights are saved at the end of every epoch, if it's the best seen so far.
 
         if verbose <= 0:
             only tensor log printed
