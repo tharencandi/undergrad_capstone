@@ -466,10 +466,14 @@ def main():
             base = f"{key}_pre{PREACTIVE}_w{WEIGHT_INIT.name}_lr{LEARNING_RATE}"
             if OUTPUT_FILES_NAME_MODIFIER != "":
                 base += "_" + OUTPUT_FILES_NAME_MODIFIER
-            with open(f"{LOG_DIR}/{base}.log", "w") as log_file:
-                w = csv.DictWriter(log_file, hist_dict[key].keys())
-                w.writeheader()
-                w.writerow(hist_dict[key])
+            # with open(f"{LOG_DIR}/{base}.log", "w") as log_file:
+            #     w = csv.DictWriter(log_file, hist_dict[key].keys())
+            #     w.writeheader()
+            #     w.writerow(hist_dict[key])
+            with open(f"{LOG_DIR}/{base}.log", "wb") as log_file:
+                writer = csv.writer(log_file)
+                writer.writerow(hist_dict[key].keys())
+                writer.writerows(zip(*hist_dict[key].values()))
 
     elif FUNC == functions.HYPERBAND:
         hyperband(train, val)
