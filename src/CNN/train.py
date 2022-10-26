@@ -470,7 +470,7 @@ def main():
             #     w = csv.DictWriter(log_file, hist_dict[key].keys())
             #     w.writeheader()
             #     w.writerow(hist_dict[key])
-            with open(f"{LOG_DIR}/{base}.log", "wb") as log_file:
+            with open(f"{LOG_DIR}/{base}.log", "w") as log_file:
                 writer = csv.writer(log_file)
                 writer.writerow(hist_dict[key].keys())
                 writer.writerows(zip(*hist_dict[key].values()))
