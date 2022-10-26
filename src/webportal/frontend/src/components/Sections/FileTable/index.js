@@ -73,8 +73,15 @@ const FileTable = () => {
           return status;
         };
 
-        const { fileId, fileName, maskStatus, pngStatus, tifStatus, created } =
-          data[fileKey];
+        const {
+          fileId,
+          fileName,
+          maskStatus,
+          pngStatus,
+          tifStatus,
+          created,
+          caseType,
+        } = data[fileKey];
 
         return {
           id: fileId,
@@ -83,6 +90,7 @@ const FileTable = () => {
           mask: fileStatusGenerator(maskStatus),
           ".png": fileStatusGenerator(pngStatus),
           dateCreated: created,
+          caseType,
         };
       })
     : [];
@@ -155,6 +163,11 @@ const FileTable = () => {
       width: 128,
       renderCell: getChildFileStatus,
       align: "center",
+    },
+    {
+      field: "caseType",
+      headerName: "Case",
+      width: 128,
     },
     {
       field: "dateCreated",
