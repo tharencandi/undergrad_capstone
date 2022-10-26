@@ -128,82 +128,122 @@ def hyperband(train, val):
     is {best_hps.get('learning_rate')}.
     """)
 
-def grid_search(epochs, batch_sizes, train_set, val_set, test_set, save=False, evaluate_on_every_epoch=False, early_stopping=False):
+def grid_search(max_epochs, 
+                batch_sizes, 
+                train_set, 
+                val_set, 
+                test_set, 
+                save=False,  
+                early_stopping=False, 
+                reduce_learning_rate=False,
+                tensorboard=False,
+                verbose=0
+                ):
     """
         trains all combinations of epochs and batch sizes and logs all information, and records "best" combination.
 
         (highest miou of test set.)
 
         configure early stopping with earlyStopping = True, and patience = x
+
+        if verbose <= 0:
+            only tensor log printed
+        if verbose == 1:
+            tensor log printed
+            best_performance and best_para printed after testing every batch sizes
+        if verbose >= 2:
+            tensor log printed
+            best_performance and best_para printed after testing every batch sizes
+            log (batch size, max epoch, performance metrics) printed after testing every batch sizes
+
     """
-    stop_early = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=ES_PATIENCE, restore_best_weights=True, verbose=1)
     
     best_perfomance = 0
     best_para = (None, None)
     log = "b,e,result\n"
     dic_model_history = {}
+    
+
     for b in batch_sizes:
         train = train_set.batch(b)
         va  = val_set.batch(b)
         test = test_set.batch(b)
 
-        for e in epochs:
-            print("log: ", log)
+        if verbose <= 0:
+            pass
+        elif verbose == 1:
             print("best_perfomance so far: ", best_perfomance)
             print("best_para so far: ", best_para)
-            print("batch size: {}, epochs: {}".format(b, e))
+        else:
+            print("best_perfomance so far: ", best_perfomance)
+            print("best_para so far: ", best_para)
+            print("log: ", log)
+        
+        
+        model = DRAN(initialiser=WEIGHT_INIT)
+
+        
+        model.compile(optimizer=keras.optimizers.Adam(learning_rate=LEARNING_RATE),
+                        loss="sparse_categorical_crossentropy",
+                        metrics=[UpdatedMeanIoU(num_classes=2),])
+        callbacks_ls = []
+
+        if reduce_learning_rate:
+            reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(monitor='val_loss', factor=LR_FACTOR,
+                                    patience=LR_PATIENCE, min_lr=MIN_LR)
+            callbacks_ls.append(reduce_lr)
+
+
+        if early_stopping:
+            stop_early = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=ES_PATIENCE, restore_best_weights=True, verbose=1)
+            callbacks_ls.append(stop_early)
             
-            model = DRAN(initialiser=WEIGHT_INIT)
+        if tensorboard:
+            tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=LOG_DIR)
+            callbacks_ls.append(tensorboard_callback)
 
+        if save:
             
-            model.compile(optimizer=keras.optimizers.Adam(learning_rate=LEARNING_RATE),
-                            loss="sparse_categorical_crossentropy",
-                            metrics=[UpdatedMeanIoU(num_classes=2),])
+            # Model weights are saved at the end of every epoch, if it's the best seen
+            # so far.
+            model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
+                filepath=MODEL_SAVE_LOCATION + f"/checkpoint_b_{b}_maxe{max_epochs}_pre{PREACTIVE}_w{WEIGHT_INIT}_le{LEARNING_RATE}",
+                save_weights_only=True,
+                monitor='val_updated_mean_io_u',
+                mode='max',
+                save_best_only=True
+            )
+            callbacks_ls.append(model_checkpoint_callback)
+        
+        print("commencing training with batch size {} ...".format(b))
 
+        if len(callbacks_ls) == 0:
+            model_history = model.fit (
+                train, epochs=max_epochs, validation_data=va, shuffle=True)
 
-            if early_stopping:
-                model_history = model.fit (
-                    train, 
-                    epochs=e, 
-                    validation_data=va, 
-                    shuffle=True, 
-                    callbacks=[stop_early]
-                )
-            else:
-                model_history = model.fit (
-                    train, 
-                    epochs=e, 
-                    validation_data=va, 
-                    shuffle=True, 
-                    callbacks=[stop_early]
-                )
+        else:
+            model_history = model.fit (
+                train, epochs=max_epochs, validation_data=va, shuffle=True, callbacks=callbacks_ls)
 
-            
-            if save:
-                save_weights(model, e, b, PREACTIVE, WEIGHT_INIT)
-            
-            for key, val in model_history.history.items():
-                if 'val_updated_mean_io_u' in key:
-                    val_updated_mean_io_u = val
-            dic_model_history["b{}e{}".format(b, e)] = model_history
+        
+        for key, val in model_history.history.items():
+            if 'val_updated_mean_io_u' in key:
+                val_updated_mean_io_u = val
+        dic_model_history["b{}e{}".format(b, max_epochs)] = model_history
 
-            result = model.evaluate(test)
-            mean_iou = result[1]
-            print("batch size: {}, epochs: {}, mean iou: {}".format(b, e, mean_iou))
-            log += f"{b},{e},{result}\n"
-            #log.append((b,e,result,model_history.history))
+        result = model.evaluate(test)
+        mean_iou = result[1]
+        print("batch size: {}, max_epochs: {}, mean iou: {}".format(b, max_epochs, mean_iou))
+        log += f"{b},{max_epochs},{result}\n"
+        #log.append((b,e,result,model_history.history))
 
-            if evaluate_on_every_epoch:
-                best_same_batch = max(val_updated_mean_io_u)
-                best_epoch_same_batch = val_updated_mean_io_u.index(best_same_batch)+1
+        best_same_batch = max(val_updated_mean_io_u)
+        best_epoch_same_batch = val_updated_mean_io_u.index(best_same_batch)+1
 
-                if best_same_batch >= best_perfomance:
-                    best_perfomance = best_same_batch
-                    best_para = (b, best_epoch_same_batch)
-            else:
-                if mean_iou >= best_perfomance:
-                    best_perfomance = mean_iou
-                    best_para = (b, e)
+        if best_same_batch >= best_perfomance:
+            best_perfomance = best_same_batch
+            best_para = (b, best_epoch_same_batch)
+        
     return best_para, log, dic_model_history
 
 
@@ -317,9 +357,12 @@ def load_dataset(percentage_split):
 
     return train_dataset, val_dataset, test_dataset
 
-def accuracy_plot(history,title, save=False, show=True):
+def accuracy_plot(axis, history,title, save=False, show=True, single_use=False):
     """
+    axis: Axes, pass None if single_use=True
     history: History object generated by .fit()
+    single_use: True if use indiviually
+                False when called in gen_plots_for_histories
     """
     for k,v in history.history.items(): 
         if k.startswith('updated_mean_io_u'):
@@ -327,40 +370,67 @@ def accuracy_plot(history,title, save=False, show=True):
     for k,v in history.history.items(): 
         if k.startswith('val_updated_mean_io_u'):
             val_updated_mean_io_u = v
-    plt.plot(updated_mean_io_u)
-    plt.plot(val_updated_mean_io_u)
-    plt.title(title)
-    plt.ylabel('updated_mean_io_u')
-    plt.xlabel('epoch')
-    plt.legend(['train', 'val'], loc='upper left')
-    if show:
-        plt.show()
-    if save:
-        plt.savefig(f"{LOG_DIR}/{title}")
+    if single_use:
+        plt.plot(updated_mean_io_u)
+        plt.plot(val_updated_mean_io_u)
+        plt.title(title)
+        plt.ylabel('updated_mean_io_u')
+        plt.xlabel('epoch')
+        plt.legend(['train', 'val'], loc='upper left')
+        if show:
+            plt.show()
+        if save:
+            plt.savefig(f"{LOG_DIR}/{title}")
+    else:
+        axis.plot(updated_mean_io_u)
+        axis.plot(val_updated_mean_io_u)
+        axis.set_title(title)
+        axis.ylabel('updated_mean_io_u')
+        axis.xlabel('epoch')
+        axis.legend(['train', 'val'], loc='upper left')
 
 
-def loss_plot(history, title, save=False, show=True):
+def loss_plot(axis, history, title, save=False, show=True, single_use=False):
     """
+    axis: Axes, pass None if single_use=True
     history: History object generated by .fit()
+    single_use: True if use indiviually
+                False when called in gen_plots_for_histories
     """
-    plt.plot(history.history['loss'])
-    plt.plot(history.history['val_loss'])
-    plt.title(title)
-    plt.ylabel('loss')
-    plt.xlabel('epoch')
-    plt.legend(['train', 'val'], loc='upper left')
-    if show:
-        plt.show()
-    if save:
-        plt.savefig(f"{LOG_DIR}/{title}")
+    if single_use:
+        plt.plot(history.history['loss'])
+        plt.plot(history.history['val_loss'])
+        plt.title(title)
+        plt.ylabel('loss')
+        plt.xlabel('epoch')
+        plt.legend(['train', 'val'], loc='upper left')
+        if show:
+            plt.show()
+        if save:
+            plt.savefig(f"{LOG_DIR}/{title}")
+    else:
+        axis.plot(history.history['loss'])
+        axis.plot(history.history['val_loss'])
+        axis.set_title(title)
+        axis.ylabel('loss')
+        axis.xlabel('epoch')
+        axis.legend(['train', 'val'], loc='upper left')
         
-def gen_plots_for_histories(hist_dict):
+def gen_plots_for_histories(hist_dict, title ,save=False, show=True):
+    num = len(hist_dict)
+    figure, axis = plt.subplots(num, 2)
+    row = 0
     for key in hist_dict:
         base_title = f"{key}_pre{PREACTIVE}_w{WEIGHT_INIT.name}_lr{LEARNING_RATE}"
         acc_title = base_title + "_ACC.png"
         loss_title = base_title + "_LOSS.png"
-        accuracy_plot(hist_dict[key], acc_title, save=True, show=False)
-        loss_plot(hist_dict[key], loss_title, save=True, show=False)
+        accuracy_plot(axis[row, 0] ,hist_dict[key], acc_title, save=True, show=False, single_use=True)
+        loss_plot(axis[row, 1], hist_dict[key], loss_title, save=True, show=False, single_use=True)
+        row += 1
+    if show:
+            plt.show()
+    if save:
+        plt.savefig(f"{LOG_DIR}/{title}")
 
 def main():
 
