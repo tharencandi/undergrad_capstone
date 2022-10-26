@@ -1,12 +1,14 @@
 ---
-OUTPUT_DIR: "/home/tharen/UNI/glioblastoma_processing/data"
-PROGRESS_LOG: "/home/tharen/UNI/glioblastoma_processing/progress.log"
-FAILURE_LOG: "/home/tharen/UNI/glioblastoma_processing/failure.log"
+OUTPUT_DIR: "/home/tharen/UNI/cell_processing/data/svs_files"
+PROGRESS_LOG: "/home/tharen/UNI/cell_processing/progress.log"
+FAILURE_LOG: "/home/tharen/UNI/cell_processing/failure.log"
 # Increasing chunk size will speed things up but will increase ram usage
 CHUNK_SIZE: 16384
 # Concurrent downloads does nothing currently - not implemented
 CONCURRENT_DOWNLOADS: 4
-LOGFILE: "/home/tharen/UNI/glioblastoma_processing/downloader.log"
+LOGFILE: "/home/tharen/UNI/cell_processing/downloader.log"
 LOGLEVEL: "DEBUG"
+#set to false when using for predict_manifest on a remote machine. Set to true when downloading to client HDD
+MIMIC_GDC_FOLDERS: True 
 
 
