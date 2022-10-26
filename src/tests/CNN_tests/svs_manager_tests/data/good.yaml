@@ -1,0 +1,7 @@
+---
+TMP_DIR: "src/tests/CNN_tests/svs_manager_tests/data/tmp"
+MANIFEST_IN: "src/tests/CNN_tests/svs_manager_tests/data/test_manifest.in"
+MANIFEST_OUT: "src/tests/CNN_tests/svs_manager_tests/data/test_manifest.out"
+MASK_DIR: "src/tests/CNN_tests/svs_manager_tests/data/masks"
+SVS_DIR: "src/tests/CNN_tests/svs_manager_tests/data/svs_files"
+UPLOAD_LOG: "src/tests/CNN_tests/svs_manager_tests/data/upload_log.log"
