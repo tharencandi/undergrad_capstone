@@ -98,7 +98,7 @@ def create_meta(uuid, file_name, case, dir_path, meta_dir):
 
     meta_data = {
         'fileId': uuid,
-        'case': case,
+        'caseType': case,
         "fileName": file_name,
         "dirPath": dir_path,
         "filePath": file_path,

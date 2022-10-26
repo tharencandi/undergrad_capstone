@@ -19,12 +19,10 @@ def get_svs_dir(uuid, meta_dir):
 
 def populate_meta(uuid, object_dir_path, meta_dir):
     object_files = [f for f in os.listdir(object_dir_path) if os.path.isfile(os.path.join(object_dir_path, f))]
-    #print(object_files)
     fnmask = None
     fnPNG = None
     fnTIF = None
     fnSVS = None
-
 
     for f in object_files:
         if f.endswith(PNG_EXT):
@@ -82,7 +80,7 @@ class case_centric_ftree:
             for o in objects:
                 meta_path = get_meta_path(o, meta_out_dir)
                 if not os.path.exists(meta_path):
-                    make_meta(o, meta_out_dir, case=c, fileId=o, dirPath=self.get_object_dir(c, o))
+                    make_meta(o, meta_out_dir, caseType=c, fileId=o, dirPath=self.get_object_dir(c, o))
                     populate_meta(o, self.get_object_dir(c, o), meta_out_dir)
 
 
