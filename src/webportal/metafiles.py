@@ -4,7 +4,7 @@ from  datetime import datetime
 
 META_DATA_FORMAT = {
         'fileId': '',
-        'case': '',
+        'caseType': '',
         "fileName": '',
         "dirPath": '',
         "filePath": '',
