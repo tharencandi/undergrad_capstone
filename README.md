@@ -26,13 +26,13 @@ for best performance, please configure tensorflow2 to use NVIDIA CUDA enabled GP
 	6. apt-get install -y openslide-tools
 	7. apt-get install -y python3-opencv
 	8. install nvm and nodejs
-	8. DRAN/CNN weights available at 
+	8. DRAN/CNN weights available [here](https://drive.google.com/file/d/1Kk17yPiln8CQG6uhiFHLKn6EkvjBJc7Q/view?usp=sharing)
 
 4. How to run tests: run pytest in repo directory. 
 5. Deployment instructions:
 
 - How to setup CNN for mask generation:
-	1. download pre-trained weights here or follow CNN training process.
+	1. download pre-trained weights [here](https://drive.google.com/file/d/1Kk17yPiln8CQG6uhiFHLKn6EkvjBJc7Q/view?usp=sharing) or follow CNN training process.
 	2. download model `.json` or generate by running `python3 src/CNN/cnn_model.py`
 	3. configure `MODEL` and `WEIGHTS` constants at the top of `src/CNN/predict.py` to 1 and 2.
 	4. deploy webportal and use its interface to generate masks on your computer *OR* follow **server** deploymenet process 
@@ -45,7 +45,7 @@ for best performance, please configure tensorflow2 to use NVIDIA CUDA enabled GP
 	3. build react front end: cd into src/webportal/frontend and run `npm install` and `npm run build`
 
 - How to train model
-	1. training and validation datasets are available [here](link). 
+	1. training and validation datasets are available [here](https://drive.google.com/drive/u/2/folders/1Vlpsqh13JeldsZaPk6wYY0f_aNVtFeIe). 
 		- place in `data/training` and `data/validation` respectivley.
 	2. generate datasets by running `python3 src/CNN/dataset.py` and following its instructions. 
 	3. after 2, set related constants `TRAIN_LOCATON` and `TEST_LOCATION` in `src/CNN/train.py`.
