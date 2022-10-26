@@ -3,7 +3,6 @@ from gc import callbacks
 import tensorflow as tf
 from tensorflow import keras
 from keras import layers
-#import tensorflow_datasets as tfds
 #import matplotlib.pyplot as plt
 import numpy as np
 import cv2 as cv
@@ -15,30 +14,57 @@ import matplotlib.pyplot as plt
 from enum import Enum
 import keras_tuner as kt
 
+
+"""
+    DO NOT MODIFY
+"""
 IMG_SIZE = (102, 102)
 LBL_SIZE = (54, 54)
-EPOCHS = 100
-BATCH_SIZE = 16
-WEIGHT_INIT = myInitialiers.myHeNormal
-LEARNING_RATE = 1e-4
 
 class functions(Enum):
     SINGLE_TRAIN = 1
     GRID_SEARCH = 2
     HYPERBAND = 3
+# _______________________________________________#
+
+"""
+    paramaters for grid and single train.
+"""
+LEARNING_RATE = 1e-4
+VAL_TEST_SPLIT = 0.5
+ES_PATIENCE = 20
+LR_PATIENCE = 8
+LR_FACTOR = 0.1
+MIN_LR = 1e-6
+WEIGHT_INIT = myInitialiers.myHeNormal
+CELL_CLASS_WEIGHT = 1
+BG_CLASS_WEIGHT = 1
+
+"""
+    paramaters for single train and hyperband search. 
+"""
+EPOCHS = 100
+BATCH_SIZE = 16
 
 
-FUNC = functions.SINGLE_TRAIN
-
+"""
+    I/O config
+"""
 MODEL_SAVE_LOCATION = "data/models"
 MODEL_FILE_NAME = "test_model.model"
 TRAIN_LOCATION = "data/NBL"
 TEST_LOCATION = "data/NBL_TEST"
-CELL_CLASS_WEIGHT = 1
-BG_CLASS_WEIGHT = 1
 LOG_DIR = "data/models/log"
 
+"""
+    example output file name 
+    f"/b_10_e50_preTrue_wheNorm_le0.001(_extra_meta_data).extension"
+    leave blank if not wanted.
+"""
+OUTPUT_FILES_NAME_MODIFIER = "extra_meta_data"
 
+
+FUNC = functions.SINGLE_TRAIN
 
 if not os.path.exists(LOG_DIR):
     try: 
@@ -56,10 +82,13 @@ if not os.path.exists(MODEL_SAVE_LOCATION):
 	print(f"creating {MODEL_SAVE_LOCATION}")
 	os.mkdir(MODEL_SAVE_LOCATION)
 
+
 def save_weights(model, epochs, batch_size, is_preactive, init):
+    base_name = f"/b_{batch_size}_e{epochs}_pre{is_preactive}_w{init}_le{LEARNING_RATE}"
+    if OUTPUT_FILES_NAME_MODIFIER != "":
+        base_name += "_" + OUTPUT_FILES_NAME_MODIFIER
     model.save_weights (
-        MODEL_SAVE_LOCATION + 
-        f"/b_{batch_size}_e{epochs}_pre{is_preactive}_w{init}_le{LEARNING_RATE}.h5"
+        MODEL_SAVE_LOCATION + base_name + ".h5"
     )
 
 def hyper_model_builder(hp):
@@ -83,7 +112,7 @@ def hyperband(train, val):
                         project_name='intro_to_kt')
 
     #stop early if validation set loss too high
-    stop_early = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=5)
+    stop_early = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=ES_PATIENCE)
 
 
     tuner.search(train, epochs=50, validation_data=val, callbacks=[stop_early])
@@ -96,7 +125,16 @@ def hyperband(train, val):
     is {best_hps.get('learning_rate')}.
     """)
 
-def grid_search(epochs, batch_sizes, train_set, val_set, test_set, save=False, evaluate_on_every_epoch=False):
+def grid_search(epochs, batch_sizes, train_set, val_set, test_set, save=False, evaluate_on_every_epoch=False, early_stopping=False):
+    """
+        trains all combinations of epochs and batch sizes and logs all information, and records "best" combination.
+
+        (highest miou of test set.)
+
+        configure early stopping with earlyStopping = True, and patience = x
+    """
+    stop_early = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=ES_PATIENCE, restore_best_weights=True, verbose=1)
+    
     best_perfomance = 0
     best_para = (None, None)
     log = "b,e,result\n"
@@ -106,30 +144,37 @@ def grid_search(epochs, batch_sizes, train_set, val_set, test_set, save=False, e
         va  = val_set.batch(b)
         test = test_set.batch(b)
 
-        
-
-        """  my_callbacks = [
-            tf.keras.callbacks.ModelCheckpoint(filepath=LOG_DIR+'/model.{epoch:02d}-{val_loss:.2f}.h5',  save_weights_only=True),
-            tf.keras.callbacks.TensorBoard(log_dir=LOG_DIR),
-        ]"""
-
         for e in epochs:
             print("log: ", log)
             print("best_perfomance so far: ", best_perfomance)
             print("best_para so far: ", best_para)
             print("batch size: {}, epochs: {}".format(b, e))
-           
+            
             model = DRAN(initialiser=WEIGHT_INIT)
+
+            
             model.compile(optimizer=keras.optimizers.Adam(learning_rate=LEARNING_RATE),
                             loss="sparse_categorical_crossentropy",
                             metrics=[UpdatedMeanIoU(num_classes=2),])
 
-            model_history = model.fit (
-                train, 
-                epochs=e, 
-                validation_data=va, 
-                shuffle=True
-            )
+
+            if early_stopping:
+                model_history = model.fit (
+                    train, 
+                    epochs=e, 
+                    validation_data=va, 
+                    shuffle=True, 
+                    callbacks=[stop_early]
+                )
+            else:
+                model_history = model.fit (
+                    train, 
+                    epochs=e, 
+                    validation_data=va, 
+                    shuffle=True, 
+                    callbacks=[stop_early]
+                )
+
             
             if save:
                 save_weights(model, e, b, PREACTIVE, WEIGHT_INIT)
@@ -173,7 +218,7 @@ def single_train(train, val, test):
     )
     
 
-     # Model weights are saved at the end of every epoch, if it's the best seen
+    # Model weights are saved at the end of every epoch, if it's the best seen
     # so far.
     model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
         filepath=MODEL_SAVE_LOCATION + "/checkpoint",
@@ -183,12 +228,14 @@ def single_train(train, val, test):
         save_best_only=True
     )
 
- 
     tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=LOG_DIR)
-    reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(monitor='val_loss', factor=0.1,
-                              patience=8, min_lr=1e-6)
-
-    stop_early = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=20, restore_best_weights=True, verbose=1)
+    
+    reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(monitor='val_loss', factor=LR_FACTOR,
+                              patience=LR_PATIENCE, min_lr=MIN_LR)
+    
+    stop_early = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=ES_PATIENCE, restore_best_weights=True, verbose=1)
+    
+    
     print("commencing training...")
     model_history = model.fit (
         train, epochs=EPOCHS, validation_data=val, shuffle=True, callbacks=[reduce_lr,stop_early, tensorboard_callback,model_checkpoint_callback])
@@ -200,23 +247,12 @@ def single_train(train, val, test):
     print("saving weights")
     save_weights(model, EPOCHS, BATCH_SIZE, PREACTIVE, WEIGHT_INIT.name)
 
-    with open(LOG_DIR + "/latest_log.txt", "w") as l:
+    base_name = f"/b_{BATCH_SIZE}_e{EPOCHS}_pre{PREACTIVE}_w{WEIGHT_INIT}_le{LEARNING_RATE}"
+    if OUTPUT_FILES_NAME_MODIFIER != "":
+        base_name += "_" + OUTPUT_FILES_NAME_MODIFIER
+    name += '.log'
+    with open(LOG_DIR + name, "w") as l:    
         l.write(str(model_history.history))
-
-
-def make_graph(log):
-    x = [val[0] for val in log]
-    y = [val[1] for val in log]
-    z = [val[2][1]  for val in log]
-    fig = plt.figure()
-    ax = Axes3D(fig)
-    ax.invert_yaxis()
-    surf = ax.plot_trisurf(x, y, z, linewidth=0.1)
-    fig.colorbar(surf, shrink=0.5, aspect=5)
-    plt.show()
-
-
-
 
 
 def load_dataset(percentage_split):
@@ -325,6 +361,8 @@ def gen_plots_for_histories(hist_dict):
 
 def main():
 
+    print("\n\n---\n\tcurrently executing: ", FUNC, ".\n\tIf this was not intended please change the constant FUNC.\n---\n\n")
+    
     if not os.path.exists(MODEL_SAVE_LOCATION):
         try:
             os.mkdir(MODEL_SAVE_LOCATION)
@@ -332,18 +370,20 @@ def main():
             print(f"parent directory in {MODEL_SAVE_LOCATION} does not exist. Cannot create folder")
             exit(1)
 
-    train, val, test = load_dataset(0.5)
+    train, val, test = load_dataset(VAL_TEST_SPLIT)
 
     if FUNC == functions.SINGLE_TRAIN:
         single_train(train, val, test)
     elif FUNC == functions.GRID_SEARCH: 
         print("performing grid search...")
         best, log, hist_dict = grid_search([70], [8,16,32,40], train, val, test, save=False, evaluate_on_every_epoch=True)
-        gen_plots_for_histories(hist_dict=hist_dict)
         for key in hist_dict:
             base = f"{key}_pre{PREACTIVE}_w{WEIGHT_INIT.name}_lr{LEARNING_RATE}"
+            if OUTPUT_FILES_NAME_MODIFIER != "":
+                base += "_" + OUTPUT_FILES_NAME_MODIFIER
             with open(f"{LOG_DIR}/{base}.log", "w") as log_file:
                 log_file.write(hist_dict[key])
+
     elif FUNC == functions.HYPERBAND:
         hyperband(train, val)
 

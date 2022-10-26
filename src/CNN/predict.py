@@ -24,11 +24,9 @@ from client import upload
 #from bin_transcoder import encode_binary
 IMG_SIZE = (102, 102)
 MODEL = 'data/models/default_DRAN.json'
-WEIGHTS = 'data/models/b_16_e50_preTrue_wmyHeNormal_le0.001.h5'
+WEIGHTS = "data/models/b16_e50_pre_blackaug.h5"
 TILE_MASK_NAME_F = "{}_{}.png"
 DEBUG = False
-UPLOAD = True
-DELETE_SVS_ON_COMPLETION = False
 model_config = ""
 with open(MODEL, "r") as f:
     model_config = f.read().strip()
@@ -177,13 +175,6 @@ def construct_whole_mask(num_tiles, in_loc, out_loc, out_name, img_size):
                 break
             
         print("writing whole mask to png")
-        # tif.imwrite(
-        #         f"{out_loc}/{out_name}",
-        #         whole_mask,
-        #         tile=(1024, 1024),
-        #         compression='zlib',
-        #         compressionargs={'level': 8},
-        # )
         cv.imwrite(f"{out_loc}/{out_name}", whole_mask)
 
         del whole_mask
@@ -245,7 +236,6 @@ def predict_slide(svs_id, svs_file_name, svs_dir, tmp_dir, masks_dir):
          
     else:
         print("tiling current svs.")
-        #num_tiles  = tile_slide(svs_file, ZOOM, tmp_dir)
         _,num_tiles,dim =  tile_image(image_path = svs_file_path, save_dir=tmp_dir)
         width, height = dim[1], dim[0]
         j_dict = {"svs_image": svs_id, "num_tiles": num_tiles, "current_tile": (1,1), "dimensions": (width, height)}
@@ -370,6 +360,19 @@ def main():
         err_msg = """
         run program with the following format:
         python3 predict.py predict_config_.yaml
+
+        example YAML:
+            ---
+            TMP_DIR: "data/tmp"
+            MANIFEST_IN: "src/CNN/test_manifest.txt"
+            MANIFEST_OUT: "data/manifest.out"
+            MASK_DIR: "data/masks"
+            SVS_DIR: "data/svs_files"
+            UPLOAD_LOG: "data/logs/upload_log.log"
+            UPLOAD_TRUE: True 
+            DELETE_SVS_ON_COMPLETION: False 
+            UPLOAD_USR: "username"
+            UPLOAD_PWORD: "password"
         """
         print(err_msg)
         exit(os.EX_USAGE)
