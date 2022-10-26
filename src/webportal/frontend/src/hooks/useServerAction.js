@@ -62,7 +62,7 @@ const useServerAction = () => {
           link.setAttribute(
             "download",
             `${data[ids].fileName}.${
-              extension[0] === "mask" ? "mask.tif" : extension
+              extension[0] === "mask" ? "mask.png" : extension
             }`
           ); //or any other extension
           document.body.appendChild(link);
