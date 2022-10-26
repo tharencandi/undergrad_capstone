@@ -8,5 +8,7 @@ CHUNK_SIZE: 16384
 CONCURRENT_DOWNLOADS: 4
 LOGFILE: "/home/haeata/.glioblastoma_portal/download.log"
 LOGLEVEL: "DEBUG"
+#set to false when using for predict_manifest on a remote machine. Set to true when downloading to client HDD
+MIMIC_GDC_FOLDERS: True 
 
 
