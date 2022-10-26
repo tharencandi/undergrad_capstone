@@ -1,0 +1,145 @@
+api
+
+
+
+GET /all
+Get all scans, returns as python list
+Return:
+	{
+		id: "asd.png"
+		extensions: ["png", "svs"]
+		creation_date: "01/04/2020"
+	}, ...
+
+done:
+	id, ext, creation date
+todo:
+	status
+	testing
+
+----------------------------------------------
+
+GET /scan
+Get specificed scans and extensions for download in zip file
+Params:
+	ids: string seperated by comma
+	extension: string seperated by comma {"svs", "png", "tiff"}
+Example:
+	ids: "asd,asd,qwe"
+	extension: "svs,png,tiff"
+Return:
+	file: "multiple_files.zip"
+
+done:
+	multiple files
+	zipped
+todo:
+	error checks/handling
+	delete "multiple_files.zip" from directory after request
+	change status of files 
+	testing
+
+
+----------------------------------------------
+
+POST /scan
+upload a new scan to database
+Params:
+	file: file
+Return:
+	"DONE"
+
+done:
+	upload into correct directories
+todo:
+	multiple files
+	status
+	some error checks/handling
+	testing
+
+-----------------------------------------------
+
+DELETE /scan/
+delete scan with id <ids>
+Params:
+	ids: string
+	extenstion: string {"svs", "png", "tiff"}
+Return:
+	"DONE"
+
+done:
+	deletes properly
+todo:
+	multiple deletes (will be similar format with download)
+	some error checks/handling
+	status
+	testing
+
+
+-----------------------------------------------
+below not done
+-----------------------------------------------
+
+UPDATE /scan/<id>
+change the name of the scan
+Params:
+	id: string
+	new_name: string
+return:
+	id: "asd.png"
+	new_name: "qwe.png"
+
+-----------------------------------------------
+
+POST /scan/<id>/convert/<extension>
+convert scan to a new file format
+Params:
+	id: string
+	extension: string {"svs", "png", "tiff"}
+Return:
+	id: "asd.png"
+	extension: "png"
+
+-----------------------------------------------
+
+GET /mask/<id>
+get mask for scan with id <id>
+Params:
+	id: string
+Return:
+	id: "asd"
+	mask: asd.mask
+
+------------------------------------------------
+
+POST /mask/<id>
+create new mask for scan with id <id>
+Params:
+	id: string
+Return:
+	id: "asd.mask"
+	mask: asd.mask
+
+-------------------------------------------------
+
+DELETE /mask/<id>
+delete mask for scan with id <id>
+Params:
+	id: string
+Return:
+	id: "asd.mask"
+	mask: asd.mask
+
+-------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+	

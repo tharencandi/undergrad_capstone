@@ -1,6 +1,6 @@
-from tile_crop.slide import *
-import tile_crop.tiles as tiles
-import tile_crop.filter as filter
+from CNN.tile_crop.slide import *
+import CNN.tile_crop.tiles as tiles
+import CNN.tile_crop.filter as filter
 
 # import tiles
 # import filter
