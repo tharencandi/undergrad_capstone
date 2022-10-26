@@ -23,10 +23,10 @@ from CNN.client import upload
 
 #from bin_transcoder import encode_binary
 IMG_SIZE = (102, 102)
-MODEL = 'data/models/default_DRAN.json'
-WEIGHTS = "data/models/b16_e50_pre_blackaug.h5"
+MODEL = '/home/tharen/UNI/cell_processing/data/models/default_DRAN.json'
+WEIGHTS = "/home/tharen/UNI/cell_processing/data/models/b16_e50_pre_blackaug.h5"
 TILE_MASK_NAME_F = "{}_{}.png"
-DEBUG = False
+DEBUG = True
 model_config = ""
 with open(MODEL, "r") as f:
     model_config = f.read().strip()
@@ -275,7 +275,7 @@ def predict_slide(svs_id, svs_file_name, svs_dir, tmp_dir, masks_dir):
         num_tiles = num_tiles, 
         in_loc = f"{tmp_dir}/masks", 
         out_loc = masks_dir, 
-        out_name = f"{svs_id}.png",
+        out_name = f"{svs_id}.mask.png",
         img_size = (width, height)
     )
     

@@ -28,8 +28,8 @@ import PIL
 from PIL import Image
 import re
 import sys
-import tile_crop.util as util
-from tile_crop.util import Time
+import CNN.tile_crop.util as util
+from CNN.tile_crop.util import Time
 
 # import util
 

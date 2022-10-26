@@ -30,9 +30,9 @@ import skimage.morphology as sk_morphology
 import skimage.segmentation as sk_segmentation
 
 
-import tile_crop.slide as slide
-import tile_crop.util as util
-from tile_crop.util import Time
+import CNN.tile_crop.slide as slide
+import CNN.tile_crop.util as util
+from CNN.tile_crop.util import Time
 
 # import slide
 # import util 
