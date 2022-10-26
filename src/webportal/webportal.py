@@ -231,7 +231,7 @@ def scan_rename():
 
     for f in listdir(dir_path):
 
-        ext = f.split(".")
+        ext = f.split(".")[-1]
         os.rename(os.path.join(dir_path, f), os.path.join(dir_path, new_name + "." + ext))
 
     return "", 200
