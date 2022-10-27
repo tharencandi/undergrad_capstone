@@ -87,7 +87,7 @@ const FileTable = () => {
           id: fileId,
           filename: fileName,
           ".tif": fileStatusGenerator(tifStatus),
-          mask: fileStatusGenerator(maskStatus),
+          ".mask": fileStatusGenerator(maskStatus),
           ".png": fileStatusGenerator(pngStatus),
           dateCreated: created,
           caseType,
@@ -158,7 +158,7 @@ const FileTable = () => {
       align: "center",
     },
     {
-      field: "mask",
+      field: ".mask",
       headerName: "Mask",
       width: 128,
       renderCell: getChildFileStatus,
