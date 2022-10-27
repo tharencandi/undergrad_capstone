@@ -5,7 +5,7 @@ from metafiles import *
 PNG_EXT="png"
 TIF_EXT="tif"
 TIFF_EXT="tiff"
-MASK_EXT="mask.tif"
+MASK_EXT="mask.png"
 META_MASK_KEY="mask"
 META_EXT="meta"
 SVS_EXT="svs"
