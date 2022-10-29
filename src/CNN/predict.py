@@ -19,12 +19,13 @@ from yaml import safe_load
 
 import CNN.file_management as file_management
 from CNN.tile_crop.tile_crop_main import single_image_to_folder_of_tiles as tile_image
-from CNN.client import upload 
+from CNN.client import upload
+from CNN.CONSTANTS import MODEL, WEIGHTS
 
 #from bin_transcoder import encode_binary
 IMG_SIZE = (102, 102)
-MODEL = '/home/tharen/UNI/cell_processing/data/models/default_DRAN.json'
-WEIGHTS = "/home/tharen/UNI/cell_processing/data/models/b16_e50_pre_blackaug.h5"
+# MODEL = '/home/tharen/UNI/cell_processing/data/models/default_DRAN.json'
+# WEIGHTS = "/home/tharen/UNI/cell_processing/data/models/b16_e50_pre_blackaug.h5"
 TILE_MASK_NAME_F = "{}_{}.png"
 DEBUG = True
 model_config = ""

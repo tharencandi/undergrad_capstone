@@ -1,8 +1,12 @@
 import argparse
 import sys
 import os
-from integrity import file_checksum
-from download_script import DELIM, I_ID, I_FILENAME, I_MD5_SUM, I_SIZE, I_STATE, SVS_EXTENSION
+
+cdir = os.path.dirname(os.path.realpath(__file__))
+sys.path.append(os.path.dirname(cdir))
+
+from download_tool.integrity import file_checksum
+from download_tool.download_script import DELIM, I_ID, I_FILENAME, I_MD5_SUM, I_SIZE, I_STATE, SVS_EXTENSION
 
 MANIFEST_HEADER="id	filename	md5	size	state"
 
