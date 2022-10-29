@@ -4,7 +4,7 @@ import time
 import sys
 import os
 from Crypto.Hash import MD5
-from download.gdc_client import gdc_client
+from gdc_client import gdc_client
 from download.DownloadError import DownloadError
 from download.download_error_handler import download_error_handler
 from cml.cml_validator import *
