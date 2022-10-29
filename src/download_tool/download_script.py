@@ -9,10 +9,9 @@ from Crypto.Hash import MD5
 cdir = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.dirname(cdir))
 
-
-from download.gdc_client import gdc_client
-from download.DownloadError import DownloadError
-from download.download_error_handler import download_error_handler
+from gdc_client import gdc_client
+from download_tool.download.DownloadError import DownloadError
+from download_tool.download.download_error_handler import download_error_handler
 from cml.cml_validator import *
 from config import *
 

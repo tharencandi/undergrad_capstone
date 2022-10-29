@@ -5,13 +5,24 @@ from metafiles import *
 PNG_EXT="png"
 TIF_EXT="tif"
 TIFF_EXT="tiff"
-MASK_EXT="mask.png"
+MASK_TIF_EXT="mask.tif"
+MASK_TIFF_EXT="mask.tiff"
+MASK_PNG_EXT="mask.png"
 META_MASK_KEY="mask"
 META_EXT="meta"
 SVS_EXT="svs"
 
+MASK_OPTIONS = [META_MASK_KEY, MASK_PNG_EXT, MASK_TIF_EXT, MASK_TIFF_EXT]
+
 def make_fpath(uuid, fname, ext, meta_dir):
     dirpath = get_meta_field(uuid, "dirPath", meta_dir)
+    if ext in MASK_OPTIONS:
+        for e in MASK_OPTIONS:
+            ep = os.path.join(dirpath, fname + "." + e)
+            if os.path.exists(ep):
+                return ep
+
+
     return os.path.join(dirpath, fname + "." + ext)
 
 def get_svs_dir(uuid, meta_dir):
@@ -25,12 +36,14 @@ def populate_meta(uuid, object_dir_path, meta_dir):
     fnSVS = None
 
     for f in object_files:
-        if f.endswith(PNG_EXT):
+        # print(f)
+        if f.endswith(MASK_TIF_EXT) or f.endswith(META_MASK_KEY) or f.endswith(MASK_PNG_EXT):
+            fnmask = f
+            print(f)
+            set_meta_field(uuid, "maskStatus", "completed", meta_dir)
+        elif f.endswith(PNG_EXT):
             fnPNG = f
             set_meta_field(uuid, "pngStatus", "completed", meta_dir)
-        elif f.endswith(MASK_EXT) or f.endswith(META_MASK_KEY):
-            fnmask = f
-            set_meta_field(uuid, " maskStatus", "completed", meta_dir)
         elif f.endswith(TIF_EXT) or f.endswith(TIFF_EXT):
             fnTIF = f
             set_meta_field(uuid, "tifStatus", "completed", meta_dir)

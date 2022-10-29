@@ -16,13 +16,13 @@ from fs import *
 
 cdir = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.dirname(cdir))
-
+# sys.path.append(os.path.join(os.path.dirname(cdir), )
 
 from image_tools.conversion import svs_to_png, svs_to_tiff
 from image_tools.conversion import GOOD
 from download_tool.gdc_client import gdc_client
 from download_tool.download import *
-from CNN.predict import predict_slide
+# from CNN.predict import predict_slide
 
 application = Flask(__name__, static_url_path='',
                   static_folder='frontend/build',
@@ -41,30 +41,6 @@ DATA_DIR_K = "datadir"
 META_DIR_K = "metadir"
 dir = dirname(realpath(__file__))
 META_DIR = join(WEB_PORTAL_DIR, 'meta_files')
-valid_extensions = ["png", "svs", "tif", "tiff", "mask.tiff"]
-
-
-# get specific file path,
-def get_file(uuid, ext, data_dir):
-    dir_path = data_dir  + uuid
-
-    name = ''
-    for f in listdir(dir_path):
-        if f.endswith(ext):
-
-            print(f.endswith('.mask.tif'))
-            if ext == ('tif' or 'tiff') and (f.endswith('.mask.tif')or f.endswith('.mask.tiff')):
-                print("cont")
-                continue
-            name = f
-            break
-
-    if name == '':
-        return ""
-
-    file_path = "{}/{}".format(dir_path,name)
-
-    return file_path
 
 
 # get meta file, returns path to meta file
@@ -76,25 +52,10 @@ def get_meta(uuid, meta_dir):
     else:
         return ""
 
-
-# save file object into file system
-# def save_file(file_obj, id, ext, uuid, data_dir):
-
-#     dir_path = data_dir  + uuid
-#     file_path = "{}/{}.{}".format(dir_path,id,ext)
-
-#     file_obj.save(file_path)
-#     return file_path
-
 def create_meta(uuid, file_name, case, dir_path, meta_dir):
 
     meta_path = get_meta_path(uuid, meta_dir)
     file_path = join(dir_path, file_name) + '.svs'
-    # print(meta_path)
-    # print(file_path)
-    # print(uuid)
-    # print(file_name)
-    # print(dir_path)
 
     meta_data = {
         'fileId': uuid,
@@ -127,7 +88,6 @@ def index():
 def all_scans():
     # check for updates first
     res = {}
-    print(application.config[META_DIR_K])
     for f in listdir(application.config[META_DIR_K]):
         meta_json = dict()
         with open(os.path.join(application.config[META_DIR_K], f), "r") as f:
@@ -145,7 +105,6 @@ def get_scan():
     #
     ids = request.args["ids[]"]
     ext = request.args["extension[]"]
-    
     fname = get_meta_field(ids, "fileName", application.config[META_DIR_K])
     path = make_fpath(ids, fname, ext, application.config[META_DIR_K])
 
@@ -230,7 +189,6 @@ def scan_rename():
     set_meta_field(id, "fileName", new_name, application.config[META_DIR_K])
 
     for f in listdir(dir_path):
-
         ext = f.split(".")[-1]
         os.rename(os.path.join(dir_path, f), os.path.join(dir_path, new_name + "." + ext))
 

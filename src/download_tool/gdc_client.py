@@ -7,6 +7,10 @@ import sys
 import signal
 from tqdm import tqdm
 from requests import HTTPError
+
+cdir = os.path.dirname(os.path.realpath(__file__))
+sys.path.append(os.path.dirname(cdir))
+
 from download_tool.download.DownloadError import DownloadIntegrityError, DownloadError
 from download_tool.integrity import *
 
