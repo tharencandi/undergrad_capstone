@@ -7,8 +7,8 @@ import sys
 import signal
 from tqdm import tqdm
 from requests import HTTPError
-from download_tool.download.DownloadError import DownloadIntegrityError, DownloadError
-from download_tool.integrity import *
+from download.DownloadError import DownloadIntegrityError, DownloadError
+from integrity import *
 
 PARTIAL_FILE_POSTFIX = ".part"
 
