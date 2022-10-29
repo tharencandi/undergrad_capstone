@@ -89,7 +89,15 @@ A more detailed guide can be found in the bitbucket wiki.
 	- Please do not expose the management server directly to the internet, it is not secure. The app must be fronted by a dedicated web server such as nginx or apache tomcat. Basic authentication **MUST** be turned on at a minimum.
 	- The ngrok service was payed for by a student from the group for the duration of this project and will not be available to the client. The bitbucket wiki explains appropriate setup if the client wishes to use this tooling.
 
+- Download Tool
+	- Given a manifest file from the gdc, this tool will automatically download, verify integrity and save files in a specified format
+	- Configuration and standalone setup and deployment instructions can be found on its dedicated wiki page
 
+- Download Validation Tool
+	- Some files may have failed to download, been corrupted or are non existent in the gdc
+	- This tool will take a manifest file, verify the integrity of the downloads of each object listed in the manifest file
+	- All manifest file entries which cannot be verified are then saved in a new out manifest file which can be later retried or downloaded directly from the gdc website.
+	- Detailed instructions can be found on its dedicated wiki page
 	
 ### Contribution guidelines ###
 
