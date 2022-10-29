@@ -13,6 +13,8 @@ for best performance, please configure tensorflow2 to use NVIDIA CUDA enabled GP
 
 ### Project Setup ###
 
+**PLEASE SEE APPROPRIATE BITBUCKET PAGES FOR MORE DETAIL**
+
 1. Clone the repository onto your local machine
 	- Via ssh: `git clone git clone git@bitbucket.org:tharencandi/glioblastoma_processing.git`
 	- Via https: `git clone https://hbal7849@bitbucket.org/tharencandi/glioblastoma_processing.git`
@@ -26,6 +28,7 @@ for best performance, please configure tensorflow2 to use NVIDIA CUDA enabled GP
 	6. apt-get install -y openslide-tools
 	7. apt-get install -y python3-opencv
 	8. install nvm and nodejs
+	9. Install redis (in memory database), either from the package manager of you distrbibution OR from the official page as a binary
 	8. DRAN/CNN weights available [here](https://drive.google.com/file/d/1Kk17yPiln8CQG6uhiFHLKn6EkvjBJc7Q/view?usp=sharing)
 
 4. How to run tests: run pytest in repo directory. 
@@ -48,7 +51,7 @@ A more detailed guide can be found in the bitbucket wiki.
 
 - How to train model
 	1. training and validation datasets are available [here](https://drive.google.com/drive/u/2/folders/1Vlpsqh13JeldsZaPk6wYY0f_aNVtFeIe). 
-		- place in `data/training` and `data/validation` respectivley.
+		- place in `data/training` and `data/validation` respectively.
 	2. generate datasets by running `python3 src/CNN/dataset.py` and following its instructions. 
 	3. after 2, set related constants `TRAIN_LOCATON` and `TEST_LOCATION` in `src/CNN/train.py`.
 	4. set other hypermater constants in `train.py` and set ` FUNC = functions.SINGLE_TRAIN` or explore other functions
