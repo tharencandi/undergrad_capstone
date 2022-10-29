@@ -36,8 +36,8 @@ for best performance, please configure tensorflow2 to use NVIDIA CUDA enabled GP
 
 - How to setup CNN for mask generation:
 	1. download pre-trained weights [here](https://drive.google.com/file/d/1Kk17yPiln8CQG6uhiFHLKn6EkvjBJc7Q/view?usp=sharing) or follow CNN training process.
-	2. download model `.json` or generate by running `python3 src/CNN/cnn_model.py`
-	3. configure `MODEL` and `WEIGHTS` constants at the top of `src/CNN/predict.py` to 1 and 2.
+	2. download model `.json` or generate by simply running `python3 src/CNN/cnn_model.py`
+	3. configure `MODEL` and `WEIGHTS` constants at the top of `src/CNN/CONSTANTS.py` to 1 and 2.
 	4. deploy webportal and use its interface to generate masks on your computer *OR* follow **server** deploymenet process 
 
 
@@ -52,7 +52,7 @@ A more detailed guide can be found in the bitbucket wiki.
 - How to train model
 	1. training and validation datasets are available [here](https://drive.google.com/drive/u/2/folders/1Vlpsqh13JeldsZaPk6wYY0f_aNVtFeIe). 
 		- place in `data/training` and `data/validation` respectively.
-	2. generate datasets by running `python3 src/CNN/dataset.py` and following its instructions. 
+	2. generate CNN datasets by running `python3 src/CNN/dataset.py` and following its instructions. 
 	3. after 2, set related constants `TRAIN_LOCATON` and `TEST_LOCATION` in `src/CNN/train.py`.
 	4. set other hypermater constants in `train.py` and set ` FUNC = functions.SINGLE_TRAIN` or explore other functions
 	5. `python3 src/CNN/train.py`
@@ -60,7 +60,7 @@ A more detailed guide can be found in the bitbucket wiki.
 - How to test model
 	- aside from testing that is done in `train.py`, the IOU and mIOU of the original **validation** dataset can be determined by way of `src/CNN/test.py`. This script it configured to the relative file path `data/validation`.
 	1. set the constant `SAVE_DIR` to desired location for image and csv results at the top of `train.py` 
-	2. set the correct `MODEL` and `WEIGHTS` paths at the top of `src/CNN/predict.py`
+	2. set the correct `MODEL` and `WEIGHTS` paths at the top of `src/CNN/CONSTANTS.py`
 	3. `python3 src/CNN/test.py`.
 
 - generate masks from manifest on a remote machine
