@@ -75,10 +75,17 @@ for best performance, please configure tensorflow2 to use NVIDIA CUDA enabled GP
 	6. open a new terminal window (preferably with tmux) and run the download script:
 	 	- `python3 src/download_tool/download_script.py my_manifest.txt downloader_config.yaml`
 	7. open another terminal window (preferably with tmux) and run `predict.py`
-		-  `python3 src/CNN/predict.py preidct_config.yaml`
+		-  `python3 src/CNN/predict.py predict_config.yaml`
 
-- deploy management app
-	- Contact Haeata Balford Ash for deployement assistance, or any repo owner/admin.
+- Management Server
+	- Setting path to hardrive constant: In order for the management server to know where the hardrive directory is located in the filesystem a constant in the `src/management_server/fs.py` file must be modified. An example is depicted in the image below:
+	- ![2022-10-29 11:30:01 AM.png](https://bitbucket.org/repo/X7GME85/images/1358444091-2022-10-29%2011:30:01%20AM.png)
+	- run `python3 src/management_server/app.y` from the root of the source code directory.
+	- Please do not expose the management server directly to the internet, it is not secure. The app must be fronted by a dedicated web server such as nginx or apache tomcat. Basic authentication **MUST** be turned on at a minimum.
+	- The ngrok service was payed for by a student from the group for the duration of this project and will not be available to the client. The bitbucket wiki explains appropriate setup if the client wishes to use this tooling.
+
+
+	
 ### Contribution guidelines ###
 
 * Git workflow:
