@@ -39,10 +39,12 @@ for best performance, please configure tensorflow2 to use NVIDIA CUDA enabled GP
 
 
 - How to deploy webportal:
-	1. `python3 src/webportal/webportal.py ----existingDataPath [path_to_drive_with_GDC_data]`
-	2. `redis-server`
-	2. `celery -A "webportal" worker --loglevel=INFO`
-	3. build react front end: cd into src/webportal/frontend and run `npm install` and `npm run build`
+	1. build react front end: cd into src/webportal/frontend and run `npm install` and `npm run build`
+	2. `python3 src/webportal/webportal.py ----existingDataPath [path_to_drive_with_GDC_data]`
+	3. `redis-server`
+	4. `celery -A "webportal" worker --loglevel=INFO`
+
+A more detailed guide can be found in the bitbucket wiki.
 
 - How to train model
 	1. training and validation datasets are available [here](https://drive.google.com/drive/u/2/folders/1Vlpsqh13JeldsZaPk6wYY0f_aNVtFeIe). 
