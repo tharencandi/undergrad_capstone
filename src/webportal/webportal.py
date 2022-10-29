@@ -22,7 +22,7 @@ from image_tools.conversion import svs_to_png, svs_to_tiff
 from image_tools.conversion import GOOD
 from download_tool.gdc_client import gdc_client
 from download_tool.download import *
-# from CNN.predict import predict_slide
+from CNN.predict import predict_slide
 
 application = Flask(__name__, static_url_path='',
                   static_folder='frontend/build',
@@ -152,7 +152,8 @@ def cancel():
             jid = get_meta_field(dir, field, application.config[META_DIR_K])
             if jid != "":
                 celery.control.revoke(jid, terminate=True, signal="SIGUSR1")
-            set_meta_field(dir, field, "", application.config[META_DIR_K])
+                set_meta_field(dir, field, "", application.config[META_DIR_K])
+                set_meta_field(dir, e+"Status", "none", application.config[META_DIR_K])
 
 
 
