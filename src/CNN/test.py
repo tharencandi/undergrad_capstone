@@ -1,9 +1,18 @@
-from predict import predict_image, val_mask_to_bin
-from iou import get_iou
+
 import cv2 as cv
 import numpy as np
-import os
+from os import path, mkdir
+import sys
 
+cdir = path.dirname(path.realpath(__file__))
+sys.path.append(path.dirname(cdir))
+
+from predict import predict_image, val_mask_to_bin
+from iou import get_iou
+
+
+SAVE_DIR = "data/results"
+NUM_TEST_IMGS = 18
 
 """
 model and model weights used defined at top of predict.py
@@ -13,9 +22,9 @@ def predict_validation_set(n, save_location):
     out_str = "iou,\n"
     count = 0
 
-    if not os.path.isdir(save_location):
+    if not path.isdir(save_location):
         print(f"making save directory: {save_location}")
-        os.mkdir(save_location)
+        mkdir(save_location)
     
     for i in range(1,n+1):
         img = cv.imread("data/validation/image{:02d}.png".format(i))
@@ -40,4 +49,4 @@ def predict_validation_set(n, save_location):
     print("mean iou: " + str(iou_sum / count))
 
 if __name__ == "__main__":
-    predict_validation_set(18, "data/results")
+    predict_validation_set(NUM_TEST_IMGS, SAVE_DIR)

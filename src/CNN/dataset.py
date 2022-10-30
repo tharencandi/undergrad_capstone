@@ -1,19 +1,37 @@
 
+
+
+
 import cv2 as cv
 import numpy as np
 import tensorflow as tf
 import random
 from skimage.util.shape import view_as_windows 
 import sys
-import os
-from os import path
-TRAIN_LOCATION = "data/training/"
+
+from os import path, mkdir
+
+cdir = path.dirname(path.realpath(__file__))
+sys.path.append(path.dirname(cdir))
+
+
+
+
+"""
+    location of original images. If you do not have them downloaded.
+    Go to: 
+    - https://drive.google.com/drive/folders/1Raa2NuSqzvjDePrft9xDHf7HngxPowDo?usp=sharing 
+    - https://drive.google.com/drive/folders/14OCZf5EuLY4_TjNVGIOABA0pd3NoboN2?usp=sharing 
+"""
+TRAIN_LOCATION = "data/trainings/"
 VAL_LOCATION = "data/validation/"
 
-
+"""
+DO NOT MODIFY
+"""
 IMG_SIZE = (102, 102)
 LBL_SIZE = (54, 54)
-NUM = 15
+NUM = 16
 
 
 """
@@ -244,7 +262,7 @@ def main():
         if (folder[-1] != '/'):
             folder += "/"
         if not path.exists(folder):
-            os.mkdir(folder)
+            mkdir(folder)
 
         if dataset_type.lower() == "nbl":
 

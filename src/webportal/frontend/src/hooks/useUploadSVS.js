@@ -6,6 +6,9 @@ const useUploadSVS = () => {
   const [currentUploadingFile, setCurrentUploadingFile] = useState(null);
   const [numberUploaded, setNumberUploaded] = useState(0);
   const [numberToUpload, setNumberToUpload] = useState(0);
+  const [error, setError] = useState(null);
+  const controller = new AbortController();
+  const signal = controller.signal;
 
   //When there have been new files queued, update the global store and trigger an upload
   useEffect(() => {
@@ -15,47 +18,48 @@ const useUploadSVS = () => {
 
       setCurrentUploadingFile(file.name);
 
-      // // Dummy API call which waits for
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
       const res = await axios
         .post("/scan", formData, {
+          signal,
           headers: {
             "Content-Type": "multipart/form-data",
           },
         })
         .then((res) => {
-          console.log(res);
+          setError(null);
         })
         .catch((err) => {
-          console.log(err);
+          throw err;
         });
 
       setCurrentUploadingFile(null);
       return res;
     };
 
-    // If there is already a file uploading, then do not start another upload
-    if (currentUploadingFile) {
-      return;
-    }
-
     if (uploadQueue.length > 0) {
       const currentFile = uploadQueue[0];
-
       uploadFile(currentFile)
         .then((res) => {
           console.log(res);
+
           setNumberUploaded((prevState) => {
             return prevState + 1;
           });
+
           setUploadQueue((prevState) => {
             return [...prevState.slice(1)];
           });
         })
         .catch((err) => {
-          // Upload cancelled or failed
-          console.log(err);
+          if (err.code !== "ERR_CANCELED") {
+            setError(
+              `Attempted upload for "${currentFile.name}" failed: ${err.message}`
+            );
+          }
+          setNumberUploaded(0);
+          setNumberToUpload(0);
+          setCurrentUploadingFile(null);
+          setUploadQueue([]);
         });
     } else {
       // Nothing queued to upload, then reset the number uploaded
@@ -63,7 +67,11 @@ const useUploadSVS = () => {
       setNumberToUpload(0);
       setCurrentUploadingFile(null);
     }
-  }, [uploadQueue, currentUploadingFile]);
+
+    return () => {
+      controller.abort();
+    };
+  }, [uploadQueue]);
 
   // Concatenate the original queue with new files to upload
   return [
@@ -74,6 +82,8 @@ const useUploadSVS = () => {
     currentUploadingFile,
     numberUploaded,
     numberToUpload,
+    error,
+    setError,
   ];
 };
 

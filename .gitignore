@@ -49,3 +49,7 @@ Thumbs.db
 *.wmv
 
 *venv
+temp
+
+#Meta files
+meta_files

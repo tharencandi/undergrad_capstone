@@ -1,7 +1,0 @@
----
-TMP_DIR: "data/tmp"
-MANIFEST_IN: "src/CNN/test_manifest.txt"
-MANIFEST_OUT: "data/manifest.out"
-MASK_DIR: "data/masks"
-SVS_DIR: "data/svs_files"
-UPLOAD_LOG: "data/logs/upload_log.log"

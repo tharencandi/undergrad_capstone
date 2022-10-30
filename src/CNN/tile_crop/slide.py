@@ -28,8 +28,11 @@ import PIL
 from PIL import Image
 import re
 import sys
-import util
-from util import Time
+import CNN.tile_crop.util as util
+from CNN.tile_crop.util import Time
+
+# import util
+
 
 BASE_DIR = os.path.join(".", "data")
 # BASE_DIR = os.path.join(os.sep, "Volumes", "BigData", "TUPAC")
@@ -224,24 +227,24 @@ def get_tile_image_path_name(tile, directory):
 
 
 
-def get_tile_image_path_by_slide_row_col(slide_number, row, col):
-  """
-  Obtain tile image path using wildcard lookup with slide number, row, and column.
+# def get_tile_image_path_by_slide_row_col(slide_number, row, col):
+#   """
+#   Obtain tile image path using wildcard lookup with slide number, row, and column.
 
-  Args:
-    slide_number: The slide number.
-    row: The row.
-    col: The column.
+#   Args:
+#     slide_number: The slide number.
+#     row: The row.
+#     col: The column.
 
-  Returns:
-    Path to image tile.
-  """
-  padded_sl_num = str(slide_number).zfill(3)
-  wilcard_path = os.path.join(TILE_DIR, padded_sl_num,
-                              TRAIN_PREFIX + padded_sl_num + "-" + TILE_SUFFIX + "-r%d-c%d-*." % (
-                                row, col) + DEST_TRAIN_EXT)
-  img_path = glob.glob(wilcard_path)[0]
-  return img_path
+#   Returns:
+#     Path to image tile.
+#   """
+#   padded_sl_num = str(slide_number).zfill(3)
+#   wilcard_path = os.path.join(TILE_DIR, padded_sl_num,
+#                               TRAIN_PREFIX + padded_sl_num + "-" + TILE_SUFFIX + "-r%d-c%d-*." % (
+#                                 row, col) + DEST_TRAIN_EXT)
+#   img_path = glob.glob(wilcard_path)[0]
+#   return img_path
 
 
 # def get_training_image_path(slide_number, large_w=None, large_h=None, small_w=None, small_h=None):
@@ -543,63 +546,63 @@ def get_tile_summary_on_original_image_path_name(image_name):
   return img_path
 
 
-def get_tile_summary_on_original_thumbnail_path(slide_number):
-  """
-  Convert slide number to a path to a tile summary on original thumbnail file.
+# def get_tile_summary_on_original_thumbnail_path(slide_number):
+#   """
+#   Convert slide number to a path to a tile summary on original thumbnail file.
 
-  Example:
-    5 -> ../data/tile_summary_on_original_thumbnail_jpg/TUPAC-TR-005-tile_summary.jpg
+#   Example:
+#     5 -> ../data/tile_summary_on_original_thumbnail_jpg/TUPAC-TR-005-tile_summary.jpg
 
-  Args:
-    slide_number: The slide number.
+#   Args:
+#     slide_number: The slide number.
 
-  Returns:
-    Path to the tile summary on original thumbnail file.
-  """
-  if not os.path.exists(TILE_SUMMARY_ON_ORIGINAL_THUMBNAIL_DIR):
-    os.makedirs(TILE_SUMMARY_ON_ORIGINAL_THUMBNAIL_DIR)
-  img_path = os.path.join(TILE_SUMMARY_ON_ORIGINAL_THUMBNAIL_DIR,
-                          get_tile_summary_image_filename(slide_number, thumbnail=True))
-  return img_path
-
-
-def get_top_tiles_on_original_image_path(slide_number):
-  """
-  Convert slide number to a path to a top tiles on original image file.
-
-  Example:
-    5 -> ../data/top_tiles_on_original_png/TUPAC-TR-005-32x-49920x108288-1560x3384-top_tiles.png
-
-  Args:
-    slide_number: The slide number.
-
-  Returns:
-    Path to the top tiles on original image file.
-  """
-  if not os.path.exists(TOP_TILES_ON_ORIGINAL_DIR):
-    os.makedirs(TOP_TILES_ON_ORIGINAL_DIR)
-  img_path = os.path.join(TOP_TILES_ON_ORIGINAL_DIR, get_top_tiles_image_filename(slide_number))
-  return img_path
+#   Returns:
+#     Path to the tile summary on original thumbnail file.
+#   """
+#   if not os.path.exists(TILE_SUMMARY_ON_ORIGINAL_THUMBNAIL_DIR):
+#     os.makedirs(TILE_SUMMARY_ON_ORIGINAL_THUMBNAIL_DIR)
+#   img_path = os.path.join(TILE_SUMMARY_ON_ORIGINAL_THUMBNAIL_DIR,
+#                           get_tile_summary_image_filename(slide_number, thumbnail=True))
+#   return img_path
 
 
-def get_top_tiles_on_original_thumbnail_path(slide_number):
-  """
-  Convert slide number to a path to a top tiles on original thumbnail file.
+# def get_top_tiles_on_original_image_path(slide_number):
+#   """
+#   Convert slide number to a path to a top tiles on original image file.
 
-  Example:
-    5 -> ../data/top_tiles_on_original_thumbnail_jpg/TUPAC-TR-005-32x-49920x108288-1560x3384-top_tiles.jpg
+#   Example:
+#     5 -> ../data/top_tiles_on_original_png/TUPAC-TR-005-32x-49920x108288-1560x3384-top_tiles.png
 
-  Args:
-    slide_number: The slide number.
+#   Args:
+#     slide_number: The slide number.
 
-  Returns:
-    Path to the top tiles on original thumbnail file.
-  """
-  if not os.path.exists(TOP_TILES_ON_ORIGINAL_THUMBNAIL_DIR):
-    os.makedirs(TOP_TILES_ON_ORIGINAL_THUMBNAIL_DIR)
-  img_path = os.path.join(TOP_TILES_ON_ORIGINAL_THUMBNAIL_DIR,
-                          get_top_tiles_image_filename(slide_number, thumbnail=True))
-  return img_path
+#   Returns:
+#     Path to the top tiles on original image file.
+#   """
+#   if not os.path.exists(TOP_TILES_ON_ORIGINAL_DIR):
+#     os.makedirs(TOP_TILES_ON_ORIGINAL_DIR)
+#   img_path = os.path.join(TOP_TILES_ON_ORIGINAL_DIR, get_top_tiles_image_filename(slide_number))
+#   return img_path
+
+
+# def get_top_tiles_on_original_thumbnail_path(slide_number):
+#   """
+#   Convert slide number to a path to a top tiles on original thumbnail file.
+
+#   Example:
+#     5 -> ../data/top_tiles_on_original_thumbnail_jpg/TUPAC-TR-005-32x-49920x108288-1560x3384-top_tiles.jpg
+
+#   Args:
+#     slide_number: The slide number.
+
+#   Returns:
+#     Path to the top tiles on original thumbnail file.
+#   """
+#   if not os.path.exists(TOP_TILES_ON_ORIGINAL_THUMBNAIL_DIR):
+#     os.makedirs(TOP_TILES_ON_ORIGINAL_THUMBNAIL_DIR)
+#   img_path = os.path.join(TOP_TILES_ON_ORIGINAL_THUMBNAIL_DIR,
+#                           get_top_tiles_image_filename(slide_number, thumbnail=True))
+#   return img_path
 
 
 # def get_tile_summary_image_filename(slide_number, thumbnail=False):
@@ -725,27 +728,27 @@ def get_tile_summary_image_filename_name(image_name, thumbnail=False):
 #   return img_path
 
 
-def get_tile_data_filename(slide_number):
-  """
-  Convert slide number to a tile data file name.
+# def get_tile_data_filename(slide_number):
+#   """
+#   Convert slide number to a tile data file name.
 
-  Example:
-    5 -> TUPAC-TR-005-32x-49920x108288-1560x3384-tile_data.csv
+#   Example:
+#     5 -> TUPAC-TR-005-32x-49920x108288-1560x3384-tile_data.csv
 
-  Args:
-    slide_number: The slide number.
+#   Args:
+#     slide_number: The slide number.
 
-  Returns:
-    The tile data file name.
-  """
-  padded_sl_num = str(slide_number).zfill(3)
+#   Returns:
+#     The tile data file name.
+#   """
+#   padded_sl_num = str(slide_number).zfill(3)
 
-  training_img_path = get_training_image_path(slide_number)
-  large_w, large_h, small_w, small_h = parse_dimensions_from_image_filename(training_img_path)
-  data_filename = TRAIN_PREFIX + padded_sl_num + "-" + str(SCALE_FACTOR) + "x-" + str(large_w) + "x" + str(
-    large_h) + "-" + str(small_w) + "x" + str(small_h) + "-" + TILE_DATA_SUFFIX + ".csv"
+#   training_img_path = get_training_image_path(slide_number)
+#   large_w, large_h, small_w, small_h = parse_dimensions_from_image_filename(training_img_path)
+#   data_filename = TRAIN_PREFIX + padded_sl_num + "-" + str(SCALE_FACTOR) + "x-" + str(large_w) + "x" + str(
+#     large_h) + "-" + str(small_w) + "x" + str(small_h) + "-" + TILE_DATA_SUFFIX + ".csv"
 
-  return data_filename
+#   return data_filename
 
 
 # def get_tile_data_path(slide_number):
@@ -913,28 +916,28 @@ def training_slide_name_to_image(slide_name):
   # save_thumbnail(img, THUMBNAIL_SIZE, thumbnail_path)
 
 
-def slide_to_scaled_pil_image(slide_number):
-  """
-  Convert a WSI training slide to a scaled-down PIL image.
+# def slide_to_scaled_pil_image(slide_number):
+#   """
+#   Convert a WSI training slide to a scaled-down PIL image.
 
-  Args:
-    slide_number: The slide number.
+#   Args:
+#     slide_number: The slide number.
 
-  Returns:
-    Tuple consisting of scaled-down PIL image, original width, original height, new width, and new height.
-  """
-  slide_filepath = get_training_slide_path(slide_number)
-  print("Opening Slide #%d: %s" % (slide_number, slide_filepath))
-  slide = open_slide(slide_filepath)
+#   Returns:
+#     Tuple consisting of scaled-down PIL image, original width, original height, new width, and new height.
+#   """
+#   slide_filepath = get_training_slide_path(slide_number)
+#   print("Opening Slide #%d: %s" % (slide_number, slide_filepath))
+#   slide = open_slide(slide_filepath)
 
-  large_w, large_h = slide.dimensions
-  new_w = math.floor(large_w / SCALE_FACTOR)
-  new_h = math.floor(large_h / SCALE_FACTOR)
-  level = slide.get_best_level_for_downsample(SCALE_FACTOR)
-  whole_slide_image = slide.read_region((0, 0), level, slide.level_dimensions[level])
-  whole_slide_image = whole_slide_image.convert("RGB")
-  img = whole_slide_image.resize((new_w, new_h), PIL.Image.BILINEAR)
-  return img, large_w, large_h, new_w, new_h
+#   large_w, large_h = slide.dimensions
+#   new_w = math.floor(large_w / SCALE_FACTOR)
+#   new_h = math.floor(large_h / SCALE_FACTOR)
+#   level = slide.get_best_level_for_downsample(SCALE_FACTOR)
+#   whole_slide_image = slide.read_region((0, 0), level, slide.level_dimensions[level])
+#   whole_slide_image = whole_slide_image.convert("RGB")
+#   img = whole_slide_image.resize((new_w, new_h), PIL.Image.BILINEAR)
+#   return img, large_w, large_h, new_w, new_h
 
 def slide_name_to_scaled_pil_image(slide_name):
   """
@@ -960,61 +963,61 @@ def slide_name_to_scaled_pil_image(slide_name):
   return img, large_w, large_h, new_w, new_h
 
 
-def slide_to_scaled_np_image(slide_number):
-  """
-  Convert a WSI training slide to a scaled-down NumPy image.
+# def slide_to_scaled_np_image(slide_number):
+#   """
+#   Convert a WSI training slide to a scaled-down NumPy image.
 
-  Args:
-    slide_number: The slide number.
+#   Args:
+#     slide_number: The slide number.
 
-  Returns:
-    Tuple consisting of scaled-down NumPy image, original width, original height, new width, and new height.
-  """
-  pil_img, large_w, large_h, new_w, new_h = slide_to_scaled_pil_image(slide_number)
-  np_img = util.pil_to_np_rgb(pil_img)
-  return np_img, large_w, large_h, new_w, new_h
-
-
-def show_slide(slide_number):
-  """
-  Display a WSI slide on the screen, where the slide has been scaled down and converted to a PIL image.
-
-  Args:
-    slide_number: The slide number.
-  """
-  pil_img = slide_to_scaled_pil_image(slide_number)[0]
-  pil_img.show()
+#   Returns:
+#     Tuple consisting of scaled-down NumPy image, original width, original height, new width, and new height.
+#   """
+#   pil_img, large_w, large_h, new_w, new_h = slide_to_scaled_pil_image(slide_number)
+#   np_img = util.pil_to_np_rgb(pil_img)
+#   return np_img, large_w, large_h, new_w, new_h
 
 
-def save_thumbnail(pil_img, size, path, display_path=False):
-  """
-  Save a thumbnail of a PIL image, specifying the maximum width or height of the thumbnail.
+# def show_slide(slide_number):
+#   """
+#   Display a WSI slide on the screen, where the slide has been scaled down and converted to a PIL image.
 
-  Args:
-    pil_img: The PIL image to save as a thumbnail.
-    size:  The maximum width or height of the thumbnail.
-    path: The path to the thumbnail.
-    display_path: If True, display thumbnail path in console.
-  """
-  max_size = tuple(round(size * d / max(pil_img.size)) for d in pil_img.size)
-  img = pil_img.resize(max_size, PIL.Image.BILINEAR)
-  if display_path:
-    print("Saving thumbnail to: " + path)
-  dir = os.path.dirname(path)
-  if dir != '' and not os.path.exists(dir):
-    os.makedirs(dir)
-  img.save(path)
+#   Args:
+#     slide_number: The slide number.
+#   """
+#   pil_img = slide_to_scaled_pil_image(slide_number)[0]
+#   pil_img.show()
 
 
-def get_num_training_slides():
-  """
-  Obtain the total number of WSI training slide images.
+# def save_thumbnail(pil_img, size, path, display_path=False):
+#   """
+#   Save a thumbnail of a PIL image, specifying the maximum width or height of the thumbnail.
 
-  Returns:
-    The total number of WSI training slide images.
-  """
-  num_training_slides = len(glob.glob1(SRC_TRAIN_DIR, "*." + SRC_TRAIN_EXT))
-  return num_training_slides
+#   Args:
+#     pil_img: The PIL image to save as a thumbnail.
+#     size:  The maximum width or height of the thumbnail.
+#     path: The path to the thumbnail.
+#     display_path: If True, display thumbnail path in console.
+#   """
+#   max_size = tuple(round(size * d / max(pil_img.size)) for d in pil_img.size)
+#   img = pil_img.resize(max_size, PIL.Image.BILINEAR)
+#   if display_path:
+#     print("Saving thumbnail to: " + path)
+#   dir = os.path.dirname(path)
+#   if dir != '' and not os.path.exists(dir):
+#     os.makedirs(dir)
+#   img.save(path)
+
+
+# def get_num_training_slides():
+#   """
+#   Obtain the total number of WSI training slide images.
+
+#   Returns:
+#     The total number of WSI training slide images.
+#   """
+#   num_training_slides = len(glob.glob1(SRC_TRAIN_DIR, "*." + SRC_TRAIN_EXT))
+#   return num_training_slides
 
 
 # def training_slide_range_to_images(start_ind, end_ind):

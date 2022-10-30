@@ -29,10 +29,15 @@ import numpy as np
 import os
 from PIL import Image, ImageDraw, ImageFont
 from enum import Enum
-import util
-import filter
-import slide
-from util import Time
+import CNN.tile_crop.util as util
+import CNN.tile_crop.filter as filter
+import CNN.tile_crop.slide as slide
+from CNN.tile_crop.util import Time
+
+# import util
+# import slide
+# import filter
+# from util import Time
 
 TISSUE_HIGH_THRESH = 80
 TISSUE_LOW_THRESH = 10
@@ -58,8 +63,10 @@ FADED_MEDIUM_COLOR = (255, 255, 128)
 FADED_LOW_COLOR = (255, 210, 128)
 FADED_NONE_COLOR = (255, 128, 128)
 
-FONT_PATH = "/Library/Fonts/Arial Bold.ttf"
-SUMMARY_TITLE_FONT_PATH = "/Library/Fonts/Courier New Bold.ttf"
+FONT_PATH = "/home/tharen/UNI/cell_processing/data/Courier New Bold.ttf"
+SUMMARY_TITLE_FONT_PATH = "/home/tharen/UNI/cell_processing/data/Courier New Bold.ttf"
+# FONT_PATH = "/Library/Fonts/Arial Bold.ttf"
+# SUMMARY_TITLE_FONT_PATH = "/Library/Fonts/Courier New Bold.ttf"
 SUMMARY_TITLE_TEXT_COLOR = (0, 0, 0)
 SUMMARY_TITLE_TEXT_SIZE = 24
 SUMMARY_TILE_TEXT_COLOR = (255, 255, 255)
@@ -298,27 +305,27 @@ def generate_tile_summaries_name(tile_sum, np_img, display=True, save_summary=Fa
 #   return result
 
 
-def np_tile_stat_img(tiles):
-  """
-  Generate tile scoring statistics for a list of tiles and return the result as a NumPy array image.
+# def np_tile_stat_img(tiles):
+#   """
+#   Generate tile scoring statistics for a list of tiles and return the result as a NumPy array image.
 
-  Args:
-    tiles: List of tiles (such as top tiles)
+#   Args:
+#     tiles: List of tiles (such as top tiles)
 
-  Returns:
-    Tile scoring statistics converted into an NumPy array image.
-  """
-  tt = sorted(tiles, key=lambda t: (t.r, t.c), reverse=False)
-  tile_stats = "Tile Score Statistics:\n"
-  count = 0
-  for t in tt:
-    if count > 0:
-      tile_stats += "\n"
-    count += 1
-    tup = (t.r, t.c, t.rank, t.tissue_percentage, t.color_factor, t.s_and_v_factor, t.quantity_factor, t.score)
-    tile_stats += "R%03d C%03d #%003d TP:%6.2f%% CF:%4.0f SVF:%4.2f QF:%4.2f S:%0.4f" % tup
-  np_stats = np_text(tile_stats, font_path=SUMMARY_TITLE_FONT_PATH, font_size=14)
-  return np_stats
+#   Returns:
+#     Tile scoring statistics converted into an NumPy array image.
+#   """
+#   tt = sorted(tiles, key=lambda t: (t.r, t.c), reverse=False)
+#   tile_stats = "Tile Score Statistics:\n"
+#   count = 0
+#   for t in tt:
+#     if count > 0:
+#       tile_stats += "\n"
+#     count += 1
+#     tup = (t.r, t.c, t.rank, t.tissue_percentage, t.color_factor, t.s_and_v_factor, t.quantity_factor, t.score)
+#     tile_stats += "R%03d C%03d #%003d TP:%6.2f%% CF:%4.0f SVF:%4.2f QF:%4.2f S:%0.4f" % tup
+#   np_stats = np_text(tile_stats, font_path=SUMMARY_TITLE_FONT_PATH, font_size=14)
+#   return np_stats
 
 
 
@@ -439,25 +446,25 @@ def np_tile_stat_img(tiles):
 #   return np_stats
 
 
-def tile_border_color(tissue_percentage):
-  """
-  Obtain the corresponding tile border color for a particular tile tissue percentage.
+# def tile_border_color(tissue_percentage):
+#   """
+#   Obtain the corresponding tile border color for a particular tile tissue percentage.
 
-  Args:
-    tissue_percentage: The tile tissue percentage
+#   Args:
+#     tissue_percentage: The tile tissue percentage
 
-  Returns:
-    The tile border color corresponding to the tile tissue percentage.
-  """
-  if tissue_percentage >= TISSUE_HIGH_THRESH:
-    border_color = HIGH_COLOR
-  elif (tissue_percentage >= TISSUE_LOW_THRESH) and (tissue_percentage < TISSUE_HIGH_THRESH):
-    border_color = MEDIUM_COLOR
-  elif (tissue_percentage > 0) and (tissue_percentage < TISSUE_LOW_THRESH):
-    border_color = LOW_COLOR
-  else:
-    border_color = NONE_COLOR
-  return border_color
+#   Returns:
+#     The tile border color corresponding to the tile tissue percentage.
+#   """
+#   if tissue_percentage >= TISSUE_HIGH_THRESH:
+#     border_color = HIGH_COLOR
+#   elif (tissue_percentage >= TISSUE_LOW_THRESH) and (tissue_percentage < TISSUE_HIGH_THRESH):
+#     border_color = MEDIUM_COLOR
+#   elif (tissue_percentage > 0) and (tissue_percentage < TISSUE_LOW_THRESH):
+#     border_color = LOW_COLOR
+#   else:
+#     border_color = NONE_COLOR
+#   return border_color
 
 def tile_border_color_name(tissue_percentage, threshold):
   """
@@ -578,11 +585,11 @@ def summary_stats_name(tile_summary,threshold):
          "Scale Factor: 1/%dx\n" % tile_summary.scale_factor + \
          "Scaled Dimensions: %dx%d\n" % (tile_summary.scaled_w, tile_summary.scaled_h) + \
          "Scaled Tile Size: %dx%d\n" % (tile_summary.scaled_tile_w, tile_summary.scaled_tile_w) + \
-         "Total Mask: %3.2f%%, Total Tissue: %3.2f%%\n" % (
-           tile_summary.mask_percentage(), tile_summary.tissue_percentage) + \
+         "Total Tissue: %3.2f%%\n" % (
+           tile_summary.tissue_percentage) + \
          "Tiles: %dx%d = %d\n" % (tile_summary.num_col_tiles, tile_summary.num_row_tiles, tile_summary.count) + \
          " %5d (%5.2f%%) tiles >=%d%% tissue\n" % (
-           tile_summary.high, tile_summary.high / tile_summary.count * 100, threshold) + \
+           tile_summary.high + tile_summary.medium, (tile_summary.high + tile_summary.medium)/ tile_summary.count * 100, threshold) + \
          " %5d (%5.2f%%) tiles >0%% and <%d%% tissue\n" % (
            tile_summary.low, tile_summary.low / tile_summary.count * 100, threshold) + \
          " %5d (%5.2f%%) tiles =0%% tissue" % (tile_summary.none, tile_summary.none / tile_summary.count * 100)
@@ -851,35 +858,35 @@ def save_above_threshold_name(image_name, display=True, save_summary=False, save
   return tile_sum
 
 
-def save_tile_data(tile_summary):
-  """
-  Save tile data to csv file.
+# def save_tile_data(tile_summary):
+#   """
+#   Save tile data to csv file.
 
-  Args
-    tile_summary: TimeSummary object.
-  """
+#   Args
+#     tile_summary: TimeSummary object.
+#   """
 
-  time = Time()
+  # time = Time()
 
-  csv = summary_title(tile_summary) + "\n" + summary_stats(tile_summary)
+  # csv = summary_title(tile_summary) + "\n" + summary_stats(tile_summary)
 
-  csv += "\n\n\nTile Num,Row,Column,Tissue %,Tissue Quantity,Col Start,Row Start,Col End,Row End,Col Size,Row Size," + \
-         "Original Col Start,Original Row Start,Original Col End,Original Row End,Original Col Size,Original Row Size," + \
-         "Color Factor,S and V Factor,Quantity Factor,Score\n"
+  # csv += "\n\n\nTile Num,Row,Column,Tissue %,Tissue Quantity,Col Start,Row Start,Col End,Row End,Col Size,Row Size," + \
+  #        "Original Col Start,Original Row Start,Original Col End,Original Row End,Original Col Size,Original Row Size," + \
+  #        "Color Factor,S and V Factor,Quantity Factor,Score\n"
 
-  for t in tile_summary.tiles:
-    line = "%d,%d,%d,%4.2f,%s,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%4.0f,%4.2f,%4.2f,%0.4f\n" % (
-      t.tile_num, t.r, t.c, t.tissue_percentage, t.tissue_quantity().name, t.c_s, t.r_s, t.c_e, t.r_e, t.c_e - t.c_s,
-      t.r_e - t.r_s, t.o_c_s, t.o_r_s, t.o_c_e, t.o_r_e, t.o_c_e - t.o_c_s, t.o_r_e - t.o_r_s, t.color_factor,
-      t.s_and_v_factor, t.quantity_factor, t.score)
-    csv += line
+  # for t in tile_summary.tiles:
+  #   line = "%d,%d,%d,%4.2f,%s,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%4.0f,%4.2f,%4.2f,%0.4f\n" % (
+  #     t.tile_num, t.r, t.c, t.tissue_percentage, t.tissue_quantity().name, t.c_s, t.r_s, t.c_e, t.r_e, t.c_e - t.c_s,
+  #     t.r_e - t.r_s, t.o_c_s, t.o_r_s, t.o_c_e, t.o_r_e, t.o_c_e - t.o_c_s, t.o_r_e - t.o_r_s, t.color_factor,
+  #     t.s_and_v_factor, t.quantity_factor, t.score)
+  #   csv += line
 
-  data_path = slide.get_tile_data_path(tile_summary.slide_num)
-  csv_file = open(data_path, "w")
-  csv_file.write(csv)
-  csv_file.close()
+  # data_path = slide.get_tile_data_path(tile_summary.slide_num)
+  # csv_file = open(data_path, "w")
+  # csv_file.write(csv)
+  # csv_file.close()
 
-  print("%-20s | Time: %-14s  Name: %s" % ("Save Tile Data", str(time.elapsed()), data_path))
+  # print("%-20s | Time: %-14s  Name: %s" % ("Save Tile Data", str(time.elapsed()), data_path))
 
 
 def tile_to_pil_tile(tile):
@@ -903,95 +910,95 @@ def tile_to_pil_tile(tile):
   pil_img = tile_region.convert("RGB")
   return pil_img
 
-def tile_to_pil_tile_svs(tile):
-  """
-  Convert tile information into the corresponding tile as a PIL image read from the whole-slide image file.
+# def tile_to_pil_tile_svs(tile):
+#   """
+#   Convert tile information into the corresponding tile as a PIL image read from the whole-slide image file.
 
-  Args:
-    tile: Tile object.
+#   Args:
+#     tile: Tile object.
 
-  Return:
-    Tile as a PIL image.
-  """
-  t = tile
-  slide_filepath = slide.get_training_slide_path(t.slide_num)
-  s = slide.open_slide(slide_filepath)
+#   Return:
+#     Tile as a PIL image.
+#   """
+#   t = tile
+#   slide_filepath = slide.get_training_slide_path(t.slide_num)
+#   s = slide.open_slide(slide_filepath)
 
-  x, y = t.o_c_s, t.o_r_s
-  w, h = t.o_c_e - t.o_c_s, t.o_r_e - t.o_r_s
-  tile_region = s.read_region((x, y), 0, (w, h))
-  # RGBA to RGB
-  pil_img = tile_region.convert("RGB")
-  return pil_img
-
-
-
-def tile_to_np_tile(tile):
-  """
-  Convert tile information into the corresponding tile as a NumPy image read from the whole-slide image file.
-
-  Args:
-    tile: Tile object.
-
-  Return:
-    Tile as a NumPy image.
-  """
-  pil_img = tile_to_pil_tile(tile)
-  np_img = util.pil_to_np_rgb(pil_img)
-  return np_img
-
-
-def save_display_tile(tile, save=True, display=False):
-  """
-  Save and/or display a tile image.
-
-  Args:
-    tile: Tile object.
-    save: If True, save tile image.
-    display: If True, dispaly tile image.
-  """
-  tile_pil_img = tile_to_pil_tile(tile)
-
-  if save:
-    t = Time()
-    img_path = slide.get_tile_image_path(tile)
-    dir = os.path.dirname(img_path)
-    if not os.path.exists(dir):
-      os.makedirs(dir)
-    tile_pil_img.save(img_path)
-    print("%-20s | Time: %-14s  Name: %s" % ("Save Tile", str(t.elapsed()), img_path))
-
-  if display:
-    tile_pil_img.show()
-
-def save_display_tile_threshold(tile, save=True, display=False, keep=True):
-  """
-  Save and/or display a tile image.
-
-  Args:
-    tile: Tile object.
-    save: If True, save tile image.
-    display: If True, dispaly tile image.
-  """
-  tile_pil_img = tile_to_pil_tile(tile)
+#   x, y = t.o_c_s, t.o_r_s
+#   w, h = t.o_c_e - t.o_c_s, t.o_r_e - t.o_r_s
+#   tile_region = s.read_region((x, y), 0, (w, h))
+#   # RGBA to RGB
+#   pil_img = tile_region.convert("RGB")
+#   return pil_img
 
 
 
-  if save:
-    t = Time()
-    img_path = slide.get_tile_image_path(tile)
-    if keep:
-        img_path = img_path.rstrip(".png") + "_keep.png"
-    else:
-        img_path = img_path.rstrip(".png") + "_delete.png"
-    dir = os.path.dirname(img_path)
-    if not os.path.exists(dir):
-      os.makedirs(dir)
-    tile_pil_img.save(img_path)
-    print("%-20s | Time: %-14s  Name: %s" % ("Save Tile", str(t.elapsed()), img_path))
+# def tile_to_np_tile(tile):
+#   """
+#   Convert tile information into the corresponding tile as a NumPy image read from the whole-slide image file.
 
-  if display:
-    tile_pil_img.show()
+#   Args:
+#     tile: Tile object.
+
+#   Return:
+#     Tile as a NumPy image.
+#   """
+#   pil_img = tile_to_pil_tile(tile)
+#   np_img = util.pil_to_np_rgb(pil_img)
+#   return np_img
+
+
+# def save_display_tile(tile, save=True, display=False):
+#   """
+#   Save and/or display a tile image.
+
+#   Args:
+#     tile: Tile object.
+#     save: If True, save tile image.
+#     display: If True, dispaly tile image.
+#   """
+#   tile_pil_img = tile_to_pil_tile(tile)
+
+#   if save:
+#     t = Time()
+#     img_path = slide.get_tile_image_path(tile)
+#     dir = os.path.dirname(img_path)
+#     if not os.path.exists(dir):
+#       os.makedirs(dir)
+#     tile_pil_img.save(img_path)
+#     print("%-20s | Time: %-14s  Name: %s" % ("Save Tile", str(t.elapsed()), img_path))
+
+#   if display:
+#     tile_pil_img.show()
+
+# def save_display_tile_threshold(tile, save=True, display=False, keep=True):
+#   """
+#   Save and/or display a tile image.
+
+#   Args:
+#     tile: Tile object.
+#     save: If True, save tile image.
+#     display: If True, dispaly tile image.
+#   """
+#   tile_pil_img = tile_to_pil_tile(tile)
+
+
+
+#   if save:
+#     t = Time()
+#     img_path = slide.get_tile_image_path(tile)
+#     if keep:
+#         img_path = img_path.rstrip(".png") + "_keep.png"
+#     else:
+#         img_path = img_path.rstrip(".png") + "_delete.png"
+#     dir = os.path.dirname(img_path)
+#     if not os.path.exists(dir):
+#       os.makedirs(dir)
+#     tile_pil_img.save(img_path)
+#     print("%-20s | Time: %-14s  Name: %s" % ("Save Tile", str(t.elapsed()), img_path))
+
+#   if display:
+#     tile_pil_img.show()
 
 
 def save_display_tile_threshold_name(tile, save=True, display=False, keep=True, directory = ""):
@@ -2169,53 +2176,53 @@ def tissue_quantity_threshold(tissue_percentage, threshold):
 #   pil_combo.show()
 
 
-def pil_text(text, w_border=TILE_TEXT_W_BORDER, h_border=TILE_TEXT_H_BORDER, font_path=FONT_PATH,
-             font_size=TILE_TEXT_SIZE, text_color=TILE_TEXT_COLOR, background=TILE_TEXT_BACKGROUND_COLOR):
-  """
-  Obtain a PIL image representation of text.
+# def pil_text(text, w_border=TILE_TEXT_W_BORDER, h_border=TILE_TEXT_H_BORDER, font_path=FONT_PATH,
+#              font_size=TILE_TEXT_SIZE, text_color=TILE_TEXT_COLOR, background=TILE_TEXT_BACKGROUND_COLOR):
+#   """
+#   Obtain a PIL image representation of text.
 
-  Args:
-    text: The text to convert to an image.
-    w_border: Tile text width border (left and right).
-    h_border: Tile text height border (top and bottom).
-    font_path: Path to font.
-    font_size: Size of font.
-    text_color: Tile text color.
-    background: Tile background color.
+#   Args:
+#     text: The text to convert to an image.
+#     w_border: Tile text width border (left and right).
+#     h_border: Tile text height border (top and bottom).
+#     font_path: Path to font.
+#     font_size: Size of font.
+#     text_color: Tile text color.
+#     background: Tile background color.
 
-  Returns:
-    PIL image representing the text.
-  """
+#   Returns:
+#     PIL image representing the text.
+#   """
 
-  font = ImageFont.truetype(font_path, font_size)
-  x, y = ImageDraw.Draw(Image.new("RGB", (1, 1), background)).textsize(text, font)
-  image = Image.new("RGB", (x + 2 * w_border, y + 2 * h_border), background)
-  draw = ImageDraw.Draw(image)
-  draw.text((w_border, h_border), text, text_color, font=font)
-  return image
+#   font = ImageFont.truetype(font_path, font_size)
+#   x, y = ImageDraw.Draw(Image.new("RGB", (1, 1), background)).textsize(text, font)
+#   image = Image.new("RGB", (x + 2 * w_border, y + 2 * h_border), background)
+#   draw = ImageDraw.Draw(image)
+#   draw.text((w_border, h_border), text, text_color, font=font)
+#   return image
 
 
-def np_text(text, w_border=TILE_TEXT_W_BORDER, h_border=TILE_TEXT_H_BORDER, font_path=FONT_PATH,
-            font_size=TILE_TEXT_SIZE, text_color=TILE_TEXT_COLOR, background=TILE_TEXT_BACKGROUND_COLOR):
-  """
-  Obtain a NumPy array image representation of text.
+# def np_text(text, w_border=TILE_TEXT_W_BORDER, h_border=TILE_TEXT_H_BORDER, font_path=FONT_PATH,
+#             font_size=TILE_TEXT_SIZE, text_color=TILE_TEXT_COLOR, background=TILE_TEXT_BACKGROUND_COLOR):
+#   """
+#   Obtain a NumPy array image representation of text.
 
-  Args:
-    text: The text to convert to an image.
-    w_border: Tile text width border (left and right).
-    h_border: Tile text height border (top and bottom).
-    font_path: Path to font.
-    font_size: Size of font.
-    text_color: Tile text color.
-    background: Tile background color.
+#   Args:
+#     text: The text to convert to an image.
+#     w_border: Tile text width border (left and right).
+#     h_border: Tile text height border (top and bottom).
+#     font_path: Path to font.
+#     font_size: Size of font.
+#     text_color: Tile text color.
+#     background: Tile background color.
 
-  Returns:
-    NumPy array representing the text.
-  """
-  pil_img = pil_text(text, w_border, h_border, font_path, font_size,
-                     text_color, background)
-  np_img = util.pil_to_np_rgb(pil_img)
-  return np_img
+#   Returns:
+#     NumPy array representing the text.
+#   """
+#   pil_img = pil_text(text, w_border, h_border, font_path, font_size,
+#                      text_color, background)
+#   np_img = util.pil_to_np_rgb(pil_img)
+#   return np_img
 
 
 # def display_tile(tile, rgb_histograms=True, hsv_histograms=True):
@@ -2426,34 +2433,34 @@ def hsv_purple_pink_factor(rgb):
   return factor
 
 
-def hsv_purple_vs_pink_average_factor(rgb, tissue_percentage):
-  """
-  Function to favor purple (hematoxylin) over pink (eosin) staining based on the distance of the HSV hue average
-  from purple and pink.
+# def hsv_purple_vs_pink_average_factor(rgb, tissue_percentage):
+#   """
+#   Function to favor purple (hematoxylin) over pink (eosin) staining based on the distance of the HSV hue average
+#   from purple and pink.
 
-  Args:
-    rgb: Image as RGB NumPy array
-    tissue_percentage: Amount of tissue on the tile
+#   Args:
+#     rgb: Image as RGB NumPy array
+#     tissue_percentage: Amount of tissue on the tile
 
-  Returns:
-    Factor, where >1 to boost purple slide scores, <1 to reduce pink slide scores, or 1 no effect.
-  """
+#   Returns:
+#     Factor, where >1 to boost purple slide scores, <1 to reduce pink slide scores, or 1 no effect.
+#   """
 
-  factor = 1
-  # only applies to slides with a high quantity of tissue
-  if tissue_percentage < TISSUE_HIGH_THRESH:
-    return factor
+#   factor = 1
+#   # only applies to slides with a high quantity of tissue
+#   if tissue_percentage < TISSUE_HIGH_THRESH:
+#     return factor
 
-  hues = rgb_to_hues(rgb)
-  hues = hues[hues >= 200]  # Remove hues under 200
-  if len(hues) == 0:
-    return factor
-  avg = np.average(hues)
-  # pil_hue_histogram(hues).show()
+#   hues = rgb_to_hues(rgb)
+#   hues = hues[hues >= 200]  # Remove hues under 200
+#   if len(hues) == 0:
+#     return factor
+#   avg = np.average(hues)
+#   # pil_hue_histogram(hues).show()
 
-  pu = HSV_PURPLE - avg
-  pi = HSV_PINK - avg
-  pupi = pu + pi
+#   pu = HSV_PURPLE - avg
+#   pi = HSV_PINK - avg
+#   pupi = pu + pi
   # print("Av: %4d, Pu: %4d, Pi: %4d, PuPi: %4d" % (avg, pu, pi, pupi))
   # Av:  250, Pu:   20, Pi:   80, PuPi:  100
   # Av:  260, Pu:   10, Pi:   70, PuPi:   80
@@ -2467,18 +2474,18 @@ def hsv_purple_vs_pink_average_factor(rgb, tissue_percentage):
   # Av:  340, Pu:  -70, Pi:  -10, PuPi:  -80
   # Av:  350, Pu:  -80, Pi:  -20, PuPi: -100
 
-  if pupi > 30:
-    factor *= 1.2
-  if pupi < -30:
-    factor *= .8
-  if pupi > 0:
-    factor *= 1.2
-  if pupi > 50:
-    factor *= 1.2
-  if pupi < -60:
-    factor *= .8
+  # if pupi > 30:
+  #   factor *= 1.2
+  # if pupi < -30:
+  #   factor *= .8
+  # if pupi > 0:
+  #   factor *= 1.2
+  # if pupi > 50:
+  #   factor *= 1.2
+  # if pupi < -60:
+  #   factor *= .8
 
-  return factor
+  # return factor
 
 
 class TileSummary:
@@ -2563,37 +2570,37 @@ class TileSummary:
     sorted_list = sorted(self.tiles, key=lambda t: t.score, reverse=True)
     return sorted_list
 
-  def top_tiles(self):
-    """
-    Retrieve the top-scoring tiles.
+  # def top_tiles(self):
+  #   """
+  #   Retrieve the top-scoring tiles.
 
-    Returns:
-       List of the top-scoring tiles.
-    """
-    sorted_tiles = self.tiles_by_score()
-    top_tiles = sorted_tiles[:NUM_TOP_TILES]
-    return top_tiles
+  #   Returns:
+  #      List of the top-scoring tiles.
+  #   """
+  #   sorted_tiles = self.tiles_by_score()
+  #   top_tiles = sorted_tiles[:NUM_TOP_TILES]
+  #   return top_tiles
 
-  def get_tile(self, row, col):
-    """
-    Retrieve tile by row and column.
+  # def get_tile(self, row, col):
+  #   """
+  #   Retrieve tile by row and column.
 
-    Args:
-      row: The row
-      col: The column
+  #   Args:
+  #     row: The row
+  #     col: The column
 
-    Returns:
-      Corresponding Tile object.
-    """
-    tile_index = (row - 1) * self.num_col_tiles + (col - 1)
-    tile = self.tiles[tile_index]
-    return tile
+  #   Returns:
+  #     Corresponding Tile object.
+  #   """
+  #   tile_index = (row - 1) * self.num_col_tiles + (col - 1)
+  #   tile = self.tiles[tile_index]
+  #   return tile
 
-  def display_summaries(self):
-    """
-    Display summary images.
-    """
-    summary_and_tiles(self.slide_num, display=True, save_summary=False, save_data=False, save_top_tiles=False)
+  # def display_summaries(self):
+  #   """
+  #   Display summary images.
+  #   """
+  #   summary_and_tiles(self.slide_num, display=True, save_summary=False, save_data=False, save_top_tiles=False)
 
 
 
@@ -2628,41 +2635,41 @@ class Tile:
     return "[Tile #%d, Row #%d, Column #%d, Tissue %4.2f%%, Score %0.4f]" % (
       self.tile_num, self.r, self.c, self.tissue_percentage, self.score)
 
-  def __repr__(self):
-    return "\n" + self.__str__()
+  # def __repr__(self):
+  #   return "\n" + self.__str__()
 
-  def mask_percentage(self):
-    return 100 - self.tissue_percentage
+  # def mask_percentage(self):
+  #   return 100 - self.tissue_percentage
 
-  def tissue_quantity(self):
-    return tissue_quantity(self.tissue_percentage)
+  # def tissue_quantity(self):
+  #   return tissue_quantity(self.tissue_percentage)
 
-  def get_pil_tile(self):
-    return tile_to_pil_tile(self)
+  # def get_pil_tile(self):
+  #   return tile_to_pil_tile(self)
 
-  def get_np_tile(self):
-    return tile_to_np_tile(self)
+  # def get_np_tile(self):
+  #   return tile_to_np_tile(self)
 
-  def save_tile(self):
-    save_display_tile(self, save=True, display=False)
+  # def save_tile(self):
+  #   save_display_tile(self, save=True, display=False)
 
-  def save_tile_threshold(self,keep=True):
-    save_display_tile_threshold(self, save=True, display=False, keep=keep)
+  # def save_tile_threshold(self,keep=True):
+  #   save_display_tile_threshold(self, save=True, display=False, keep=keep)
 
   def save_tile_threshold_name(self,keep=True, directory=""):
     save_display_tile_threshold_name(self, save=True, display=False, keep=keep, directory=directory)
 
-  def display_tile(self):
-    save_display_tile(self, save=False, display=True)
+  # def display_tile(self):
+  #   save_display_tile(self, save=False, display=True)
 
-  def display_with_histograms(self):
-    display_tile(self, rgb_histograms=True, hsv_histograms=True)
+  # def display_with_histograms(self):
+  #   display_tile(self, rgb_histograms=True, hsv_histograms=True)
 
-  def get_np_scaled_tile(self):
-    return self.np_scaled_tile
+  # def get_np_scaled_tile(self):
+  #   return self.np_scaled_tile
 
-  def get_pil_scaled_tile(self):
-    return util.np_to_pil(self.np_scaled_tile)
+  # def get_pil_scaled_tile(self):
+  #   return util.np_to_pil(self.np_scaled_tile)
 
 
 class TissueQuantity(Enum):
