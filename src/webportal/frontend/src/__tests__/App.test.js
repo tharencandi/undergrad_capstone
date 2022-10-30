@@ -117,4 +117,42 @@ describe("app", () => {
     expect(confirmBtn).toBeVisible();
     expect(cancelBtn).toBeVisible();
   });
+
+  test("click generate and render prompt then cancel prompt", async () => {
+    await act( async () => {
+        render(
+            <Provider store={store}>
+                <App />
+            </Provider>
+        );
+    });
+
+    const generateBtn = screen.getByRole("button", { name: /generate/i });
+    fireEvent.click(generateBtn);
+    const cancelBtn = screen.getByRole("button", { name: /cancel/i });
+    fireEvent.click(cancelBtn);
+
+    // there should now only be one generate button on screen
+    const generateBtns = screen.getAllByRole("button", { name: /generate/i });
+    expect(generateBtns.length === 1).toBeTruthy();
+  });
+
+  test("click delete and render prompt then cancel prompt", async () => {
+    await act( async () => {
+        render(
+            <Provider store={store}>
+                <App />
+            </Provider>
+        );
+    });
+
+    const deleteBtn = screen.getByRole("button", { name: /delete/i });
+    fireEvent.click(deleteBtn);
+    const cancelBtn = screen.getByRole("button", { name: /cancel/i });
+    fireEvent.click(cancelBtn);
+
+    // there should now only be one delete button on screen
+    const deleteBtns = screen.getAllByRole("button", { name: /delete/i });
+    expect(deleteBtns.length === 1).toBeTruthy();
+  });
 });
