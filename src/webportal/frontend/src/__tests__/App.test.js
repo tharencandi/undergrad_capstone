@@ -80,7 +80,7 @@ describe("app", () => {
 
     const prompt = screen.getByText(/selected to generate/i);
     const confirmBtns = screen.getAllByRole("button", { name: /generate/i });
-    const cancelBtn = screen.getByRole("button", { name: /cancel/i });
+    const cancelBtns = screen.getAllByRole("button", { name: /cancel/i });
 
     // there should be two generate buttons on screen,
     // need to check for 2nd one
@@ -89,7 +89,7 @@ describe("app", () => {
 
     expect(prompt).toBeVisible();
     expect(confirmBtn).toBeVisible();
-    expect(cancelBtn).toBeVisible();
+    expect(cancelBtns[1]).toBeVisible();
   });
 
   test("click delete and render prompt", async () => {
@@ -106,7 +106,7 @@ describe("app", () => {
 
     const prompt = screen.getByText(/selected to delete/i);
     const confirmBtns = screen.getAllByRole("button", { name: /delete/i });
-    const cancelBtn = screen.getByRole("button", { name: /cancel/i });
+    const cancelBtns = screen.getAllByRole("button", { name: /cancel/i });
 
     // there should be two delete buttons on screen,
     // need to check for 2nd one
@@ -115,7 +115,7 @@ describe("app", () => {
 
     expect(prompt).toBeVisible();
     expect(confirmBtn).toBeVisible();
-    expect(cancelBtn).toBeVisible();
+    expect(cancelBtns[1]).toBeVisible();
   });
 
   test("click generate and render prompt then cancel prompt", async () => {
@@ -129,8 +129,8 @@ describe("app", () => {
 
     const generateBtn = screen.getByRole("button", { name: /generate/i });
     fireEvent.click(generateBtn);
-    const cancelBtn = screen.getByRole("button", { name: /cancel/i });
-    fireEvent.click(cancelBtn);
+    const cancelBtns = screen.getAllByRole("button", { name: /cancel/i });
+    fireEvent.click(cancelBtns[1]);
 
     // there should now only be one generate button on screen
     const generateBtns = screen.getAllByRole("button", { name: /generate/i });
@@ -148,8 +148,8 @@ describe("app", () => {
 
     const deleteBtn = screen.getByRole("button", { name: /delete/i });
     fireEvent.click(deleteBtn);
-    const cancelBtn = screen.getByRole("button", { name: /cancel/i });
-    fireEvent.click(cancelBtn);
+    const cancelBtns = screen.getAllByRole("button", { name: /cancel/i });
+    fireEvent.click(cancelBtns[1]);
 
     // there should now only be one delete button on screen
     const deleteBtns = screen.getAllByRole("button", { name: /delete/i });
