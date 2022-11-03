@@ -27,7 +27,7 @@ IMG_SIZE = (102, 102)
 # MODEL = '/home/tharen/UNI/cell_processing/data/models/default_DRAN.json'
 # WEIGHTS = "/home/tharen/UNI/cell_processing/data/models/b16_e50_pre_blackaug.h5"
 TILE_MASK_NAME_F = "{}_{}.png"
-DEBUG = True
+DEBUG = False
 model_config = ""
 with open(MODEL, "r") as f:
     model_config = f.read().strip()

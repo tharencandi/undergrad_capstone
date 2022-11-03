@@ -56,7 +56,7 @@ BATCH_SIZE = 16
 MODEL_SAVE_LOCATION = "data/models"
 MODEL_FILE_NAME = "test_model.model"
 TRAIN_LOCATION = "data/NBL"
-TEST_LOCATION = "data/NBL_TEST"
+TEST_LOCATION = "data/NBL_test"
 LOG_DIR = "data/models/log"
 
 """

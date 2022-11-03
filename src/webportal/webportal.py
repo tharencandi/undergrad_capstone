@@ -22,7 +22,7 @@ from image_tools.conversion import svs_to_png, svs_to_tiff
 from image_tools.conversion import GOOD
 from download_tool.gdc_client import gdc_client
 from download_tool.download import *
-from CNN.predict import predict_slide
+
 
 application = Flask(__name__, static_url_path='',
                   static_folder='frontend/build',
@@ -219,11 +219,13 @@ def make_tif(uuid, svs_fpath, dest, meta_dir):
  
 @celery.task()
 def make_mask(uuid, svs_fpath, dest, meta_dir):
+    from CNN.predict import predict_slide
     set_meta_field(uuid, "maskStatus", "inProgress", meta_dir)
     base_name = get_meta_field(uuid, "fileName", meta_dir)
     name = base_name + ".svs"
     svs_dir = get_svs_dir(uuid, meta_dir)
-    res = predict_slide(uuid, name, svs_dir, WEB_PORTAL_DIR[0:-1], svs_dir)
+    tmp_dir = os.path.join(WEB_PORTAL_DIR, "tmp")
+    res = predict_slide(uuid, name, svs_dir, tmp_dir, svs_dir)
     if res == None:
         set_meta_field(uuid, "maskStatus", "failed", meta_dir)
         return
@@ -304,5 +306,14 @@ if __name__ == '__main__':
     masks_dir = os.path.join(WEB_PORTAL_DIR, "masks")
     if not os.path.exists(masks_dir):
         os.makedirs(masks_dir)
-    application.run(debug=True, port = 8080)
+
+    tmp_dir = os.path.join(WEB_PORTAL_DIR, "tmp")
+    if not os.path.exists(tmp_dir):
+        os.makedirs(tmp_dir)
+    tmp_mask_dir = os.path.join(WEB_PORTAL_DIR, "tmp/masks")
+    if not os.path.exists(tmp_mask_dir):
+        os.makedirs(tmp_mask_dir)
+    
+
+    application.run(debug=False, port = 5000, host="0.0.0.0")
 

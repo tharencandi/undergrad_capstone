@@ -1,12 +1,12 @@
 ---
-OUTPUT_DIR: "/home/haeata/.glioblastoma_portal/scans"
-PROGRESS_LOG: "/home/haeata/.glioblastoma_portal/progress.log"
-FAILURE_LOG: "/home/haeata/.glioblastoma_portal/failure.log"
+OUTPUT_DIR: "/home/lab_server_04/.glioblastoma_portal/scans"
+PROGRESS_LOG: "/home/lab_server_04/.glioblastoma_portal/progress.log"
+FAILURE_LOG: "/home/lab_server_04/.glioblastoma_portal/failure.log"
 # Increasing chunk size will speed things up but will increase ram usage
 CHUNK_SIZE: 16384
 # Concurrent downloads does nothing currently - not implemented
 CONCURRENT_DOWNLOADS: 4
-LOGFILE: "/home/haeata/.glioblastoma_portal/download.log"
+LOGFILE: "/home/lab_server_04/.glioblastoma_portal/download.log"
 LOGLEVEL: "DEBUG"
 #set to false when using for predict_manifest on a remote machine. Set to true when downloading to client HDD
 MIMIC_GDC_FOLDERS: True 

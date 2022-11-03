@@ -23,7 +23,7 @@ sys.path.append(path.dirname(cdir))
     - https://drive.google.com/drive/folders/1Raa2NuSqzvjDePrft9xDHf7HngxPowDo?usp=sharing 
     - https://drive.google.com/drive/folders/14OCZf5EuLY4_TjNVGIOABA0pd3NoboN2?usp=sharing 
 """
-TRAIN_LOCATION = "data/trainings/"
+TRAIN_LOCATION = "data/training/"
 VAL_LOCATION = "data/validation/"
 
 """

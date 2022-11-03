@@ -63,8 +63,8 @@ FADED_MEDIUM_COLOR = (255, 255, 128)
 FADED_LOW_COLOR = (255, 210, 128)
 FADED_NONE_COLOR = (255, 128, 128)
 
-FONT_PATH = "/home/tharen/UNI/cell_processing/data/Courier New Bold.ttf"
-SUMMARY_TITLE_FONT_PATH = "/home/tharen/UNI/cell_processing/data/Courier New Bold.ttf"
+FONT_PATH = "/home/lab_server_04/cell_processing/glioblastoma_processing/data/Courier New Bold.ttf"
+SUMMARY_TITLE_FONT_PATH = "/home/lab_server_04/cell_processing/glioblastoma_processing/data/Courier New Bold.ttf"
 # FONT_PATH = "/Library/Fonts/Arial Bold.ttf"
 # SUMMARY_TITLE_FONT_PATH = "/Library/Fonts/Courier New Bold.ttf"
 SUMMARY_TITLE_TEXT_COLOR = (0, 0, 0)
